@@ -1,7 +1,12 @@
+/*! es6-module-loader - v0.1.0 - 5/19/2012
+* https://github.com/addyosmani/es6-module-loader
+* Copyright (c) 2012 Luke Hogan, Addy Osmani; Licensed MIT */
+
 (function (global) {
 
   /// Module loader constructor
   function Loader(parent, options) {
+
     // Initialization of loader state from options
     this._global = options.global || Object.create(null);
     this._baseURL = options.baseURL || this.global && this.global.baseURL;
@@ -12,8 +17,9 @@
     this._resolve = options.resolve || parent.resolve;
     this._fetch = options.fetch || parent.fetch;
     this._translate = options.translate || parent.translate;
+
     // The internal table of module instance objects
-    this._mios = {}
+    this._mios = {};
   }
   Object.defineProperty(Loader.prototype, "global", {
     configurable: true,
@@ -52,8 +58,9 @@
         }
       }, key);
     }
-  }
+  };
   Loader.prototype.eval = function (sourceText) {
+  	console.log('this gets called sometime');
     with(this._global) {
       eval(sourceText);
     }

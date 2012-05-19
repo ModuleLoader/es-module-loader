@@ -1,0 +1,41 @@
+{
+  "name": "es6-module-loader",
+  "description": "An ES6 Module Loader shim",
+  "version": "0.1.0",
+  "homepage": "https://github.com/addyosmani/es6-module-loader",
+  "author": {
+    "name": "Luke Hogan, Addy Osmani",
+    "email": "addyosmani@gmail.com",
+    "url": "none"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/addyosmani/es6-module-loader"
+  },
+  "bugs": {
+    "url": "https://github.com/addyosmani/es6-module-loader/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/addyosmani/es6-module-loader/blob/master/LICENSE-MIT"
+    }
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "grunt": "~0.3.0"
+  },
+  "keywords": [
+    "script",
+    "loader",
+    "es6",
+    "harmony"
+  ],
+  "engines": {
+    "node": ">= 0.7.9-pre"
+  },
+  "main": "lib/es6-module-loader",
+  "scripts": {
+    "test": "grunt test"
+  }
+}
