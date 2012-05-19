@@ -3,40 +3,8 @@
 An ES6 Module Loader shim
 
 ## Getting Started
-### On the server
-Install the module with: `npm install es6-module-loader`
 
-```javascript
-var es6_module_loader = require('es6-module-loader');
-es6_module_loader.awesome(); // "awesome"
-```
-
-### In the browser
-Download the [production version][min] or the [development version][max].
-
-[min]: https://raw.github.com/addyosmani/es6-module-loader/master/dist/es6-module-loader.min.js
-[max]: https://raw.github.com/addyosmani/es6-module-loader/master/dist/es6-module-loader.js
-
-In your web page:
-
-```html
-<script src="dist/es6-module-loader.min.js"></script>
-<script>
-awesome(); // "awesome"
-</script>
-```
-
-In your code, you can attach es6-module-loader's methods to any object.
-
-```html
-<script>
-this.exports = Bocoup.utils;
-</script>
-<script src="dist/es6-module-loader.min.js"></script>
-<script>
-Bocoup.utils.awesome(); // "awesome"
-</script>
-```
+See the demo for the time being until further documentation is written.
 
 ## Documentation
 _(Coming soon)_
