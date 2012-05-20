@@ -12,8 +12,9 @@ var module = new Module({test:'hello'});
 console.log(module);
 
 //System (pre-configured Loader)
-System.load('js/test1.js', function(scr){
-	console.log('test1.js loaded', scr);
+System.load('js/test1.js', function(test1){
+	console.log('test1.js loaded', test1);
+	test1.tester();
 });
 
 
@@ -52,10 +53,17 @@ console.log(loader);
 loader.load('js/test2.js',
     function(test) {
         console.log('test2.js loaded', test);
+        test.foobar();
     }, function(err){
     	console.log(err);
 	});
 
 
 
-
+loader.load('js/libs/jquery-1.7.1.js',
+    function(jQuery) {
+        console.log('jQuery loaded', jQuery);
+        $('body').css({'background':'blue'});
+    }, function(err){
+    	console.log(err);
+	});

@@ -1,7 +1,7 @@
-// Todo: figure out what form ES6 modules being 
-// pulled in via the module loader should take
-// are we just returning instances of 'Module'?
-
 (function(){
-	console.log('test1.js - hello world');
+	return{
+		tester:function(){
+			console.log('hello!');
+		}
+	}
 })();
