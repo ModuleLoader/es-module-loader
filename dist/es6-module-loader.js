@@ -1,4 +1,4 @@
-/*! es6-module-loader - v0.1.0 - 5/19/2012
+/*! es6-module-loader - v0.1.0 - 5/20/2012
 * https://github.com/addyosmani/es6-module-loader
 * Copyright (c) 2012 Luke Hogan, Addy Osmani; Licensed MIT */
 
@@ -66,11 +66,16 @@
       var self = this;
       this._fetch(url, this._baseURL, {
         fulfill: function (src) {
-          var actualSrc = self._translate(src, url, self._baseURL, key);
+
+          var actualSrc, evalSrc;
+
+          actualSrc = self._translate(src, url, self._baseURL, key);
           if (self._strict) {
             actualSrc = "'use strict';\n" + actualSrc;
           }
-          eval(actualSrc);
+        
+          evalSrc = eval(actualSrc);
+          self.set(url, evalSrc);
           callback(self._mios[key]);
         },
         redirect: function (url, baseURL) {
@@ -147,12 +152,15 @@
 
 
   function Module(o) {
-    if (o == null) throw new TypeError("Expected object");
-    var obj = Object(o);
+    
+    if (o === null) throw new TypeError("Expected object");
+    var obj = Object(o);  
     if (obj instanceof Module) {
-      return obj;
+      return obj; 
     } else {
-      var mio = Object.create(null);
+
+      var mio = Object.create(null); 
+    
       for (var key in obj) {
         (function (key) {
           Object.defineProperty(mio, key, {
@@ -164,6 +172,7 @@
           });
         })(key);
       }
+      
       return mio;
     }
   };
