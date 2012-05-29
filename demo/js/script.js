@@ -1,5 +1,6 @@
 /* 
 
+Examples
 Author: Addy Osmani
 
 See: http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders
