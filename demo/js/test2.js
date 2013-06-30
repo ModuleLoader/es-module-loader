@@ -1,7 +1,3 @@
-(function(){
-	return{
-		foobar:function(){
-			console.log('foobar!');
-		}
-	}
-})();
+export function foobar() {
+  console.log('foobar!');
+}
