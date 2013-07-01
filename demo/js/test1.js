@@ -1,7 +1,3 @@
-(function(){
-	return{
-		tester:function(){
-			console.log('hello!');
-		}
-	}
-})();
+export function tester() {
+	console.log('hello!');
+}
