@@ -1,24 +1,65 @@
-# es6-module-loader
+# ES6 Module Loader
 
-An ES6 Module Loader shim based on [http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders](http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders) and the initial work done by [Luke Hogan](https://gist.github.com/2246758).
+An ES6 Module Loader polyfill based on [http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders](http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders) by Luke Hogan, Addy Osmani and Guy Bedford.
 
 ## Getting Started
 
-See the demo for the time being until further documentation is written.
+Check-out the [demo](http://moduleloader.github.io/es6-module-loader/demo/index.html) sample to see the project in action.
 
-## Examples
+Define a new ES6 module:
 
-
-Define a new module
-
-```
+```javascript
 var module = new Module({test:'hello'});
 console.log(module);
 ```
 
+Use System (pre-configured Loader):
+
+```javascript
+System.import('js/test1.js', function(test1){
+  console.log('test1.js loaded', test1);
+  test1.tester();
+});
+```
+
 Define a new module Loader instance:
 
+```javascript
+var baseURL = document.URL.substring(0, document.URL.lastIndexOf('\/') + 1);
+var loader = new Loader({global: window,
+    strict: false,
+    resolve: function (name, options) {
+      return  baseURL + name;
+    }
+  });
 ```
+
+Usage:
+
+```javascript
+
+// Example 1
+loader.import('js/test2.js',
+  function(test) {
+      console.log('test2.js loaded', test);
+      test.foobar();
+  }, function(err){
+    console.log(err);
+});
+
+// Example 2
+loader.import('js/libs/jquery-1.7.1.js',
+  function() {
+      console.log('jQuery loaded', loader.global.jQuery);
+      loader.global.$('body').css({'background':'blue'});
+  }, function(err){
+    console.log(err);
+});
+```
+
+Define a new module Loader instance (extended example):
+
+```javascript
 var loader = new Loader(Loader,{global: window,
     baseURL: document.URL.substring(0, document.URL.lastIndexOf('\/') + 1),
     strict: false,
@@ -49,35 +90,6 @@ var loader = new Loader(Loader,{global: window,
 console.log(loader);
 ```
 
-Using the Loader instance:
-
-```
-loader.load('js/test2.js',
-    function(test) {
-        console.log('test2.js loaded', test);
-        test.foobar();
-    }, function(err){
-    	console.log(err);
-	});
-
-
-loader.load('js/libs/jquery-1.7.1.js',
-    function(jQuery) {
-        console.log('jQuery loaded', jQuery);
-        $('body').css({'background':'blue'});
-    }, function(err){
-    	console.log(err);
-	});
-```
-
-Use System (pre-configured Loader)
-
-```
-System.load('js/test1.js', function(test1){
-	console.log('test1.js loaded', test1);
-	test1.tester();
-});
-```
 
 ## Notes and roadmap
 
@@ -85,11 +97,11 @@ System.load('js/test1.js', function(test1){
 
 The polyfill is implemented exactly to the specification now, except for the following items:
 
-* The `extra` metadata property is not yet handled in the resolve, as I can't tell what happens to this.
+* The `extra` metadata property is not yet handled in the resolve.
 * The `fetch` function is given a different specification between the prototype (`Loader.prototype.fetch`) and loader instance (`options.fetch`). Since instance functions are provided on the instance object as in the @wycats essay (`System.normalize`, `System.fetch` etc), there seems to be a conflict between these.
 * The `evalAsync` function doesn't yet throw an error when exports are present, which should be the case.
-* The `ToModule` function isn't implemented, but should be simple. I just couldn't tell if this was to be created at `window.ToModule` or `Module.ToModule`.
-* The intrinsics encapsulation is a tricky one to polyfill, but I have done my best based on a global prototype chain behaviour, where `global.__proto__ == intrinsics`. And `intrinsics.__proto__ == window`. All code is evaluated with the `window` and `this` properties referencing the `global` allowing full global encapsulation.
+* The `ToModule` function isn't implemented, but should be simple. 
+* The intrinsics encapsulation is a tricky one to polyfill, but we have done our best based on a global prototype chain behaviour, where `global.__proto__ == intrinsics`. And `intrinsics.__proto__ == window`. All code is evaluated with the `window` and `this` properties referencing the `global` allowing full global encapsulation.
 
 ### Syntax Parsing
 
