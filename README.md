@@ -99,7 +99,7 @@ The polyfill is implemented exactly to the specification now, except for the fol
 
 The [Esprima ES6 Harmony parser](https://github.com/ariya/esprima/tree/harmony) is being used to do parsing, loaded only when necessary. This parser still uses an older syntax, which is currently the major critical issue to sort out for this polyfill.
 
-The issue tracking this is here - https://code.google.com/p/esprima/issues/detail?id=410
+The issue tracking this is here - https://github.com/ModuleLoader/es6-module-loader/issues/10
 
 
 ## Contributing
