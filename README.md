@@ -18,7 +18,8 @@ System.import('js/test1', function (test1) {
 where, test1 can contain module syntax:
 
 test1.js:
-```
+
+```javascript
 export function tester() {
   console.log('hello!');
 }
