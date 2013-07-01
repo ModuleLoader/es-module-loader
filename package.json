@@ -1,10 +1,10 @@
 {
   "name": "es6-module-loader",
   "description": "An ES6 Module Loader shim",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "homepage": "https://github.com/addyosmani/es6-module-loader",
   "author": {
-    "name": "Luke Hogan, Addy Osmani",
+    "name": "Guy Bedford, Luke Hoban, Addy Osmani",
     "email": "addyosmani@gmail.com",
     "url": "none"
   },

@@ -22,13 +22,6 @@ module.exports = function(grunt) {
         dest: 'dist/<%= pkg.name %>.min.js'
       }
     },
-    lint: {
-      files: ['lib/**/*.js']
-    },
-    watch: {
-      files: '<config:lint.files>',
-      tasks: 'lint test'
-    },
     jshint: {
       options: {
         curly: true,
@@ -47,6 +40,6 @@ module.exports = function(grunt) {
   });
 
   // Default task.
-  grunt.registerTask('default', 'lint test concat min');
+  grunt.registerTask('default', 'concat min');
 
 };
