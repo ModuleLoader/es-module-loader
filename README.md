@@ -42,7 +42,7 @@ Load a plain JavaScript file from a URL:
 
 ```javascript
 System.load('js/libs/jquery-1.7.1.js', function() {
-  var $ = loader.global.jQuery;
+  var $ = System.global.jQuery;
   console.log('jQuery loaded', $);
   $('body').css({'background':'blue'});
 });
