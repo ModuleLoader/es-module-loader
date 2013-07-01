@@ -1,93 +1,76 @@
 # ES6 Module Loader
 
-An ES6 Module Loader polyfill based on [http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders](http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders) by Luke Hogan, Addy Osmani and Guy Bedford.
+An ES6 Module Loader polyfill based on [http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders](http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders) by Luke Hoban, Addy Osmani and Guy Bedford.
 
 ## Getting Started
 
 Check-out the [demo](http://moduleloader.github.io/es6-module-loader/demo/index.html) sample to see the project in action.
 
-Define a new ES6 module:
+Use the System (pre-configured Loader):
 
 ```javascript
-var module = new Module({test:'hello'});
-console.log(module);
+System.baseURL = '/lib';
+System.import('js/test1', function (test1) {
+  console.log('test1.js loaded', test1);
+});
 ```
 
-Use System (pre-configured Loader):
+Load multiple modules:
 
 ```javascript
-System.import('js/test1.js', function(test1){
+System.import(['js/test1', 'js/test2'], function(test1, test2) {
   console.log('test1.js loaded', test1);
-  test1.tester();
+  console.log('test2.js loaded', test2);
+}, function(err) {
+  console.log('loading error');
+});
+```
+
+Load a plain JavaScript file from a URL:
+
+```javascript
+System.load('js/libs/jquery-1.7.1.js', function() {
+  var $ = loader.global.jQuery;
+  console.log('jQuery loaded', $);
+  $('body').css({'background':'blue'});
 });
 ```
 
 Define a new module Loader instance:
 
 ```javascript
-var baseURL = document.URL.substring(0, document.URL.lastIndexOf('\/') + 1);
-var loader = new Loader({global: window,
-    strict: false,
-    resolve: function (name, options) {
-      return  baseURL + name;
-    }
-  });
-```
-
-Usage:
-
-```javascript
-
-// Example 1
-loader.import('js/test2.js',
-  function(test) {
-      console.log('test2.js loaded', test);
-      test.foobar();
-  }, function(err){
-    console.log(err);
-});
-
-// Example 2
-loader.import('js/libs/jquery-1.7.1.js',
-  function() {
-      console.log('jQuery loaded', loader.global.jQuery);
-      loader.global.$('body').css({'background':'blue'});
-  }, function(err){
-    console.log(err);
-});
-```
-
-Define a new module Loader instance (extended example):
-
-```javascript
-var loader = new Loader(Loader,{global: window,
-    baseURL: document.URL.substring(0, document.URL.lastIndexOf('\/') + 1),
-    strict: false,
-    resolve: function (relURL, baseURL) {
-      var url = baseURL + relURL;
-      return url;
-    },
-    fetch: function (relURL, baseURL, request, resolved) {
-      var url = baseURL + relURL;
-      var xhr = new XMLHttpRequest();
-      xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4) {
-          if (xhr.status === 200) {
-            request.fulfill(xhr.responseText);
-          } else {
-            request.reject(xhr.statusText);
-          }
+var loader = new Loader(Loader, {
+  global: window,
+  strict: false,
+  resolve: function (normalized, options) {
+    return '/' + normalized + '.js';
+  },
+  fetch: function (url, fulfill, reject, options) {
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          fulfill(xhr.responseText);
+        } else {
+          reject(xhr.statusText);
         }
-      };
-      xhr.open("GET", url, true);
-      xhr.send(null);
-    },
-    translate: function (src, relURL, baseURL, resolved) {
-      return src;
-    }
-  });
+      }
+    };
+    xhr.open("GET", url, true);
+    xhr.send(null);
+  },
+  translate: function (source, options) {
+    return source;
+  }
+});
+```
 
-console.log(loader);
+Define an ES6 module programatically (useful in optimized / production environments):
+
+```javascript
+var module = new Module({ test: 'hello' });
+System.set('my-module', module);
+console.log(System.get('my-module'));
 ```
 
 
@@ -105,7 +88,7 @@ The polyfill is implemented exactly to the specification now, except for the fol
 
 ### Syntax Parsing
 
-The ES6 Harmony parser is being used to do parsing, loaded only when necessary. This parser still uses an older syntax, which is currently the major critical issue to sort out for this polyfill.
+The [Esprima ES6 Harmony parser](https://github.com/ariya/esprima/tree/harmony) is being used to do parsing, loaded only when necessary. This parser still uses an older syntax, which is currently the major critical issue to sort out for this polyfill.
 
 The issue tracking this is here - https://code.google.com/p/esprima/issues/detail?id=410
 
@@ -119,5 +102,5 @@ _Also, please don't edit files in the "dist" subdirectory as they are generated 
 _(Nothing yet)_
 
 ## License
-Copyright (c) 2012 Luke Hogan, Addy Osmani, Guy Bedford  
+Copyright (c) 2012 Luke Hoban, Addy Osmani, Guy Bedford  
 Licensed under the MIT license.
