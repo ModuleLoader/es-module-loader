@@ -15,6 +15,15 @@ System.import('js/test1', function (test1) {
 });
 ```
 
+where, test1 can contain module syntax:
+
+test1.js:
+```
+export function tester() {
+  console.log('hello!');
+}
+```
+
 Load multiple modules:
 
 ```javascript
