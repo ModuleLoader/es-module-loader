@@ -79,12 +79,23 @@ System.load('js/test1.js', function(test1){
 });
 ```
 
-## Pending changes
+## Notes and roadmap
 
-* Get rid of `eval` (and stop the linter from complaining about it in the process) 
-* `ToModule(obj)` not implemented. Can it be? We're currently creating object instances as 'module' instances can't be properly done till ES6 is natively available
-* Tests? Should be fairly straight-forward. Can be based on what is in the demo.
-* Improve documentation (inline or otherwise)
+### Specification Notes
+
+The polyfill is implemented exactly to the specification now, except for the following items:
+
+* The `extra` metadata property is not yet handled in the resolve, as I can't tell what happens to this.
+* The `fetch` function is given a different specification between the prototype (`Loader.prototype.fetch`) and loader instance (`options.fetch`). Since instance functions are provided on the instance object as in the @wycats essay (`System.normalize`, `System.fetch` etc), there seems to be a conflict between these.
+* The `evalAsync` function doesn't yet throw an error when exports are present, which should be the case.
+* The `ToModule` function isn't implemented, but should be simple. I just couldn't tell if this was to be created at `window.ToModule` or `Module.ToModule`.
+* The intrinsics encapsulation is a tricky one to polyfill, but I have done my best based on a global prototype chain behaviour, where `global.__proto__ == intrinsics`. And `intrinsics.__proto__ == window`. All code is evaluated with the `window` and `this` properties referencing the `global` allowing full global encapsulation.
+
+### Syntax Parsing
+
+The ES6 Harmony parser is being used to do parsing, loaded only when necessary. This parser still uses an older syntax, which is currently the major critical issue to sort out for this polyfill.
+
+The issue tracking this is here - https://code.google.com/p/esprima/issues/detail?id=410
 
 
 ## Contributing
@@ -96,5 +107,5 @@ _Also, please don't edit files in the "dist" subdirectory as they are generated 
 _(Nothing yet)_
 
 ## License
-Copyright (c) 2012 Luke Hogan, Addy Osmani  
+Copyright (c) 2012 Luke Hogan, Addy Osmani, Guy Bedford  
 Licensed under the MIT license.
