@@ -1,4 +1,4 @@
-/*! es6-module-loader - v0.2.0 - 6/30/2013
+/*! es6-module-loader - v0.2.0 - 7/3/2013
 * https://github.com/addyosmani/es6-module-loader
 * Copyright (c) 2013 Guy Bedford, Luke Hoban, Addy Osmani; Licensed MIT */
 
@@ -60,6 +60,9 @@
 
     // The internal table of module instance objects
     this._mios = {};
+
+    // the internal table of loaded scripts
+    this._sloaded = {};
     
     // modules currently loading
     // key is normalized name, value is an array of callback functions to be queued (optional)
@@ -102,8 +105,8 @@
       return;
     }
 
-    if (this._mios[url]) {
-      callback(this._mios[url]);
+    if (this._sloaded[url]) {
+      callback && callback();
       return;
     }
 
@@ -126,10 +129,20 @@
         self._sloads[url][i].callback && self._sloads[url][i].callback();
       delete self._sloads[url];
     }
-    var _errback = function() {
-      for (var i = 0; i < self._sloads[url].length; i++)
-        self._sloads[url][i].errback && self._sloads[url][i].errback();
+    var _errback = function(err) {
+      var allCalled = true;
+      for (var i = 0; i < self._sloads[url].length; i++) {
+        if (self._sloads[url][i].errback) {
+          self._sloads[url][i].errback(err);
+        }
+        else {
+          allCalled = false;
+        }
+      }
       delete self._sloads[url];
+      // if any didn't have an error handler, throw
+      if (!allCalled)
+        throw err;
     }
 
     this.fetch(url, function (source) {
@@ -174,7 +187,7 @@
     }
 
     if (this._mios[name]) {
-      return callback(this._mios[name]);
+      return callback && callback(this._mios[name]);
     }
 
     // store the callbacks in a load queue for multiple requests
@@ -197,15 +210,20 @@
         self._mloads[name][i].callback && self._mloads[name][i].callback(module);
       delete self._mloads[name];
     }
-    var _errback = function() {
-      if (errback) {
-        if (errback.called)
-          return;
-        errback.called = true;
+    var _errback = function(err) {
+      var allCalled = true;
+      for (var i = 0; i < self._mloads[name].length; i++) {
+        if (self._mloads[name][i].errback) {
+          self._mloads[name][i].errback(err);
+        }
+        else {
+          allCalled = false;
+        }
       }
-      for (var i = 0; i < self._mloads[name].length; i++)
-        self._mloads[name][i].errback && self._mloads[name][i].errback();
       delete self._mloads[name];
+      // if any didn't have an error handler, throw
+      if (!allCalled)
+        throw err;
     }
 
     var url = this.resolve(name, opt);
@@ -234,12 +252,14 @@
   // defined module object
   // isScript = true implies loading a script so don't define exports
   var evalCnt = 0;
-  Loader.prototype._linkExecute = function (name, source, opt, callback, errback, isScript) {
+  Loader.prototype._linkExecute = function (name, source, opt, callback, errback) {
     // when no name is given,
     // provide a unique name to cache the syntax tree parsing
     if (!name) {
       name = '__eval' + evalCnt++;
     }
+
+    var isScript = opt.type == 'script';
 
     var link = this.link(source, opt);
 
@@ -269,14 +289,14 @@
       var normalizeMap = {};
       execute = execute || function() {
         var exports;
-        try {
-          // parses export statements and evaluates in the correct context
-          // returning the exports object
-          exports = ES6Parser.parseEval(_source, self, name, normalizeMap, opt.address);
-        }
-        catch(e) {
-          return errback(e);
-        }
+        // parses export statements and evaluates in the correct context
+        // returning the exports object
+        exports = ES6Parser.parseEval(_source, self, {
+          name: name, 
+          normalizeMap: normalizeMap,
+          sourceURL: opt.address, 
+          isEval: isScript
+        });
         // only return exports for a module when not doing script eval
         if (name && !isScript)
           return new Module(exports || {});
@@ -303,7 +323,14 @@
           depCnt++;
           deps[i] = module;
           if (depCnt == imports.length) {
-            callback(execute.apply(self, deps));
+            try {
+              var output = execute.apply(self, deps);
+              callback(output);
+            }
+            catch(e) {
+              errback(e);
+              return;
+            }
           }
         }, errback, referer);
       })(i);
@@ -317,7 +344,9 @@
   // If the compilation process results in a fetch, a SyntaxError is thrown.
   // The compiled code is statically associated with this loader.
   Loader.prototype.eval = function (source) {
-    ES6Parser.parseEval(source, this);
+    ES6Parser.parseEval(source, this, {
+      isEval: true
+    });
   };
 
   // Loader.prototype.parseEval( source )
@@ -325,7 +354,7 @@
   // The compiled code is statically associated with this loader.
   Loader.prototype.evalAsync = function (source, callback, errback) {
     // links and then evals
-    this._linkExecute(null, source, {}, callback || function() {}, errback || function() {}, true);
+    this._linkExecute(null, source, { type: 'script' }, callback || function() {}, errback || function() {});
   }
 
   // Loader.prototype.get ( name )
@@ -367,31 +396,31 @@
   };
 
 
-  function Module(o) {
-
-    if (o === null) throw new TypeError("Expected object");
-    var obj = Object(o);
-    if (obj instanceof Module) {
-      return obj;
+  function Module (o) {
+    
+    if (typeof o != 'object') throw new TypeError("Expected object");
+    
+    if (o instanceof Module) {
+      return o;
     } else {
-
-      var mio = Object.create(null);
-
-      for (var key in obj) {
+      var self = this;
+      for (var key in o) {
         (function (key) {
-          Object.defineProperty(mio, key, {
+          Object.defineProperty(self, key, {
             configurable: false,
             enumerable: true,
             get: function () {
-              return obj[key];
+              return o[key];
             }
           });
         })(key);
       }
-
-      return mio;
     }
   };
+
+  function ToModule (o) {
+    return new Module(o);
+  }
 
 
   // Pre-configured Loader instance for easier use
@@ -495,6 +524,9 @@
       return this.parseNames[name];
     },
     loadEsprima: function(name, source, callback, errback) {
+      if (this.esprima)
+        return callback();
+      
       // use a regex to check if the source contains 'import', 'export' or 'module' statements
       // may incorrectly fire, but the damage is only an http request to do better parsing shortly
       if (!this.checkModuleSyntax(name, source))
@@ -555,20 +587,25 @@
     },
 
     // runs an eval of code with module syntax
-    // name, normalizeMap, sourceURL optional
+    // opt = {
+    //   name: name, // normalized module name, used to load cached syntax tree
+    //   normalizeMap: normalizeMap, // normalization map to save having to renormalize again
+    //   sourceURL: opt.address, // used for source map
+    //   isEval: isScript // indicate if exports should be parsed
+    // }
     // return value is any exports as a plain object
-    parseEval: function(source, loader, name, normalizeMap, sourceURL) {
+    parseEval: function(source, loader, opt) {
 
       // regex showed no need for esprima - normal eval
-      if (!this.checkModuleSyntax(name, source)) {
+      if (!this.checkModuleSyntax(opt.name, source)) {
         var __Loader = loader;
-        eval('(function(window) { with(__Loader.global) { ' + (loader._strict ? '"use strict";\n' : '') + source + ' } }).call(__Loader.global, __Loader.global); ' + (sourceURL ? '\n//# sourceURL=' + sourceURL : ''));
+        eval('(function(window) { with(__Loader.global) { ' + (loader._strict ? '"use strict";\n' : '') + source + ' } }).call(__Loader.global, __Loader.global); ' + (opt.sourceURL ? '\n//# sourceURL=' + opt.sourceURL : ''));
         return;
       }
 
-      var tree = this.treeCache[name] || this.esprima.parse(source, { range: true });
+      var tree = this.treeCache[opt.name] || this.esprima.parse(source, { range: true });
 
-      normalizeMap = normalizeMap || {};
+      var normalizeMap = opt.normalizeMap || {};
 
       var tSource = new SourceModifier(source);
 
@@ -724,12 +761,19 @@
           self.applyPolyfill(node, tSource);
       });
 
-      delete this.treeCache[name];
+      delete this.treeCache[opt.name];
 
       var __Loader = loader;
       var __exports = {};
-      var evalSource = '(function(window) { with(__Loader.global) { ' + (loader._strict ? '"use strict";\n' : '') + tSource.toString() + ' } }).call(__Loader.global, __Loader.global);' + (sourceURL ? '\n//# sourceURL=' + sourceURL : '');
+      var evalSource = '(function(window) { with(__Loader.global) { ' + (loader._strict ? '"use strict";\n' : '') + tSource.toString() + ' } }).call(__Loader.global, __Loader.global);' + (opt.sourceURL ? '\n//# sourceURL=' + opt.sourceURL : '');
       eval(evalSource);
+
+      // if exports are defined and it is an eval, throw
+      if (opt.isEval) {
+        for (var e in __exports) {
+          throw 'Exports only supported for modules, not script evaluation.'
+        }
+      }
 
       return __exports;
     }
@@ -795,6 +839,7 @@
   global.Loader = Loader;
   // Export the Module class
   global.Module = Module;
+  global.ToModule = ToModule;
   // Export the System object
   global.System = defaultSystemLoader;
 
