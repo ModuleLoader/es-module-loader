@@ -4,6 +4,11 @@ An ES6 Module Loader polyfill based on [http://wiki.ecmascript.org/doku.php?id=h
 
 Not yet suitable for production use while the specification is still subject to change.
 
+## Download
+
+* [Minified build](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/es6-module-loader.min.js)  ~ 12KB
+* [Unminified build](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/es6-module-loader.js) ~ 28KB
+
 ## Getting Started
 
 Check-out the [demo](http://moduleloader.github.io/es6-module-loader/demo/index.html) sample to see the project in action.
