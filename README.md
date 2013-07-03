@@ -99,8 +99,6 @@ The polyfill is implemented exactly to the specification now, except for the fol
 
 * The `extra` metadata property is not yet handled in the resolve.
 * The `fetch` function is given a different specification between the prototype (`Loader.prototype.fetch`) and loader instance (`options.fetch`). Since instance functions are provided on the instance object as in the @wycats essay (`System.normalize`, `System.fetch` etc), there seems to be a conflict between these.
-* The `evalAsync` function doesn't yet throw an error when exports are present, which should be the case.
-* The `ToModule` function isn't implemented, but should be simple. 
 * The intrinsics encapsulation is a tricky one to polyfill, but we have done our best based on a global prototype chain behaviour, where `global.__proto__ == intrinsics`. And `intrinsics.__proto__ == window`. All code is evaluated with the `window` and `this` properties referencing the `global` allowing full global encapsulation.
 
 ### Syntax Parsing
