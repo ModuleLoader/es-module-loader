@@ -1,91 +1,115 @@
-# es6-module-loader
+# ES6 Module Loader
 
-An ES6 Module Loader shim based on [http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders](http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders) and the initial work done by [Luke Hogan](https://gist.github.com/2246758).
+An ES6 Module Loader polyfill based on [http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders](http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders) by Luke Hoban, Addy Osmani and Guy Bedford.
+
+Not yet suitable for production use while the specification is still subject to change.
+
+## Download
+
+* [Minified build](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/es6-module-loader.min.js)  ~ 12KB
+* [Unminified build](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/es6-module-loader.js) ~ 28KB
 
 ## Getting Started
 
-See the demo for the time being until further documentation is written.
+Check-out the [demo](http://moduleloader.github.io/es6-module-loader/demo/index.html) sample to see the project in action.
 
-## Examples
+Use the System (pre-configured Loader):
 
-
-Define a new module
-
+```javascript
+System.baseURL = '/lib';
+System.import('js/test1', function (test1) {
+  console.log('test1.js loaded', test1);
+});
 ```
-var module = new Module({test:'hello'});
-console.log(module);
+
+where, test1 can contain module syntax:
+
+test1.js:
+
+```javascript
+export function tester() {
+  console.log('hello!');
+}
+```
+
+Load multiple modules:
+
+```javascript
+System.import(['js/test1', 'js/test2'], function(test1, test2) {
+  console.log('test1.js loaded', test1);
+  console.log('test2.js loaded', test2);
+}, function(err) {
+  console.log('loading error');
+});
+```
+
+Load a plain JavaScript file from a URL:
+
+```javascript
+System.load('js/libs/jquery-1.7.1.js', function() {
+  var $ = System.global.jQuery;
+  console.log('jQuery loaded', $);
+  $('body').css({'background':'blue'});
+});
 ```
 
 Define a new module Loader instance:
 
-```
-var loader = new Loader(Loader,{global: window,
-    baseURL: document.URL.substring(0, document.URL.lastIndexOf('\/') + 1),
-    strict: false,
-    resolve: function (relURL, baseURL) {
-      var url = baseURL + relURL;
-      return url;
-    },
-    fetch: function (relURL, baseURL, request, resolved) {
-      var url = baseURL + relURL;
-      var xhr = new XMLHttpRequest();
-      xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4) {
-          if (xhr.status === 200) {
-            request.fulfill(xhr.responseText);
-          } else {
-            request.reject(xhr.statusText);
-          }
+```javascript
+var loader = new Loader(Loader, {
+  global: window,
+  strict: false,
+  resolve: function (normalized, options) {
+    return '/' + normalized + '.js';
+  },
+  fetch: function (url, fulfill, reject, options) {
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          fulfill(xhr.responseText);
+        } else {
+          reject(xhr.statusText);
         }
-      };
-      xhr.open("GET", url, true);
-      xhr.send(null);
-    },
-    translate: function (src, relURL, baseURL, resolved) {
-      return src;
-    }
-  });
-
-console.log(loader);
-```
-
-Using the Loader instance:
-
-```
-loader.load('js/test2.js',
-    function(test) {
-        console.log('test2.js loaded', test);
-        test.foobar();
-    }, function(err){
-    	console.log(err);
-	});
-
-
-loader.load('js/libs/jquery-1.7.1.js',
-    function(jQuery) {
-        console.log('jQuery loaded', jQuery);
-        $('body').css({'background':'blue'});
-    }, function(err){
-    	console.log(err);
-	});
-```
-
-Use System (pre-configured Loader)
-
-```
-System.load('js/test1.js', function(test1){
-	console.log('test1.js loaded', test1);
-	test1.tester();
+      }
+    };
+    xhr.open("GET", url, true);
+    xhr.send(null);
+  },
+  translate: function (source, options) {
+    return source;
+  }
 });
 ```
 
-## Pending changes
+Define an ES6 module programatically (useful in optimized / production environments):
 
-* Get rid of `eval` (and stop the linter from complaining about it in the process) 
-* `ToModule(obj)` not implemented. Can it be? We're currently creating object instances as 'module' instances can't be properly done till ES6 is natively available
-* Tests? Should be fairly straight-forward. Can be based on what is in the demo.
-* Improve documentation (inline or otherwise)
+```javascript
+var module = new Module({ test: 'hello' });
+System.set('my-module', module);
+console.log(System.get('my-module'));
+```
 
+
+## Notes and roadmap
+
+### Specification Notes
+
+The polyfill is implemented exactly to the specification now, except for the following items:
+
+* The `extra` metadata property is not yet handled in the resolve.
+* The `fetch` function is given a different specification between the prototype (`Loader.prototype.fetch`) and loader instance (`options.fetch`). Since instance functions are provided on the instance object as in the @wycats essay (`System.normalize`, `System.fetch` etc), there seems to be a conflict between these.
+* The intrinsics encapsulation is a tricky one to polyfill, but we have done our best based on a global prototype chain behaviour, where `global.__proto__ == intrinsics`. And `intrinsics.__proto__ == window`. All code is evaluated with the `window` and `this` properties referencing the `global` allowing full global encapsulation.
+
+### Syntax Parsing
+
+The [Esprima ES6 Harmony parser](https://github.com/ariya/esprima/tree/harmony) is being used to do parsing, loaded only when necessary. This parser still uses an older syntax, which is currently the major critical issue to sort out for this polyfill.
+
+The issue tracking this is here - https://github.com/ModuleLoader/es6-module-loader/issues/10
+
+## Projects using us
+
+* [JSPM Loader](https://github.com/jspm/jspm-loader/) is a RequireJS-style loader using our polyfill to load ES6, AMD, CommonJS and global modules 
 
 ## Contributing
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [grunt](https://github.com/cowboy/grunt).
@@ -96,5 +120,5 @@ _Also, please don't edit files in the "dist" subdirectory as they are generated 
 _(Nothing yet)_
 
 ## License
-Copyright (c) 2012 Luke Hogan, Addy Osmani  
+Copyright (c) 2012 Luke Hoban, Addy Osmani, Guy Bedford  
 Licensed under the MIT license.
