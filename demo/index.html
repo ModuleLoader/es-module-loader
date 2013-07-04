@@ -22,7 +22,26 @@
 
   </header>
   <div role="main">
-
+    <h1>Module Loader Polyfill</h1>
+    <p>Check the console in your browser developer tools! You should see something similar to the below.</p>
+    <pre>
+  > Module {}
+   script.js:13
+  > Loader {_intrinsics: Global, _global: Global, _strict: false, normalize: function, resolve: function…}
+   script.js:31
+  jQuery loaded function ( selector, context ) {
+      // The jQuery object is actually just the init constructor 'enhanced'
+      return new jQuery.fn.init( selector, context, rootjQuery );
+    } script.js:47
+  test1.js loaded 
+  Module {}
+   script.js:17
+  hello!
+  test2.js loaded 
+  Module {}
+   script.js:37
+  foobar!
+    </pre>
   </div>
   <footer>
   </footer>
