@@ -32,10 +32,11 @@
     "harmony"
   ],
   "engines": {
-    "node": ">= 0.7.9-pre"
+    "node": ">=0.8.0"
   },
   "main": "lib/es6-module-loader",
   "scripts": {
     "test": "grunt test"
-  }
+  },
+  "files": ["lib/es6-module-loader.js"]
 }
