@@ -1,24 +1,24 @@
 {
   "name": "es6-module-loader",
   "description": "An ES6 Module Loader shim",
-  "version": "0.2.0",
-  "homepage": "https://github.com/addyosmani/es6-module-loader",
+  "version": "0.2.1",
+  "homepage": "https://github.com/ModuleLoader/es6-module-loader",
   "author": {
     "name": "Guy Bedford, Luke Hoban, Addy Osmani",
     "email": "addyosmani@gmail.com",
-    "url": "none"
+    "url": "https://github.com/ModuleLoader"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/addyosmani/es6-module-loader"
+    "url": "https://github.com/ModuleLoader/es6-module-loader"
   },
   "bugs": {
-    "url": "https://github.com/addyosmani/es6-module-loader/issues"
+    "url": "https://github.com/ModuleLoader/es6-module-loader/issues"
   },
   "licenses": [
     {
       "type": "MIT",
-      "url": "https://github.com/addyosmani/es6-module-loader/blob/master/LICENSE-MIT"
+      "url": "https://github.com/ModuleLoader/es6-module-loader/blob/master/LICENSE-MIT"
     }
   ],
   "dependencies": {},

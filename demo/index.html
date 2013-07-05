@@ -15,17 +15,36 @@
   <script src="js/libs/modernizr-2.5.3.min.js"></script>
 </head>
 <body>
-  <!--[if lt IE 7]><p class=chromeframe>Your browser is <em>ancient!</em> <a href="http://browsehappy.com/">Upgrade to a different browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to experience this site.</p><![endif]-->
+  <!--[if lt IE 7]>
+ <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+  <![endif]-->
   <header>
 
   </header>
   <div role="main">
-
+    <h1>Module Loader Polyfill</h1>
+    <p>Check the console in your browser developer tools! You should see something similar to the below.</p>
+    <pre>
+  > Module {}
+   script.js:13
+  > Loader {_intrinsics: Global, _global: Global, _strict: false, normalize: function, resolve: function…}
+   script.js:31
+  jQuery loaded function ( selector, context ) {
+      // The jQuery object is actually just the init constructor 'enhanced'
+      return new jQuery.fn.init( selector, context, rootjQuery );
+    } script.js:47
+  test1.js loaded 
+  Module {}
+   script.js:17
+  hello!
+  test2.js loaded 
+  Module {}
+   script.js:37
+  foobar!
+    </pre>
   </div>
   <footer>
-
   </footer>
-
 
   <script src="../lib/es6-module-loader.js"></script>
   <script src="js/script.js"></script>
