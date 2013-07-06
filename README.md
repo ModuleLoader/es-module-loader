@@ -99,7 +99,7 @@ The polyfill is implemented exactly to the specification, except where areas are
 
 The only feature which is not possible to fully polyfill is the intrinsics functionality and sandboxing of the loader. Custom builtins and full global encapsulation is still provided.
 
-For the issue tracking the specification changes, see https://github.com/ModuleLoader/es6-module-loader/issues/17.
+To follow the current the specification changes, see https://github.com/ModuleLoader/es6-module-loader/issues?labels=specification&page=1&state=open.
 
 ### Syntax Parsing
 
