@@ -95,11 +95,11 @@ console.log(System.get('my-module'));
 
 ### Specification Notes
 
-The polyfill is implemented exactly to the specification now, except for the following items:
+The polyfill is implemented exactly to the specification, except where areas are currently under debate. 
 
-* The `extra` metadata property is not yet handled in the resolve.
-* The `fetch` function is given a different specification between the prototype (`Loader.prototype.fetch`) and loader instance (`options.fetch`). Since instance functions are provided on the instance object as in the @wycats essay (`System.normalize`, `System.fetch` etc), there seems to be a conflict between these.
-* The intrinsics encapsulation is a tricky one to polyfill, but we have done our best based on a global prototype chain behaviour, where `global.__proto__ == intrinsics`. And `intrinsics.__proto__ == window`. All code is evaluated with the `window` and `this` properties referencing the `global` allowing full global encapsulation.
+The only feature which is not possible to fully polyfill is the intrinsics functionality and sandboxing of the loader. Custom builtins and full global encapsulation is still provided.
+
+To follow the current the specification changes, see https://github.com/ModuleLoader/es6-module-loader/issues?labels=specification&page=1&state=open.
 
 ### Syntax Parsing
 
