@@ -1,5 +1,5 @@
-/*! es6-module-loader - v0.2.0 - 7/3/2013
-* https://github.com/addyosmani/es6-module-loader
+/*! es6-module-loader - v0.2.1 - 7/13/2013
+* https://github.com/ModuleLoader/es6-module-loader
 * Copyright (c) 2013 Guy Bedford, Luke Hoban, Addy Osmani; Licensed MIT */
 
 (function (global) {
@@ -29,9 +29,9 @@
     // Object.create(window) doesn't work...
     var Global = function () {}
     Global.prototype = options.global || window;
-    this._intrinsics = new Global();
+    this._builtins = new Global();
 
-    // some standard intrinsics can't work through this prototype
+    // some standard builtins can't work through this prototype
     // structure so we need to wrap them to allow this global
     // abstraction layer
     var wrapped = {};
@@ -43,10 +43,9 @@
     })(wrap[i]);
 
     this.defineBuiltins(wrapped);
-    this.defineBuiltins(options.intrinsics && options.intrinsics._intrinsics || {});
 
     Global = function () {}
-    Global.prototype = this._intrinsics;
+    Global.prototype = this._builtins;
     this._global = new Global();
 
     Object.defineProperty(this._global, 'window', { value: this._global });
@@ -317,7 +316,7 @@
         if (typeof normalized == 'object')
           normalized = normalized.normalized;
 
-        imports[i] = normalizeMap[imports[i]] = normalized;
+        normalizeMap[imports[i]] = normalized;
 
         self.import(imports[i], function (module) {
           depCnt++;
@@ -390,7 +389,7 @@
   Loader.prototype.defineBuiltins = function (o) {
     for (var p in o) {
       if (o.hasOwnProperty(p)) {
-        this._intrinsics[p] = o[p];
+        this._builtins[p] = o[p];
       }
     }
   };
@@ -418,13 +417,9 @@
     }
   };
 
-  function ToModule (o) {
-    return new Module(o);
-  }
-
 
   // Pre-configured Loader instance for easier use
-  var absUrlRegEx = /^\/|([^\:\/]*:)/;
+  var absUrlRegEx = /^\/|([^\:\/]*:\/\/)/;
   var isUrl = function(name) {
     return name.substr(name.length - 3, 3) == '.js' || name.match(absUrlRegEx);
   }
@@ -433,24 +428,24 @@
     strict: false,
     normalize: function(name, referer) {
       if (isUrl(name))
-          return name;
-        var parentName = referer && referer.name;
-        if (name.substr(0, 2) == './') {
-          var parentParts = parentName.split('/');
-          if (!parentParts.length)
-            return name.substr(2);
-          parentParts.pop();
-          parentParts.push(name.substr(2));
-          return parentParts.join('/');
-        }
-        if (name.substr(0, 3) == '../') {
-          var parentParts = parentName.split('/');
-          if (!parentParts.length)
-            throw "Path below baseUrl";
-          parentParts.pop();
-          return this.normalize(name.substr(3), { name: parentParts.join('/') });
-        }
         return name;
+      var parentName = referer && referer.name;
+      if (name.substr(0, 2) == './') {
+        var parentParts = parentName.split('/');
+        if (!parentParts.length)
+          return name.substr(2);
+        parentParts.pop();
+        parentParts.push(name.substr(2));
+        return parentParts.join('/');
+      }
+      if (name.substr(0, 3) == '../') {
+        var parentParts = parentName.split('/');
+        if (!parentParts.length)
+          throw "Path below baseUrl";
+        parentParts.pop();
+        return this.normalize('./' + name.substr(3), { name: parentParts.join('/') });
+      }
+      return name;
     },
     resolve: function (name, options) {
       for (var r in this.ondemandTable)
@@ -467,7 +462,7 @@
           if (xhr.status === 200 || (xhr.status == 0 && xhr.responseText)) {
             fulfill(xhr.responseText);
           } else {
-            reject(xhr.statusText);
+            reject(xhr.statusText || 'XHR error');
           }
         }
       };
@@ -526,7 +521,7 @@
     loadEsprima: function(name, source, callback, errback) {
       if (this.esprima)
         return callback();
-      
+
       // use a regex to check if the source contains 'import', 'export' or 'module' statements
       // may incorrectly fire, but the damage is only an http request to do better parsing shortly
       if (!this.checkModuleSyntax(name, source))
@@ -766,6 +761,7 @@
       var __Loader = loader;
       var __exports = {};
       var evalSource = '(function(window) { with(__Loader.global) { ' + (loader._strict ? '"use strict";\n' : '') + tSource.toString() + ' } }).call(__Loader.global, __Loader.global);' + (opt.sourceURL ? '\n//# sourceURL=' + opt.sourceURL : '');
+
       eval(evalSource);
 
       // if exports are defined and it is an eval, throw
@@ -839,7 +835,6 @@
   global.Loader = Loader;
   // Export the Module class
   global.Module = Module;
-  global.ToModule = ToModule;
   // Export the System object
   global.System = defaultSystemLoader;
 
