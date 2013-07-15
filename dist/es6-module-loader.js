@@ -1,4 +1,4 @@
-/*! es6-module-loader - v0.2.1 - 7/13/2013
+/*! es6-module-loader - v0.2.1 - 7/14/2013
 * https://github.com/ModuleLoader/es6-module-loader
 * Copyright (c) 2013 Guy Bedford, Luke Hoban, Addy Osmani; Licensed MIT */
 
@@ -453,7 +453,7 @@
           return name;
       if (isUrl(name))
         return name;
-      return this.baseURL + (this.baseURL.substr(this.baseURL.length - 1, 1) != '/' ? '/' : '') + name + (name.split('/').pop().indexOf('.') == -1 ? '.js' : '');
+      return this.baseURL + (this.baseURL.substr(this.baseURL.length - 1, 1) != '/' ? '/' : '') + name + (name.substr(name.length - 3, 3) == '.js' ? '' : '.js');
     },
     fetch: function (url, fulfill, reject, options) {
       var xhr = new XMLHttpRequest();
@@ -524,7 +524,7 @@
 
       // use a regex to check if the source contains 'import', 'export' or 'module' statements
       // may incorrectly fire, but the damage is only an http request to do better parsing shortly
-      if (!this.checkModuleSyntax(name, source))
+      if (!this.polyfills.length && !this.checkModuleSyntax(name, source))
         return callback();
 
       var self = this;
@@ -547,32 +547,21 @@
       var imports = [];
       this.traverse(tree, function(node) {
         if (node.type == 'ImportDeclaration') {
-          var moduleName;
-          // import 'jquery' as $;
-          if (node.from.type == 'Literal')
-            moduleName = node.from.value;
-          // import * from foo;
-          else if (node.from.type == 'Path')
-            moduleName = node.from.body[0].name;
-          imports.push(moduleName);
+          imports.push(node.source.value);
         }
         else if (node.type == 'ExportDeclaration') {
-          // export ... from blah
-          // export ... from 'blah'
-          if (node.specifiers && node.specifiers[0] && node.specifiers[0].from) {
-            if (node.specifiers[0].from.body == 'Path')
-              imports.push(node.specifiers[0].from.body[0].name);
-            else
-              imports.push(node.specifiers[0].from.value);
+          if (node.specifiers && node.specifiers[0].type == 'ExportBatchSpecifier') {
+            imports.push(node.specifiers[0].source.value);
           }
+          // NB import {...} from 'lib' not yet supported in esprima harmony
         }
       });
       return imports;
     },
     // allow custom polyfills to be added in the form of syntax functions
-    addPolyfill: function(polyfill, callback, errback) {
+    addPolyfill: function(polyfill) {
       // by virtue of adding a polyfill, we now load esprima by default
-      this.loadEsprima(null, null, callback, errback);
+      this.loadEsprima(null, null, function(){}, function(){});
       this.polyfills.push(polyfill);
     },
     polyfills: [],
@@ -592,7 +581,7 @@
     parseEval: function(source, loader, opt) {
 
       // regex showed no need for esprima - normal eval
-      if (!this.checkModuleSyntax(opt.name, source)) {
+      if (!this.polyfills.length && !this.checkModuleSyntax(opt.name, source)) {
         var __Loader = loader;
         eval('(function(window) { with(__Loader.global) { ' + (loader._strict ? '"use strict";\n' : '') + source + ' } }).call(__Loader.global, __Loader.global); ' + (opt.sourceURL ? '\n//# sourceURL=' + opt.sourceURL : ''));
         return;
@@ -608,150 +597,82 @@
       this.traverse(tree, function(node) {
         
         // --- Imports ---
-        // replaces imports with Loader.get
-        // https://github.com/ariya/esprima/blob/harmony/test/harmonytest.js#L4067
-
         if (node.type == 'ImportDeclaration') {
-          // import 'jquery' as $;
-          if (node.from.type == 'Literal' && node.specifiers[0].type != 'ImportSpecifier') {
-            tSource.replace(node.range[0], node.range[1], 
-              "var " + node.as.name + " = __Loader.get('" + (normalizeMap[node.from.value] || node.from.value) + "');");
-          }
-          
-          // import ... from foo
-          else {
-            var moduleName;
-            if (node.from.body)
-              moduleName = node.from.body[0].name;
-            else if (node.from.type == 'Literal')
-              moduleName = node.from.value;
+          var moduleName = normalizeMap[node.source.value] || node.source.value;
 
-            moduleName = normalizeMap[moduleName] || moduleName;
-            
-            // import * from foo;
-            if (node.specifiers[0].type == 'Glob')
-              tSource.replace(node.range[0], node.range[1], 
-                "var __module = __Loader.get('" + moduleName + "');" + 
-                "for (var m in __module)" + 
-                "  __global[m] = __module[m];");
-
-            // import { a } from foo;
-            // import { a: mapping, of: imports } from foo
-            else if (node.specifiers[0].type == 'ImportSpecifier') {
-              var replaceSource = "var __module = __Loader.get('" + moduleName + "');";
-              for (var i = 0; i < node.specifiers.length; i++ ) {
-                replaceSource += "var " + node.specifiers[i].id.name + " = " + 
-                  "__module['" + (node.specifiers[i].from ? node.specifiers[i].from.body[0].name : node.specifiers[i].id.name) + "'];";
-              }
-              tSource.replace(node.range[0], node.range[1], replaceSource);
-            }
+          var replaceSource = "var __module = __Loader.get('" + moduleName + "');";
+          for (var i = 0; i < node.specifiers.length; i++) {
+            var specifier = node.specifiers[i];
+            replaceSource += "var " + (specifier.name ? specifier.name.name : specifier.id.name) + " = __module['" + specifier.id.name + "'];";
           }
+
+          tSource.replace(node.range[0], node.range[1], replaceSource);
         }
 
         // --- Exports ---
-        // NB throw an error for exports being present when (name && name.substr(0, 6) != '__eval')
-        // replace exports with __exports.export = ...
-        // https://github.com/ariya/esprima/blob/harmony/test/harmonytest.js#L3288
-
-        // exports = ...
-        else if (node.type == 'AssignmentExpression' && node.left.name && node.left.name == 'exports')
-          tSource.replace(node.left.range[0], node.left.range[1], '__exports');
-        
         else if (node.type == 'ExportDeclaration') {
-          var fromModule;
-          var exports;
-          // export ... from blah
-          // export ... from 'blah'
-          if (node.specifiers && node.specifiers[0] && node.specifiers[0].from) {
-            if (node.specifiers[0].from.body == 'Path')
-              fromModule = node.specifiers[0].from.body[0].name;
-            else
-              fromModule = node.specifiers[0].from.value;
-          }
-          if (!node.declaration && node.specifiers) {
-            // export *
-            if (node.specifiers[0].id.type == 'Glob')
-              exports = true;
 
-            // export { A: some.thing, B: another.thing, C }
-            else if (node.specifiers[0].type == 'ExportSpecifierSet') {
-              exports = {};
-              for (var i = 0; i < node.specifiers[0].specifiers.length; i++) {
-                if (node.specifiers[0].specifiers[i].from)
-                  exports[node.specifiers[0].specifiers[i].id.name] = tSource.getRange.apply(tSource, node.specifiers[0].specifiers[i].from.range);
-                else
-                  exports[node.specifiers[0].specifiers[i].id.name] = node.specifiers[0].specifiers[i].id.name;
+          if (node.declaration) {
+            // NB implement 'default' (not yet in esprima harmony)
+
+            if (node.declaration.type == 'VariableDeclaration') {
+              var declaration = node.declaration.declarations[0];
+              
+              // export var p = ...
+              if (declaration.init) {
+                tSource.replace(node.range[0], declaration.init.range[0] - 1, "__exports['" + declaration.id.name + "'] = ");
+              }
+              // export var p;
+              else {
+                tSource.replace(node.range[0], declaration.id.range[0] - 1, "__exports['" + declaration.id.name + "'] = ");
               }
             }
-            // export varA, varB, varC
-            else if (node.specifiers[0].type = 'ExportSpecifier') {
-              exports = {};
-              for (var i = 0; i < node.specifiers.length; i++)
-                exports[node.specifiers[i].id.name] = node.specifiers[i].id.name;
+
+            // export function q() {}
+            // export class q {}
+            else if (node.declaration.type == 'FunctionDeclaration' || node.declaration.type == 'ClassDeclaration') {
+              tSource.replace(node.range[0], node.declaration.range[0] - 1, "__exports['" + node.declaration.id.name + "'] = ");
             }
           }
-          // export var p
-          else if (node.declaration.type == 'VariableDeclaration')
-            exports = node.declaration.declarations[0].id.name;
-          // export function p() {}
-          else if (node.declaration.type == 'FunctionDeclaration')
-            exports = node.declaration.id.name;
 
-          // export module p {}
-          // export class p {}
-          else if (node.declaration.type == 'ModuleDeclaration' || node.declaration.type == 'ClassDeclaration')
-            exports = node.declaration.declarations[0].id.name;
-
-          if (fromModule) {
-            fromModule = normalize(fromModule);
-            // export * from someModule
-            if (exports === true)
-              tSource.replace(node.range[0], node.range[1], "__exports = __Loader.get('" + fromModule + "');");
-            // export { some: var } from someModule
-            else {
-              var replaceSource = "";
-              for (var e in exports)
-                replaceSource += "__exports['" + e + "'] = __Loader.get('" + fromModule + "')['" + exports[e] + "'];";
-              tSource.replace(node.range[0], node.range[1], replaceSource);
-            }
+          // export * from 'jquery'
+          else if (node.specifiers[0].type == 'ExportBatchSpecifier') {
+            // NB consider allowing this to work with other exports as well by using a loop
+            tSource.replace(node.range[0], node.range[1], "__exports = __Loader.get('" + fromModule + "');");
           }
-          else if (typeof exports == 'object') {
-            // export { a, b, c: d }
+
+          else {
             var replaceSource = "";
-            for (var e in exports)
-              replaceSource += "__exports['" + e + "'] = " + exports[e] + "; ";
+
+            // export { a as b, c as d } from 'jquery'
+            // NB not yet supported by esprima harmony
+            if (false) {
+              for (var i = 0; i < node.specifiers.length; i++) {
+                replaceSource += "__exports['" + node.specifiers[i].id.name + "'] = __Loader.get('" + fromModule + "')['" + node.specifiers[i].id.name + "']; ";
+              }
+            }
+
+            // export {a as b, c as d}
+            else {
+              for (var i = 0; i < node.specifiers.length; i++) {
+                replaceSource += "__exports['" + node.specifiers[i].id.name + "'] = " + (node.specifiers[i].name ? node.specifiers[i].name.name : node.specifiers[i].id.name) + "; ";
+              }
+            }
+
             tSource.replace(node.range[0], node.range[1], replaceSource);
-          }
-          else if (typeof exports == 'string') {
-            // export var p = 5 etc
-            if (node.declaration.declarations)
-              tSource.replace(node.range[0], node.declaration.declarations[0].id.range[0] - 1, "__exports['" + exports + "'] = ");
-            // export function q() { ... }
-            else if (node.declaration.type == 'FunctionDeclaration')
-              tSource.replace(node.range[0], node.declaration.range[0] - 1, "__exports['" + exports + "'] = ");
-            
-            else
-              tSource.replace(node.range[0], node.declaration.id.range[0] - 1, "__exports['" + exports + "'] = ");
           }
         }
 
         // --- Modules ---
-        // replaces modules with Loader.set
-
-        else if (node.type == 'ModuleDeclaration') {
-          var moduleName = node.id.name;
-          // module foo { ..code.. }
+        else if (node.type == 'ModuleDeclaration' && node.body.type == 'BlockStatement') {
+          // module 'foo' { ..code.. }
           // -> (function() { var __exports = {}; ..code.. __Loader.set("foo", new Module(__exports)); })();
-          if (node.body.type == 'BlockStatement') {
-            tSource.replace(node.range[0], node.body.range[0] + 1, "(function() { var __exports = {}; ");
-            tSource.replace(node.body.range[1], node.range[1], " __Loader.set('" + moduleName + "', new Module(__exports)); })();");
-          }
-          // module names are assumed to be normalized already
-          // so nested modules not currently supported
+
+          tSource.replace(node.range[0], node.body.range[0] + 1, "(function() { var __exports = {}; ");
+          tSource.replace(node.body.range[1], node.range[1], " __Loader.set('" + node.id.name + "', new Module(__exports)); })();");
         }
 
         // --- Polyfills ---
-
         else if (self.polyfills.length)
           self.applyPolyfill(node, tSource);
       });

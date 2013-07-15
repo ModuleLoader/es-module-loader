@@ -6,8 +6,8 @@ Not yet suitable for production use while the specification is still subject to 
 
 ## Download
 
-* [Minified build](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/es6-module-loader.min.js)  ~ 12KB
-* [Unminified build](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/es6-module-loader.js) ~ 28KB
+* [Minified build](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/es6-module-loader.min.js)  ~ 10KB
+* [Unminified build](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/es6-module-loader.js) ~ 26KB
 
 ## Getting Started
 
@@ -103,9 +103,26 @@ To follow the current the specification changes, see https://github.com/ModuleLo
 
 ### Syntax Parsing
 
-The [Esprima ES6 Harmony parser](https://github.com/ariya/esprima/tree/harmony) is being used to do parsing, loaded only when necessary. This parser still uses an older syntax, which is currently the major critical issue to sort out for this polyfill.
+The [Esprima ES6 Harmony parser](https://github.com/ariya/esprima/tree/harmony) is being used to do parsing, loaded only when necessary.
 
-The issue tracking this is here - https://github.com/ModuleLoader/es6-module-loader/issues/10
+The following module statements are currently supported:
+
+```javascript
+// import a module
+import 'jquery';
+import $ from 'jquery';
+import { $ as jQuery } from 'jquery';
+
+// export
+export var x = 42;
+export var p;
+export function foo() {};
+
+// define a module
+module 'crypto' { ... }
+```
+
+The `default` export syntax is still pending some specification clarification.
 
 ## Projects using us
 
