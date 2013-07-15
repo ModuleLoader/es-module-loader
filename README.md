@@ -7,7 +7,7 @@ Not yet suitable for production use while the specification is still subject to 
 ## Download
 
 * [Minified build](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/es6-module-loader.min.js)  ~ 11KB
-* [Unminified build](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/es6-module-loader.js) ~ 26KB
+* [Unminified](https://raw.github.com/ModuleLoader/es6-module-loader/master/lib/es6-module-loader.js) ~ 26KB
 
 ## Getting Started
 
@@ -93,14 +93,6 @@ console.log(System.get('my-module'));
 
 ## Notes and roadmap
 
-### Specification Notes
-
-The polyfill is implemented exactly to the specification, except where areas are currently under debate. 
-
-The only feature which is not possible to fully polyfill is the intrinsics functionality and sandboxing of the loader. Custom builtins and full global encapsulation is still provided.
-
-To follow the current the specification changes, see https://github.com/ModuleLoader/es6-module-loader/issues?labels=specification&page=1&state=open.
-
 ### Syntax Parsing
 
 The [Esprima ES6 Harmony parser](https://github.com/ariya/esprima/tree/harmony) is being used to do parsing, loaded only when necessary.
@@ -133,6 +125,14 @@ The best way to do this currently is simply to use `default` as the name for the
 ```
 
 This syntax will be updated soon as we get clarification on the specification.
+
+### Specification Notes
+
+The polyfill is implemented exactly to the specification, except where areas are currently under debate. 
+
+The only feature which is not possible to fully polyfill is the intrinsics functionality and sandboxing of the loader. Custom builtins and full global encapsulation is still provided.
+
+To follow the current the specification changes, see https://github.com/ModuleLoader/es6-module-loader/issues?labels=specification&page=1&state=open.
 
 ## Projects using us
 
