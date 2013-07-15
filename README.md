@@ -6,7 +6,7 @@ Not yet suitable for production use while the specification is still subject to 
 
 ## Download
 
-* [Minified build](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/es6-module-loader.min.js)  ~ 10KB
+* [Minified build](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/es6-module-loader.min.js)  ~ 11KB
 * [Unminified build](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/es6-module-loader.js) ~ 26KB
 
 ## Getting Started
@@ -108,24 +108,31 @@ The [Esprima ES6 Harmony parser](https://github.com/ariya/esprima/tree/harmony) 
 The following module statements are currently supported:
 
 ```javascript
-// import a module
-import 'jquery';
-import { $ } from 'jquery';
-import { $ as jQuery } from 'jquery';
+import 'jquery';                        // import a module
+import $ from 'jquery';                 // import the default export of a module
+import { $ } from 'jquery';             // import a named export of a module
+import { $ as jQuery } from 'jquery';   // import a named export to a different name
 
-// export module values
-export var x = 42;
-export var p;
-export function foo() {};
-export { encrypt };
-export { encrypt, decrypt as dec };
-export * from 'crypto';
+export var x = 42;                      // export a named variable
+export var p;                           // export an existing variable
+export function foo() {};               // export a named function
+export { encrypt };                     // export an existing variable
+export { decrypt as dec };              // export a variable as a new name
+export { encrypt as en } from 'crypto'; // export an export from another module
+export * from 'crypto';                 // export all exports from another module
 
-// define a module
-module 'crypto' { ... }
+module 'crypto' { ... }                 // define a module
 ```
 
-The `default` import and export syntax is not yet supported.
+Currently, to create the **default** export for a module (eg in `import $ from 'jquery';`), the `default` export syntax is not yet fully supported.
+
+The best way to do this currently is simply to use `default` as the name for the export:
+
+```javascript
+  export { someVar as default }
+```
+
+This syntax will be updated soon as we get clarification on the specification.
 
 ## Projects using us
 
