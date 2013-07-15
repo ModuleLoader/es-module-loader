@@ -110,19 +110,22 @@ The following module statements are currently supported:
 ```javascript
 // import a module
 import 'jquery';
-import $ from 'jquery';
+import { $ } from 'jquery';
 import { $ as jQuery } from 'jquery';
 
-// export
+// export module values
 export var x = 42;
 export var p;
 export function foo() {};
+export { encrypt };
+export { encrypt, decrypt as dec };
+export * from 'crypto';
 
 // define a module
 module 'crypto' { ... }
 ```
 
-The `default` export syntax is still pending some specification clarification.
+The `default` import and export syntax is not yet supported.
 
 ## Projects using us
 
