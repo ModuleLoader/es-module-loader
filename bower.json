@@ -1,0 +1,33 @@
+{
+  "name": "es6-module-loader",
+  "version": "0.2.1",
+  "description": "An ES6 Module Loader polyfill based on the latest spec.",
+  "homepage": "https://github.com/ModuleLoader/es6-module-loader",
+  "main": "dist/es6-module-loader.js",
+  "keywords": [
+    "es6",
+    "harmony",
+    "polyfill",
+    "modules"
+  ],
+  "ignore": [
+    "demo",
+    "dist/*.min.js",
+    "lib",
+    "test",
+    "grunt.js",
+    "package.json"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ModuleLoader/es6-module-loader.git"
+  },
+  "licenses": [
+    {
+      "type": "MIT"
+    }
+  ],
+  "dependencies": {
+    "esprima": "~1.0.3"
+  }
+}
