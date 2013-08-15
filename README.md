@@ -56,31 +56,37 @@ System.load('js/libs/jquery-1.7.1.js', function() {
 Define a new module Loader instance:
 
 ```javascript
-var loader = new Loader(Loader, {
+var loader = new Loader({
   global: window,
   strict: false,
+  normalize: function (name, referer) {
+    return normalized(name, referer.name);
+  },
   resolve: function (normalized, options) {
     return '/' + normalized + '.js';
   },
   fetch: function (url, fulfill, reject, options) {
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState === 4) {
-        if (xhr.status === 200) {
-          fulfill(xhr.responseText);
-        } else {
-          reject(xhr.statusText);
-        }
-      }
-    };
-    xhr.open("GET", url, true);
-    xhr.send(null);
+    fulfill(source);
   },
   translate: function (source, options) {
-    return source;
+    return compile(source);
+  },
+  link: function (source, options) {
+    return {
+      imports: ['some', 'dependencies'],
+      execute: function(depA, depB) {
+        return new Module({
+          some: 'export'
+        });
+      }
+    };
   }
 });
 ```
+
+The above hooks are all optional, using the default System hooks when not present.
+
+For an overview of working with custom loaders, see [Yehuda Katz's essay](https://gist.github.com/wycats/51c96e3adcdb3a68cbc3) or the [ES6 Module Specification](http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders).
 
 Define an ES6 module programatically (useful in optimized / production environments):
 
@@ -119,6 +125,20 @@ export * from 'crypto';                 // export all exports from another modul
 
 module 'crypto' { ... }                 // define a module
 ```
+
+### NodeJS Support
+
+For use in NodeJS, the `Module`, `Loader` and `System` globals are provided as exports:
+
+```
+  var System = require('es6-module-loader').System;
+  
+  System.import('some-module', callback);
+```
+
+### Custom Esprima Location
+
+To set a custom path to the Esprima Harmony parser, specify the `data-esprima-src` attribute on the `<script>` tag used to include the module loader.
 
 ### Specification Notes
 
