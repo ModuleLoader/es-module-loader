@@ -120,6 +120,20 @@ export * from 'crypto';                 // export all exports from another modul
 module 'crypto' { ... }                 // define a module
 ```
 
+### NodeJS Support
+
+For use in NodeJS, the `Module`, `Loader` and `System` globals are provided as exports:
+
+```
+  var System = require('es6-module-loader').System;
+  
+  System.import('some-module', callback);
+```
+
+### Custom Esprima Location
+
+To set a custom path to the Esprima Harmony parser, specify the `data-esprima-src` attribute on the `<script>` tag used to include the module loader.
+
 ### Specification Notes
 
 The polyfill is implemented exactly to the specification, except where areas are currently under debate. 
