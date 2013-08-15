@@ -59,6 +59,9 @@ Define a new module Loader instance:
 var loader = new Loader(Loader, {
   global: window,
   strict: false,
+  normalize: function (name, referer) {
+    return normalized(name, referer.name);
+  },
   resolve: function (normalized, options) {
     return '/' + normalized + '.js';
   },
@@ -78,9 +81,21 @@ var loader = new Loader(Loader, {
   },
   translate: function (source, options) {
     return source;
+  },
+  link: function (source, options) {
+    return {
+      imports: ['some', 'dependencies'],
+      execute: function() {
+      
+      }
+    };
   }
 });
 ```
+
+The above hooks are all optional, using the default System hooks when not present.
+
+For an overview of working with custom loaders, see [Yehuda Katz's essay](https://gist.github.com/wycats/51c96e3adcdb3a68cbc3) or the [ES6 Module Specification](http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders).
 
 Define an ES6 module programatically (useful in optimized / production environments):
 
