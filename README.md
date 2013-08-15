@@ -56,7 +56,7 @@ System.load('js/libs/jquery-1.7.1.js', function() {
 Define a new module Loader instance:
 
 ```javascript
-var loader = new Loader(Loader, {
+var loader = new Loader({
   global: window,
   strict: false,
   normalize: function (name, referer) {
@@ -66,27 +66,18 @@ var loader = new Loader(Loader, {
     return '/' + normalized + '.js';
   },
   fetch: function (url, fulfill, reject, options) {
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState === 4) {
-        if (xhr.status === 200) {
-          fulfill(xhr.responseText);
-        } else {
-          reject(xhr.statusText);
-        }
-      }
-    };
-    xhr.open("GET", url, true);
-    xhr.send(null);
+    fulfill(source);
   },
   translate: function (source, options) {
-    return source;
+    return compile(source);
   },
   link: function (source, options) {
     return {
       imports: ['some', 'dependencies'],
-      execute: function() {
-      
+      execute: function(depA, depB) {
+        return new Module({
+          some: 'export'
+        });
       }
     };
   }
