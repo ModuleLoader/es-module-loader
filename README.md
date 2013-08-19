@@ -4,6 +4,8 @@ An ES6 Module Loader polyfill based on [http://wiki.ecmascript.org/doku.php?id=h
 
 Not yet suitable for production use while the specification is still subject to change.
 
+Supports all modern browsers including IE8+.
+
 ## Download
 
 * [Minified build](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/es6-module-loader.min.js)  ~ 11KB
@@ -142,9 +144,11 @@ To set a custom path to the Esprima Harmony parser, specify the `data-esprima-sr
 
 ### Specification Notes
 
-The polyfill is implemented exactly to the specification, except where areas are currently under debate. 
+The polyfill is implemented exactly to the specification as closely as possible.
 
 The only feature which is not possible to fully polyfill is the intrinsics functionality and sandboxing of the loader. Custom builtins and full global encapsulation is still provided.
+
+The System normalization and resolution functions are not fully described by the specification, so some assumptions have been made which are listed here https://gist.github.com/guybedford/3712492cf0f629eed761.
 
 To follow the current the specification changes, see https://github.com/ModuleLoader/es6-module-loader/issues?labels=specification&page=1&state=open.
 
