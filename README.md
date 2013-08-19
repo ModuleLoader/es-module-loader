@@ -4,6 +4,8 @@ An ES6 Module Loader polyfill based on [http://wiki.ecmascript.org/doku.php?id=h
 
 Not yet suitable for production use while the specification is still subject to change.
 
+Supports all modern browsers including IE8+.
+
 ## Download
 
 * [Minified build](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/es6-module-loader.min.js)  ~ 11KB
