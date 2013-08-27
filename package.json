@@ -40,5 +40,5 @@
   "scripts": {
     "test": "grunt test"
   },
-  "files": ["lib/es6-module-loader.js"]
+  "files": ["lib/es6-module-loader.js", "lib/esprima-es6.min.js"]
 }
