@@ -11,4 +11,5 @@ console.log('Normalize test 3: ' + (System.normalize('./a/b', { name: '../c/d' }
 console.log('Normalize test 4: ' + (System.normalize('./a/b', { name: '../c/d' }) == '../c/a/b'));
 console.log('Normalize test 5: ' + (System.normalize('../a/b', { name: '../../c/d' }) == '../../a/b'));
 console.log('Normalize test 6: ' + (System.normalize('../../a/b', { name: 'c/d' }) == '../a/b'));
+console.log('Normalize test 7: ' + (System.normalize('../core', { name: 'core/ready' }) == 'core'));
 
