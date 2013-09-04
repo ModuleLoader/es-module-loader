@@ -25,8 +25,5 @@
     {
       "type": "MIT"
     }
-  ],
-  "dependencies": {
-    "esprima-harmony": "git://github.com/ariya/esprima.git#harmony"
-  }
+  ]
 }
