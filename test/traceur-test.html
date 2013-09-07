@@ -1,0 +1,11 @@
+<!doctype html>
+  <html>
+  <script src="traceur.js"></script>
+  <script src="../lib/es6-module-loader.js"></script>
+  <script>
+
+    System.import('es6-file', function(m) {
+      var classInstance = new m.q();
+      classInstance.foo();
+    });
+  </script>
