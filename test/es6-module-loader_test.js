@@ -13,3 +13,10 @@ console.log('Normalize test 5: ' + (System.normalize('../a/b', { name: '../../c/
 console.log('Normalize test 6: ' + (System.normalize('../../a/b', { name: 'c/d' }) == '../a/b'));
 console.log('Normalize test 7: ' + (System.normalize('../core', { name: 'core/ready' }) == 'core'));
 
+
+// enable traceur
+require('../lib/es6-module-loader.js').traceur = require('traceur');
+System.import('es6-file', function(m) {
+  if (m.q)
+		console.log('ES6 Traceur test passed');
+});

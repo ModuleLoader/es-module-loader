@@ -21,11 +21,13 @@
       "url": "https://github.com/ModuleLoader/es6-module-loader/blob/master/LICENSE-MIT"
     }
   ],
-  "dependencies": {},
+  "dependencies": {
+  },
   "devDependencies": {
     "grunt": "~0.4.1",
     "grunt-contrib-uglify": "~0.2.2",
-    "grunt-contrib-jshint": "~0.6.0"
+    "grunt-contrib-jshint": "~0.6.0",
+    "traceur": "0.0.4"
   },
   "keywords": [
     "script",
@@ -40,5 +42,8 @@
   "scripts": {
     "test": "grunt test"
   },
-  "files": ["lib/es6-module-loader.js", "lib/esprima-es6.min.js"]
+  "files": [
+    "lib/es6-module-loader.js",
+    "lib/esprima-es6.min.js"
+  ]
 }
