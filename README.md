@@ -1,10 +1,12 @@
 # ES6 Module Loader
 
-An ES6 Module Loader polyfill based on [http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders](http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders) by Luke Hoban, Addy Osmani and Guy Bedford.
+ES6 Module Loader polyfill based on [http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders](http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders) by Luke Hoban, Addy Osmani and Guy Bedford.
+
+* [Dynamically load ES6 modules](#getting-started) in all modern browsers including IE8+
+* Supports [Traceur](https://github.com/google/traceur) for [compiling ES6 into ES5 in the browser with source map support](#traceur)
+* Use as a base for creating [custom spec-compliant module loaders](#creating-a-custom-loader)
 
 Not yet suitable for production use while the specification is still subject to change.
-
-Supports all modern browsers including IE8+.
 
 ## Download
 
@@ -13,15 +15,21 @@ Supports all modern browsers including IE8+.
 
 ## Getting Started
 
-Check-out the [demo](http://moduleloader.github.io/es6-module-loader/demo/index.html) sample to see the project in action.
+Include the loader in the page:
+
+```html
+  <script src="path/to/es6-module-loader.js"></script>
+```
 
 Use the System (pre-configured Loader):
 
-```javascript
-System.baseURL = '/lib';
-System.import('js/test1', function (test1) {
-  console.log('test1.js loaded', test1);
-});
+```html
+<script>
+  System.baseURL = '/lib';
+  System.import('js/test1', function (test1) {
+    console.log('js/test1.js loaded', test1);
+  });
+</script>
 ```
 
 where, test1 can contain module syntax:
@@ -54,6 +62,36 @@ System.load('js/libs/jquery-1.7.1.js', function() {
   $('body').css({'background':'blue'});
 });
 ```
+
+## Integration with Traceur
+
+Include both Traceur and the ES6 module loader in the page:
+
+```html
+  <script src="path/to/traceur.js"></script>
+  <script src="path/to/es6-module-loader.js"></script>
+```
+
+Load an ES6 module (test.js):
+```javascript
+  export class MyClass {
+    foo() {
+      console.log('es6!');
+    }
+  }
+```
+
+Import the module:
+```html
+  <script>
+    System.load('test', function(test) {
+      new test.MyClass();
+    });
+  </script>
+```
+
+
+## Creating a Custom Loader
 
 Define a new module Loader instance:
 
@@ -90,14 +128,6 @@ The above hooks are all optional, using the default System hooks when not presen
 
 For an overview of working with custom loaders, see [Yehuda Katz's essay](https://gist.github.com/wycats/51c96e3adcdb3a68cbc3) or the [ES6 Module Specification](http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders).
 
-Define an ES6 module programatically (useful in optimized / production environments):
-
-```javascript
-var module = new Module({ test: 'hello' });
-System.set('my-module', module);
-console.log(System.get('my-module'));
-```
-
 
 ## Notes and roadmap
 
@@ -130,10 +160,21 @@ export * from 'crypto';                 // export all exports from another modul
 
 For use in NodeJS, the `Module`, `Loader` and `System` globals are provided as exports:
 
-```
+```javascript
   var System = require('es6-module-loader').System;
   
   System.import('some-module', callback);
+```
+
+Tracuer support can also be used in NodeJS, allowing ES6 syntax in NodeJS:
+
+```javascript
+  require('es6-module-loader').traceur = require('traceur');
+  var System = require('es6-module-loader').System;
+
+  System.import('es6-file', function(module) {
+    module.classMethod();
+  });
 ```
 
 ### Custom Esprima Location
@@ -161,6 +202,7 @@ _Also, please don't edit files in the "dist" subdirectory as they are generated 
 
 ## Release History
 * 0.2.4 NodeJS support, relative normalization fixes, IE8 support
+* 0.3.0 Traceur support, better error reporting, source maps support, normalization simplifications
 
 ## License
 Copyright (c) 2012 Luke Hoban, Addy Osmani, Guy Bedford  
