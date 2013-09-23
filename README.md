@@ -84,7 +84,7 @@ Load an ES6 module (test.js):
 Import the module:
 ```html
   <script>
-    System.load('test', function(test) {
+    System.import('test', function(test) {
       new test.MyClass();
     });
   </script>
