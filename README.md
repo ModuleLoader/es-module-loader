@@ -3,7 +3,7 @@
 ES6 Module Loader polyfill based on [http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders](http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders) by Luke Hoban, Addy Osmani and Guy Bedford.
 
 * [Dynamically load ES6 modules](#getting-started) in all modern browsers including IE8+
-* Supports [Traceur](https://github.com/google/traceur) for [compiling ES6 into ES5 in the browser with source map support](#traceur)
+* Supports [Traceur](https://github.com/google/traceur-compiler) for [compiling ES6 into ES5 in the browser with source map support](#integration-with-traceur)
 * Use as a base for creating [custom spec-compliant module loaders](#creating-a-custom-loader)
 
 Not yet suitable for production use while the specification is still subject to change.
@@ -84,7 +84,7 @@ Load an ES6 module (test.js):
 Import the module:
 ```html
   <script>
-    System.load('test', function(test) {
+    System.import('test', function(test) {
       new test.MyClass();
     });
   </script>
