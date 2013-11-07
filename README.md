@@ -154,6 +154,8 @@ export { encrypt };                     // export an existing variable
 export { decrypt as dec };              // export a variable as a new name
 export { encrypt as en } from 'crypto'; // export an export from another module
 export * from 'crypto';                 // export all exports from another module
+
+module crypto from 'crypto';            // import an entire module instance object
 ```
 
 ### NodeJS Support
