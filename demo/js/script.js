@@ -13,7 +13,7 @@ var module = new Module({test:'hello'});
 console.log(module);
 
 //System (pre-configured Loader)
-System.import('js/test1.js', function(test1){
+System.import('js/test1', function(test1){
 	console.log('test1.js loaded', test1);
 	test1.tester();
 });
