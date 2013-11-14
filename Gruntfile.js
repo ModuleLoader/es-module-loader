@@ -15,7 +15,11 @@ module.exports = function (grunt) {
       },
       dist: {
           src: 'lib/<%= pkg.name %>.js',
-          dest: 'dist/<%= pkg.name %>.min.js'
+          dest: 'dist/<%= pkg.name %>.js'
+      },
+      traceur: {
+          src: 'lib/traceur.js',
+          dest: 'dist/traceur.js'
       }
     },
     jshint: {

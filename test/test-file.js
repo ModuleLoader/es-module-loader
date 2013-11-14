@@ -1,1 +1,8 @@
-export var hello = 'world';
+var q = 25;
+
+(function() {
+
+})();
+
+
+export var p = 5;
