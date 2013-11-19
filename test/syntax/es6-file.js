@@ -1,5 +1,6 @@
 export class q {
   foo() {
+    throw 'g';
     console.log('class method');
   }
 }
