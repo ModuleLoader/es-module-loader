@@ -102,6 +102,7 @@ import { $ as jQuery } from 'jquery';   // import a named export to a different 
 
 export var x = 42;                      // export a named variable
 export function foo() {};               // export a named function
+export q = {};                          // export shorthand
 
 export default 42;                      // export the default export
 export default function foo() {};       // export the default export as a function
