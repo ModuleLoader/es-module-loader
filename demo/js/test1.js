@@ -1,3 +1,1 @@
-export function tester() {
-	console.log('hello!');
-}
+export var hello = 'world';

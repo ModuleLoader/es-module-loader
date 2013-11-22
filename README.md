@@ -72,6 +72,8 @@ When in production, one wouldn't want to load ES6 modules and syntax in the brow
 
 One can construct an AMD loader from this polyfill in under 30KB for such a scenario.
 
+Think of this module as RequireJS, and [Traceur](https://github.com/google/traceur-compiler) as the r.js optimizer.
+
 Bundling techniques for ES6 are an active area of development.
 
 ## Module Tag
@@ -207,6 +209,7 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 _Also, please don't edit files in the "dist" subdirectory as they are generated via grunt. You'll find source code in the "lib" subdirectory!_
 
 ## Release History
+* 0.3.2 Use Traceur for all parsing, module tag support, syntax updates, test workflow
 * 0.3.1 IE9 Cross Domain fix, module x from y syntax support, data-init callback support, Traceur fixes
 * 0.3.0 Traceur support, better error reporting, source maps support, normalization simplifications
 * 0.2.4 NodeJS support, relative normalization fixes, IE8 support
