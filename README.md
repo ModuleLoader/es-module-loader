@@ -3,142 +3,97 @@
 ES6 Module Loader polyfill based on [http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders](http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders) by Luke Hoban, Addy Osmani and Guy Bedford.
 
 * [Dynamically load ES6 modules](#getting-started) in all modern browsers including IE8+
-* Supports [Traceur](https://github.com/google/traceur-compiler) for [compiling ES6 into ES5 in the browser with source map support](#integration-with-traceur)
-* Use as a base for creating [custom spec-compliant module loaders](#creating-a-custom-loader)
+* Uses [Traceur](https://github.com/google/traceur-compiler) for [compiling ES6 modules and syntax into ES5 in the browser with source map support](#integration-with-traceur)
+* Use as a base for creating a [custom spec-compliant module loader](#creating-a-custom-loader)
 
 Not yet suitable for production use while the specification is still subject to change.
 
-## Download
-
-* [Minified build](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/es6-module-loader.min.js)  ~ 11KB
-* [Unminified](https://raw.github.com/ModuleLoader/es6-module-loader/master/lib/es6-module-loader.js) ~ 26KB
-
 ## Getting Started
 
-Include the loader in the page:
+Download both [es6-module-loader.js](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/es6-module-loader.js) and [traceur.js](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/traceur.js) into the same folder.
+
+Then include the `es6-module-loader.js` file on its own in the page:
 
 ```html
   <script src="path/to/es6-module-loader.js"></script>
 ```
 
-Use the System (pre-configured Loader):
+Traceur will be downloaded only when needed for ES6 syntax parsing.
+
+If we have an ES6 module file located at `/lib/app/main.js`, we can then load this with the system loader:
 
 ```html
 <script>
   System.baseURL = '/lib';
-  System.import('js/test1', function (test1) {
-    console.log('js/test1.js loaded', test1);
+  System.import('app/main', function(app) {
+    new app.Application();
   });
 </script>
 ```
 
-where, test1 can contain module syntax:
+Any module dependencies of the file will be dynamically loaded and linked as per the ES6 module specification.
 
-test1.js:
-
-```javascript
-export function tester() {
-  console.log('hello!');
-}
-```
-
-Load multiple modules:
+Modules are loaded by **Module Name** roughly using the rule:
 
 ```javascript
-System.import(['js/test1', 'js/test2'], function(test1, test2) {
-  console.log('test1.js loaded', test1);
-  console.log('test2.js loaded', test2);
-}, function(err) {
-  console.log('loading error');
-});
+  URL = baseURL + '/' + ModuleName + '.js'
 ```
 
-Load a plain JavaScript file from a URL:
+Relative module names can be written `'./local-module'` to load relative to the parent module name.
+
+## Writing and Loading ES6 Modules
+
+The contents of `/lib/app/main.js` can be written:
 
 ```javascript
-System.load('js/libs/jquery-1.7.1.js', function() {
-  var $ = System.global.jQuery;
-  console.log('jQuery loaded', $);
-  $('body').css({'background':'blue'});
-});
-```
+  import { Helpers } from './app-dep';
 
-## Integration with Traceur
-
-Include both Traceur and the ES6 module loader in the page:
-
-```html
-  <script src="path/to/traceur.js"></script>
-  <script src="path/to/es6-module-loader.js"></script>
-```
-
-Load an ES6 module (test.js):
-```javascript
-  export class MyClass {
+  export class Application {
+    constructor() {
+      console.log('Initialized ES6 App Module');
+    },
     foo() {
-      console.log('es6!');
+      Helpers.foo();
     }
   }
 ```
 
-Import the module:
+With `/lib/app/app-dep.js` containing:
+
+```javascript
+  export var Helpers = { ... };
+```
+
+When loaded, as with the `System.import` call above, these module files are dynamically loaded and compiled to ES5 in the browser and executed.
+
+## Moving to Production
+
+When in production, one wouldn't want to load ES6 modules and syntax in the browser. Rather the modules would be built into ES5 and AMD to be loaded.
+
+One can construct an AMD loader from this polyfill in under 30KB for such a scenario.
+
+Bundling techniques for ES6 are an active area of development.
+
+## Module Tag
+
+Modules can also be loaded with the module tag:
+
 ```html
-  <script>
-    System.import('test', function(test) {
-      new test.MyClass();
-    });
+  <script src="/path/to/es6-module-loader.js"></script>
+  <script>System.baseURL = '/lib'</script>
+  <script type="module">
+    import { Application } from 'app/main';
+
+    new Application();
   </script>
 ```
 
+## Full Module Syntax Summary
 
-## Creating a Custom Loader
-
-Define a new module Loader instance:
-
-```javascript
-var loader = new Loader({
-  global: window,
-  strict: false,
-  normalize: function (name, referer) {
-    return normalized(name, referer.name);
-  },
-  resolve: function (normalized, options) {
-    return '/' + normalized + '.js';
-  },
-  fetch: function (url, fulfill, reject, options) {
-    fulfill(source);
-  },
-  translate: function (source, options) {
-    return compile(source);
-  },
-  link: function (source, options) {
-    return {
-      imports: ['some', 'dependencies'],
-      execute: function(depA, depB) {
-        return new Module({
-          some: 'export'
-        });
-      }
-    };
-  }
-});
-```
-
-The above hooks are all optional, using the default System hooks when not present.
-
-For an overview of working with custom loaders, see [Yehuda Katz's essay](https://gist.github.com/wycats/51c96e3adcdb3a68cbc3) or the [ES6 Module Specification](http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders).
-
-
-## Notes and roadmap
-
-### Syntax Parsing
-
-The [Esprima ES6 Harmony parser](https://github.com/ariya/esprima/tree/harmony) is being used to do parsing, loaded only when necessary.
-
-The following module statements are currently supported:
+The following module syntax is supported by this polyfill, which is to the latest specification (November 2013):
 
 ```javascript
-import 'jquery';                        // import a module
+//import 'jquery';                      // import a module  ** awaiting support in Traceur
 import $ from 'jquery';                 // import the default export of a module
 import { $ } from 'jquery';             // import a named export of a module
 import { $ as jQuery } from 'jquery';   // import a named export to a different name
@@ -157,7 +112,7 @@ export * from 'crypto';                 // export all exports from another modul
 module crypto from 'crypto';            // import an entire module instance object
 ```
 
-### NodeJS Support
+## NodeJS Support
 
 For use in NodeJS, the `Module`, `Loader` and `System` globals are provided as exports:
 
@@ -167,10 +122,9 @@ For use in NodeJS, the `Module`, `Loader` and `System` globals are provided as e
   System.import('some-module', callback);
 ```
 
-Tracuer support can also be used in NodeJS, allowing ES6 syntax in NodeJS:
+Tracuer support requires `npm install traceur`, allowing ES6 syntax in NodeJS:
 
 ```javascript
-  require('es6-module-loader').traceur = require('traceur');
   var System = require('es6-module-loader').System;
 
   System.import('es6-file', function(module) {
@@ -178,17 +132,68 @@ Tracuer support can also be used in NodeJS, allowing ES6 syntax in NodeJS:
   });
 ```
 
-### Custom Esprima Location
+### Custom Traceur Location
 
-To set a custom path to the Esprima Harmony parser, specify the `data-esprima-src` attribute on the `<script>` tag used to include the module loader.
+To set a custom path to the Traceur parser, specify the `data-traceur-src` attribute on the `<script>` tag used to include the module loader.
+
+## Creating a Custom Loader
+
+The ES6 specification defines a loader through five hooks:
+
+* Normalize: Given the import name, provide the canonical module name.
+* Resolve: Given a canonical module name, provide the URL for the resource.
+* Fetch: Given a URL for a resource, fetch its content.
+* Translate: Given module source, make any source modifications.
+* Link: Given module source, determine its dependencies, and execute it.
+
+Variations of these hooks can allow creating many different styles of loader.
+
+Evey hook is optional for a new loader, with default behaviours defined.
+
+To create a new loader, use the `Loader` constructor:
+
+```javascript
+var MyLoader = new Loader({
+  global: window,
+  strict: false,
+  normalize: function (name, referer) {
+    return canonicalName;
+  },
+  resolve: function (normalized, options) {
+    return this.baseURL + '/' + normalized + '.js';
+  },
+  fetch: function (url, fulfill, reject, options) {
+    myXhr.get(url, fulfill, reject);
+  },
+  translate: function (source, options) {
+    return compile(source);
+  },
+  link: function (source, options) {
+
+    // use standard es6 linking
+    return;
+
+    // provide custom linking
+    // useful for providing AMD and CJS support
+    return {
+      imports: ['some', 'dependencies'],
+      execute: function(depA, depB) {
+        return new Module({
+          some: 'export'
+        });
+      }
+    };
+  }
+});
+```
+
+For a more in-depth overview of creating with custom loaders, see [Yehuda Katz's essay](https://gist.github.com/wycats/51c96e3adcdb3a68cbc3) or the [ES6 Module Specification](http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders).
 
 ### Specification Notes
 
-The polyfill is implemented exactly to the specification as closely as possible.
+The polyfill is in the process of being updated to the latest complete draft of the module specification.
 
-The only feature which is not possible to fully polyfill is the intrinsics functionality and sandboxing of the loader. Custom builtins and full global encapsulation is still provided.
-
-The System normalization and resolution functions are not fully described by the specification, so some assumptions have been made which are listed here https://gist.github.com/guybedford/3712492cf0f629eed761.
+This will alter the custom loader API entirely, but the import syntax will remain mostly identical.
 
 To follow the current the specification changes, see https://github.com/ModuleLoader/es6-module-loader/issues?labels=specification&page=1&state=open.
 
