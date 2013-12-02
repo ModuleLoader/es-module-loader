@@ -46,6 +46,7 @@ if (typeof window != 'undefined') {
 else {
   // nodejs
   System = require('../lib/es6-module-loader.js').System;
+  require('traceur') = require('../lib/traceur');
 
   tests = {
     addTest: function(id, name) {},
