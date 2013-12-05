@@ -210,6 +210,7 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 _Also, please don't edit files in the "dist" subdirectory as they are generated via grunt. You'll find source code in the "lib" subdirectory!_
 
 ## Release History
+* 0.3.3 Traceur parser update, detection regex fixes, better error messages
 * 0.3.2 Use Traceur for all parsing, module tag support, syntax updates, test workflow
 * 0.3.1 IE9 Cross Domain fix, module x from y syntax support, data-init callback support, Traceur fixes
 * 0.3.0 Traceur support, better error reporting, source maps support, normalization simplifications
