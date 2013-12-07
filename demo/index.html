@@ -24,7 +24,14 @@
     <h1>Module Loader Polyfill</h1>
     <p>Check the console in your browser developer tools! This code is currently loaded in the page:</p>
     <pre>
+  &lt;script>
+    // dynamic loading API
+    System.import('js/test2', function(module) {
+      new module.Foo();
+    });
+  &lt;/script>
   &lt;script type="module">
+    // module tag support
     import { hello } from 'js/test1';
     console.log(hello);
 
@@ -32,12 +39,6 @@
     var a, b;
     [a, b] = [1, 2];
     console.log(a);
-  &lt;/script>
-  &lt;script>
-    // dynamic loading API
-    System.import('js/test2', function(module) {
-      new module.Foo();
-    });
   &lt;/script>
     </pre>
   </div>
@@ -45,7 +46,14 @@
   </footer>
 
   <script src="../lib/es6-module-loader.js"></script>
+  <script>
+    // dynamic loading API
+    System.import('js/test2', function(module) {
+      new module.Foo();
+    });
+  </script>
   <script type="module">
+    // module tag support
     import { hello } from 'js/test1';
     console.log(hello);
 
@@ -53,12 +61,6 @@
     var a, b;
     [a, b] = [1, 2];
     console.log(a);
-  </script>
-  <script>
-    // dynamic loading API
-    System.import('js/test2', function(module) {
-      new module.Foo();
-    });
   </script>
 </body>
 </html>
