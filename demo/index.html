@@ -28,13 +28,16 @@
     import { hello } from 'js/test1';
     console.log(hello);
 
-    import { Foo } from 'js/test2';
-    new Foo();
-
     // es6 syntax
     var a, b;
     [a, b] = [1, 2];
     console.log(a);
+  &lt;/script>
+  &lt;script>
+    // dynamic loading API
+    System.import('js/test2', function(module) {
+      new module.Foo();
+    });
   &lt;/script>
     </pre>
   </div>
@@ -46,13 +49,16 @@
     import { hello } from 'js/test1';
     console.log(hello);
 
-    import { Foo } from 'js/test2';
-    new Foo();
-
     // es6 syntax
     var a, b;
     [a, b] = [1, 2];
     console.log(a);
+  </script>
+  <script>
+    // dynamic loading API
+    System.import('js/test2', function(module) {
+      new module.Foo();
+    });
   </script>
 </body>
 </html>
