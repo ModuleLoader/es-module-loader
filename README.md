@@ -2,11 +2,13 @@
 
 ES6 Module Loader polyfill based on [http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders](http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders) by Luke Hoban, Addy Osmani and Guy Bedford.
 
-* [Dynamically load ES6 modules](#getting-started) in all modern browsers including IE8+
+* Provides an asynchronous loader (`window.System`) to [dynamically load ES6 modules](#getting-started) in all modern browsers including IE8+
 * Uses [Traceur](https://github.com/google/traceur-compiler) for [compiling ES6 modules and syntax into ES5 in the browser with source map support](#integration-with-traceur)
 * Use as a base for creating a [custom spec-compliant module loader](#creating-a-custom-loader)
 
 Not yet suitable for production use while the specification is still subject to change.
+
+See the [demo folder](https://github.com/ModuleLoader/es6-module-loader/blob/master/demo/index.html) in this repo for a working example demonstrating both module loading the module tag.
 
 ## Getting Started
 
