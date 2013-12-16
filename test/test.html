@@ -1,13 +1,37 @@
 <!doctype html>
   <html>
-  <script src="../lib/es6-module-loader.js"></script>
-  <script src="test.js" async></script>
+
+  <body></body>
+
+  <script src="test.js"></script>
+  <script src="../lib/es6-module-loader.js" data-init="runTests"></script>
+
+  <script type="module" name="named-module">
+    class q {
+      constructor() {
+        this.p = 'hi';
+      }
+    }
+    export var p = new q().p;
+  </script>
 
   <script type="module">
+    window.anon = class {
+      constructor() {
 
-    class q {
-
+      }
     }
   </script>
 
-  <body></body>
+  <script>
+    setTimeout(function() {
+      test('Named &lt;script type="module"> tag', function(assert) {
+        System.import('named-module').then(function(m) {
+          assert(m.p, 'hi');
+        });
+      });
+      test('Anonymous &lt;script type="module"> tag', function(assert) {
+        assert(typeof window.anon, 'function');
+      });
+    }, 500);
+  </script>

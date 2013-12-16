@@ -1,42 +1,35 @@
 <!doctype html>
-<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
-<!--[if IE 7]>    <html class="no-js lt-ie9 lt-ie8" lang="en"> <![endif]-->
-<!--[if IE 8]>    <html class="no-js lt-ie9" lang="en"> <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
 <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-  <title></title>
-  <meta name="description" content="">
-
-  <meta name="viewport" content="width=device-width">
-  <link rel="stylesheet" href="css/style.css">
-
-  <script src="js/libs/modernizr-2.5.3.min.js"></script>
+  <style>
+    body {
+      background: blue;
+      color: #fff;
+    }
+    pre {
+      color: black;
+      background: white;
+    }
+  </style>
 </head>
-<body style="background-color: blue;">
-  <!--[if lt IE 7]>
- <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
-  <![endif]-->
-  <header>
-  </header>
+<body>
   <div role="main">
     <h1>Module Loader Polyfill</h1>
     <p>Check the console in your browser developer tools! This code is currently loaded in the page:</p>
     <pre>
+  &lt;script src="../lib/es6-module-loader.js">&lt;/script>
   &lt;script type="module">
-    import { hello } from 'js/test1';
-    console.log(hello);
+    import { hello } from 'test1';
+    console.log(hello); // -> world
 
     // es6 syntax
     var a, b;
     [a, b] = [1, 2];
-    console.log(a);
+    console.log(a); // 1
   &lt;/script>
   &lt;script>
     // dynamic loading API
-    System.import('js/test2', function(module) {
-      new module.Foo();
+    System.import('test2').then(function(module) {
+      new module.Foo(); // -> Created the ES6 class foo!
     });
   &lt;/script>
     </pre>
@@ -46,17 +39,17 @@
 
   <script src="../lib/es6-module-loader.js"></script>
   <script type="module">
-    import { hello } from 'js/test1';
-    console.log(hello);
+    import { hello } from 'test1';
+    console.log(hello); // -> world
 
     // es6 syntax
     var a, b;
     [a, b] = [1, 2];
-    console.log(a);
+    console.log(a); // -> 1
   </script>
   <script>
     // dynamic loading API
-    System.import('js/test2', function(module) {
+    System.import('test2').then(function(module) {
       new module.Foo();
     });
   </script>
