@@ -8,7 +8,7 @@ A separate browser specification in turn defines the `window.System` loader, a d
 
 This polyfill implements the `Loader` and `Module` globals, exactly as specified in the [2013-12-02 ES6 Module Specification Draft](https://github.com/jorendorff/js-loaders/blob/e60d3651/specs/es6-modules-2013-12-02.pdf) and the `System` browser loader exactly as suggested in the [sample implementation](https://github.com/jorendorff/js-loaders/blob/964623c75d/browser-loader.js).
 
-The complete combined polyfill comes to 16KB minified, making it suitable for production use in future.
+The complete combined polyfill comes to 16KB minified, making it suitable for production use in future, provided that modules are built into ES5 making them independent of Traceur. Build workflows are currently in progress.
 
 * Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#getting-started) in all modern browsers including IE8+
 * Adds support for the `<script type="module">` tag allowing inline module loading.
