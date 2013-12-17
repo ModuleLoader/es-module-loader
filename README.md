@@ -162,7 +162,7 @@ import-default.js:
 There are a few other variations of module syntax, the full list of supported statements is listed below.
 
 ```javascript
-//import 'jquery';                      // import a module  ** awaiting support in Traceur
+import 'jquery';                        // import a module without any import bindings
 import $ from 'jquery';                 // import the default export of a module
 import { $ } from 'jquery';             // import a named export of a module
 import { $ as jQuery } from 'jquery';   // import a named export to a different name
