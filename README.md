@@ -269,6 +269,8 @@ The ES6 specification defines a loader through five hooks:
 
 Variations of these hooks can allow creating many different styles of loader.
 
+Each hook can either return a result directly, or a promise (thenable) for the result.
+
 Evey hook is optional for a new loader, with default behaviours defined.
 
 To create a new loader, use the `Loader` constructor:
@@ -277,27 +279,31 @@ To create a new loader, use the `Loader` constructor:
 var MyLoader = new Loader({
   global: window,
   strict: false,
-  normalize: function (name, referer) {
-    return canonicalName;
+  normalize: function (name, parentName, parentAddress) {
+    return resolvedName;
   },
-  locate: function (normalized, options) {
-    return this.baseURL + '/' + normalized + '.js';
+  locate: function (load) {
+    // load.name is normalized name
+    return this.baseURL + '/' + load.name + '.js';
   },
-  fetch: function (url, fulfill, reject, options) {
-    myXhr.get(url, fulfill, reject);
+  fetch: function (load) {
+    // return a promise. Alternatively, just use the system fetch
+    // promise -return System.fetch(load)
+    var defer = MyPromiseLibrary.createDeferred();
+    myXhr.get(load.address, defer.resolve, defer.reject);
+    return defer.promise;
   },
-  translate: function (source, options) {
-    return compile(source);
+  translate: function (load) {
+    return load.source;
   },
-  instantiate: function (source, options) {
-
+  instantiate: function (load) {
     // use standard es6 linking
-    return System.instantiate;
+    return System.instantiate(load);
 
     // provide custom linking
     // useful for providing AMD and CJS support
     return {
-      imports: ['some', 'dependencies'],
+      deps: ['some', 'dependencies'],
       execute: function(depA, depB) {
         return new Module({
           some: 'export'
