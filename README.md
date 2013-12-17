@@ -72,7 +72,7 @@ The dynamic loader returns an instance of the `Module` class, which contains get
 
 A module is simply a JavaScript file written with module syntax to possibly import from other modules, defining its own exports.
 
-CommonJS and AMD JavaScript files are modules.
+[CommonJS](http://wiki.commonjs.org/wiki/CommonJS) and [AMD](https://github.com/amdjs/amdjs-api/wiki/AMD) JavaScript files are modules.
 
 A module loader provides the ability to dynamically load modules, and also keeps track of all loaded modules in a module registry.
 
