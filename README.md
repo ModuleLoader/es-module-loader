@@ -1,100 +1,165 @@
-# ES6 Module Loader
+# ES6 Module Loader Polyfill
 
-ES6 Module Loader polyfill based on [http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders](http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders) by Luke Hoban, Addy Osmani and Guy Bedford.
+_Fully up to date with the latest specification_
 
-* Provides an asynchronous loader (`window.System`) to [dynamically load ES6 modules](#getting-started) in all modern browsers including IE8+
+The new ES6 module specification defines a module system in JavaScript using `import` and `export` syntax, along with a module loader factory (`new Loader`).
+
+A separate browser specification in turn defines the `window.System` loader, a dynamic browser loader for JavaScript modules, as well as a `<script type="module">` tag.
+
+This polyfill implements the `Loader` and `Module` globals, exactly as specified in the [2013-12-02 ES6 Module Specification Draft](https://github.com/jorendorff/js-loaders/blob/e60d3651/specs/es6-modules-2013-12-02.pdf) and the `System` browser loader exactly as suggested in the [sample implementation](https://github.com/jorendorff/js-loaders/blob/964623c75d/browser-loader.js).
+
+The complete combined polyfill comes to 16KB minified, making it suitable for production use in future.
+
+* Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#getting-started) in all modern browsers including IE8+
+* Adds support for the `<script type="module">` tag allowing inline module loading.
 * Uses [Traceur](https://github.com/google/traceur-compiler) for [compiling ES6 modules and syntax into ES5 in the browser with source map support](#integration-with-traceur)
 * Use as a base for creating a [custom spec-compliant module loader](#creating-a-custom-loader)
+* Fully compatible with NodeJS allowing for spec-compliant server-side module loading
 
-Not yet suitable for production use while the specification is still subject to change.
+_Not yet suitable for production use while the specification is still subject to change._
 
 See the [demo folder](https://github.com/ModuleLoader/es6-module-loader/blob/master/demo/index.html) in this repo for a working example demonstrating both module loading the module tag.
 
 ## Getting Started
 
-Download both [es6-module-loader.js](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/es6-module-loader.js) and [traceur.js](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/traceur.js) into the same folder.
+Download both [es6-module-loader.js](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/es6-module-loader.js) and [traceur.js](https://raw.github.com/ModuleLoader/es6-module-loader/master/lib/traceur.js) into the same folder.
 
 Then include the `es6-module-loader.js` file on its own in the page:
 
 ```html
-  <script src="path/to/es6-module-loader.js"></script>
+  <script src="es6-module-loader.js"></script>
 ```
 
 Traceur will be downloaded only when needed for ES6 syntax parsing.
 
-If we have an ES6 module file located at `/lib/app/main.js`, we can then load this with the system loader:
+Write an ES6 module:
 
-```html
-<script>
-  System.baseURL = '/lib';
-  System.import('app/main', function(app) {
-    new app.Application();
-  });
-</script>
-```
-
-Any module dependencies of the file will be dynamically loaded and linked as per the ES6 module specification.
-
-Modules are loaded by **Module Name** roughly using the rule:
-
+mymodule.js:
 ```javascript
-  URL = baseURL + '/' + ModuleName + '.js'
-```
-
-Relative module names can be written `'./local-module'` to load relative to the parent module name.
-
-## Writing and Loading ES6 Modules
-
-The contents of `/lib/app/main.js` can be written:
-
-```javascript
-  import { Helpers } from './app-dep';
-
-  export class Application {
+  export class q {
     constructor() {
-      console.log('Initialized ES6 App Module');
-    },
-    foo() {
-      Helpers.foo();
+      console.log('this is an es6 class!');
     }
   }
 ```
 
-With `/lib/app/app-dep.js` containing:
-
-```javascript
-  export var Helpers = { ... };
-```
-
-When loaded, as with the `System.import` call above, these module files are dynamically loaded and compiled to ES5 in the browser and executed.
-
-## Moving to Production
-
-When in production, one wouldn't want to load ES6 modules and syntax in the browser. Rather the modules would be built into ES5 and AMD to be loaded.
-
-One can construct an AMD loader from this polyfill in under 30KB for such a scenario.
-
-Think of this module as RequireJS, and [Traceur](https://github.com/google/traceur-compiler) as the r.js optimizer.
-
-Bundling techniques for ES6 are an active area of development.
-
-## Module Tag
-
-Modules can also be loaded with the module tag:
+We can then load this module with a module tag in the page:
 
 ```html
-  <script src="/path/to/es6-module-loader.js"></script>
-  <script>System.baseURL = '/lib'</script>
-  <script type="module">
-    import { Application } from 'app/main';
+<script type="module">
+  // loads the 'q' export from 'mymodule.js' in the same path as the page
+  import { q } from 'mymodule';
 
-    new Application();
-  </script>
+  new q(); // -> 'this is an es6 class!'
+</script>
 ```
 
-## Full Module Syntax Summary
+Or we can also use the dynamic loader:
 
-The following module syntax is supported by this polyfill, which is to the latest specification (November 2013):
+```html
+<script>
+  System.import('mymodule').then(function(m) {
+    new m.q();
+  });
+</script>
+```
+
+The dynamic loader returns an instance of the `Module` class, which contains getters for the named exports (in this case, `q`).
+
+## Terminology
+
+### Modules and Module Loaders
+
+A module is simply a JavaScript file written with module syntax to possibly import from other modules, defining its own exports.
+
+CommonJS and AMD JavaScript files are modules.
+
+A module loader provides the ability to dynamically load modules, and also keeps track of all loaded modules in a module registry.
+
+Typically, in production, the module registry would be populated by an initial compiled bundle of modules. Later in the page state, it may become necessary to dynamically
+load a new module. This module can then share dependencies with the intitial page bundle without having to reload any dependencies.
+
+The ES6 Module Specification defines the module syntax for ES6 module files, and also defines a module loader factory class for creating ES6-compatible module loaders.
+
+### Module Names and baseURL
+
+Module names are just like moduleIDs in RequireJS. Non-relative module names (not starting with `.`) are converted to a URL with the following rule:
+
+```javascript
+  URL = absolutePath(baseURL, ModuleName + '.js')
+```
+
+Relative module names can be written `'./local-module'` to load relative to their parent module name. `..` syntax is also supported allowing easily portable modules.
+
+The `baseURL` is set to the current page path by default. It is a property of the `System` loader and can be changed:
+
+```javascript
+  System.baseURL = '/lib/';
+  System.baseURL = 'http://mysite.com/js/';
+```
+
+## ES6 Module Syntax
+
+### Exporting
+
+ES6 module syntax is most similar to the `exports.method = function() {}` pattern in NodeJS of creating multiple named exports.
+
+In CommonJS one might write:
+
+```javascript
+  exports.someMethod = function() {
+
+  }
+
+  exports.another = {};
+```
+
+In ES6, this same code would be written:
+
+exporter.js:
+```javascript
+  export function someMethod() {
+
+  }
+
+  export var another = {};
+```
+
+Notice that the name of the function, class or variable gets used as the export name.
+
+### Importing
+
+When importing, we import any exports we need by name, and can also choose to rename them:
+
+importer.js:
+```javascript
+  import { someMethod, another as newName } from './exporter';
+
+  someMethod();
+  typeof newName == 'object';
+```
+
+### Default Import and Export
+
+Sometimes one doesn't want to write an import name at all. For this we can use the default export:
+
+export-default.js:
+```javascript
+  export default function foo() {
+    console.log('foo');
+  }
+```
+
+import-default.js:
+```javascript
+  import customName from './export-default';
+
+  customName(); // -> 'foo'
+```
+
+### All Supported Syntax
+
+There are a few other variations of module syntax, the full list of supported statements is listed below.
 
 ```javascript
 //import 'jquery';                      // import a module  ** awaiting support in Traceur
@@ -117,6 +182,57 @@ export * from 'crypto';                 // export all exports from another modul
 module crypto from 'crypto';            // import an entire module instance object
 ```
 
+## Dynamic Module Loading
+
+The dynamic module loader uses promises for resolution. Modules can have both a resolve and reject handler:
+
+```javascript
+  System.import('some-module').then(function(m) {
+    // got Module instance m
+  }, function(err) {
+    // error
+  });
+```
+
+## Moving to Production
+
+When in production, one wouldn't want to load ES6 modules and syntax in the browser. Rather the modules would be built into ES5 and AMD to be loaded.
+
+Also, suitable bundling would need to be used.
+
+We are actively working on these workflows.
+
+## Module Tag
+
+The module tag supports both named and anonymous use:
+
+```html
+  <script type="module">
+    import 'some-import';
+
+    class q {
+
+    }
+
+    new q();
+  </script>
+```
+
+```html
+  <script type="module" name="my-module">
+    export var p = 'named-module';
+  </script>
+  <script>
+    // later on -
+    setTimeout(function() {
+      System.import('my-module').then(function(m) {
+        console.log(m.p); // -> named-module
+      });
+    }, 100);
+  </script>
+```
+
+
 ## NodeJS Support
 
 For use in NodeJS, the `Module`, `Loader` and `System` globals are provided as exports:
@@ -127,7 +243,7 @@ For use in NodeJS, the `Module`, `Loader` and `System` globals are provided as e
   System.import('some-module', callback);
 ```
 
-Tracuer support requires `npm install traceur`, allowing ES6 syntax in NodeJS:
+Traceur support requires `npm install traceur`, allowing ES6 syntax in NodeJS:
 
 ```javascript
   var System = require('es6-module-loader').System;
@@ -146,10 +262,10 @@ To set a custom path to the Traceur parser, specify the `data-traceur-src` attri
 The ES6 specification defines a loader through five hooks:
 
 * Normalize: Given the import name, provide the canonical module name.
-* Resolve: Given a canonical module name, provide the URL for the resource.
+* Locate: Given a canonical module name, provide the URL for the resource.
 * Fetch: Given a URL for a resource, fetch its content.
 * Translate: Given module source, make any source modifications.
-* Link: Given module source, determine its dependencies, and execute it.
+* Instantiate: Given module source, determine its dependencies, and execute it.
 
 Variations of these hooks can allow creating many different styles of loader.
 
@@ -164,7 +280,7 @@ var MyLoader = new Loader({
   normalize: function (name, referer) {
     return canonicalName;
   },
-  resolve: function (normalized, options) {
+  locate: function (normalized, options) {
     return this.baseURL + '/' + normalized + '.js';
   },
   fetch: function (url, fulfill, reject, options) {
@@ -173,10 +289,10 @@ var MyLoader = new Loader({
   translate: function (source, options) {
     return compile(source);
   },
-  link: function (source, options) {
+  instantiate: function (source, options) {
 
     // use standard es6 linking
-    return;
+    return System.instantiate;
 
     // provide custom linking
     // useful for providing AMD and CJS support
@@ -192,15 +308,58 @@ var MyLoader = new Loader({
 });
 ```
 
-For a more in-depth overview of creating with custom loaders, see [Yehuda Katz's essay](https://gist.github.com/wycats/51c96e3adcdb3a68cbc3) or the [ES6 Module Specification](http://wiki.ecmascript.org/doku.php?id=harmony:module_loaders).
+For a more in-depth overview of creating with custom loaders, some resources are provided below:
+* The [System Loader implementation](https://github.com/ModuleLoader/es6-module-loader/blob/master/lib/es6-module-loader.js#L804)
+* [ES6 Module Specification, latest draft](https://github.com/jorendorff/js-loaders/blob/e60d3651/specs/es6-modules-2013-12-02.pdf)
+* [Yehuda Katz's essay](https://gist.github.com/wycats/51c96e3adcdb3a68cbc3) (outdated)
 
-### Specification Notes
+## Specification Notes
 
-The polyfill is in the process of being updated to the latest complete draft of the module specification.
+Notes on the exact specification implementation differences are included below.
 
-This will alter the custom loader API entirely, but the import syntax will remain mostly identical.
+### Loader Polyfill
 
-To follow the current the specification changes, see https://github.com/ModuleLoader/es6-module-loader/issues?labels=specification&page=1&state=open.
+* Implemented exactly to the 2013-12-02 Specification Draft -
+  https://github.com/jorendorff/js-loaders/blob/e60d3651/specs/es6-modules-2013-12-02.pdf
+  with the only exceptions as described here
+
+* Abstract functions have been combined where possible, and their associated functions 
+  commented
+
+* Declarative Module Support is entirely disabled, and an error will be thrown if 
+  the instantiate loader hook returns undefined
+
+* With this assumption, instead of Link, LinkDynamicModules is run directly
+
+* ES6 support is thus provided through the translate function of the System loader
+
+* EnsureEvaluated is removed, but may in future implement dynamic execution pending 
+  issue - https://github.com/jorendorff/js-loaders/issues/63
+
+* Realm implementation is entirely omitted. As such, Loader.global and Loader.realm
+  accessors will throw errors, as well as Loader.eval
+
+* Loader module table iteration currently not yet implemented
+
+### System Loader Implementation
+
+* Implemented to https://github.com/jorendorff/js-loaders/blob/master/browser-loader.js,
+  except for Instantiate function
+
+* Instantate function determines if ES6 module syntax is being used, if so parses with 
+  Traceur and returns a dynamic InstantiateResult for loading ES6 module syntax in ES5.
+
+* Custom loaders thus can be implemented by using this System.instantiate function as 
+  the fallback loading scenario, after other module format detections.
+
+* Traceur is loaded dynamically when module syntax is detected by a regex (with over-
+  classification), either from require('traceur') on the server, or the 
+  'data-traceur-src' property on the current script in the browser, or if not set, 
+  'traceur.js' in the same URL path as the current script in the browser.
+
+* ondemand / paths functionality currently not yet implemented
+
+To follow the current the specification changes, see the marked issues https://github.com/ModuleLoader/es6-module-loader/issues?labels=specification&page=1&state=open.
 
 ## Projects using us
 
@@ -212,6 +371,7 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 _Also, please don't edit files in the "dist" subdirectory as they are generated via grunt. You'll find source code in the "lib" subdirectory!_
 
 ## Release History
+* 0.4.0 Update to revised specification exact algorithm
 * 0.3.3 Traceur parser update, detection regex fixes, better error messages
 * 0.3.2 Use Traceur for all parsing, module tag support, syntax updates, test workflow
 * 0.3.1 IE9 Cross Domain fix, module x from y syntax support, data-init callback support, Traceur fixes

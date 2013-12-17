@@ -3,11 +3,11 @@ module.exports = function (grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     meta: {
-      banner: '/*!\n*  <%= pkg.name %> - v<%= pkg.version %> - ' +
-        '<%= grunt.template.today("m/d/yyyy") %>' + "\n" +
-        '<%= pkg.homepage ? "*  " + pkg.homepage + "\\n" : "" %>' +
-        '*  Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>;' +
-        ' Licensed <%= _.pluck(pkg.licenses, "type").join(", ") %>\n*/\n'
+      banner: '/*\n *  <%= pkg.name %> v<%= pkg.version %>\n' +
+        '<%= pkg.homepage ? " *  " + pkg.homepage + "\\n" : "" %>' +
+        ' *  Implemented to the 2013-12-02 ES6 module specification draft\n' +
+        ' *  Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>;' +
+        ' Licensed <%= _.pluck(pkg.licenses, "type").join(", ") %>\n */\n'
     },
     uglify: {
       options: {
