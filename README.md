@@ -12,7 +12,7 @@ The complete combined polyfill comes to 16KB minified, making it suitable for pr
 
 * Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#getting-started) in all modern browsers including IE8+
 * Adds support for the `<script type="module">` tag allowing inline module loading.
-* Uses [Traceur](https://github.com/google/traceur-compiler) for [compiling ES6 modules and syntax into ES5 in the browser with source map support](#integration-with-traceur)
+* Uses [Traceur](https://github.com/google/traceur-compiler) for compiling ES6 modules and syntax into ES5 in the browser with source map support
 * Use as a base for creating a [custom spec-compliant module loader](#creating-a-custom-loader)
 * Fully compatible with NodeJS allowing for spec-compliant server-side module loading
 
@@ -30,7 +30,7 @@ Then include the `es6-module-loader.js` file on its own in the page:
   <script src="es6-module-loader.js"></script>
 ```
 
-Traceur will be downloaded only when needed for ES6 syntax parsing.
+Traceur will be downloaded only when needed for ES6 syntax parsing, detected as the existence of module syntax, or as specified by the `metadata.es6` property.
 
 Write an ES6 module:
 
