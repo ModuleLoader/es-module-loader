@@ -23,6 +23,12 @@
     }
   </script>
 
+<!--
+  Not yet supported - see https://github.com/jorendorff/js-loaders/issues/83
+  <script type="module" src="loader/anon.js"></script>
+  <script type="module" name="named" src="loader/named.js"></script>
+-->
+
   <script>
     setTimeout(function() {
       test('Named &lt;script type="module"> tag', function(assert) {
@@ -33,5 +39,11 @@
       test('Anonymous &lt;script type="module"> tag', function(assert) {
         assert(typeof window.anon, 'function');
       });
+      /* test('&lt;script type="module"> with src', function(assert) {
+        assert(typeof window.anon2, 'function');
+      });
+      test('&lt;script type="module"> named with src', function(assert) {
+        assert(System.get('named').q == 'test');
+      }); */
     }, 500);
   </script>

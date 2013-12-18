@@ -204,7 +204,11 @@ We are actively working on these workflows.
 
 ## Module Tag
 
-The module tag supports both named and anonymous use:
+The module tag supports both named and anonymous use.
+
+### Anonymous Module
+
+This is just like an anonymous &lt;script> tag, allowing code to be run directly:
 
 ```html
   <script type="module">
@@ -217,6 +221,10 @@ The module tag supports both named and anonymous use:
     new q();
   </script>
 ```
+
+### Named Module
+
+A named module is just like an anonymous module, but defines the module in the registry as well:
 
 ```html
   <script type="module" name="my-module">
@@ -231,7 +239,6 @@ The module tag supports both named and anonymous use:
     }, 100);
   </script>
 ```
-
 
 ## NodeJS Support
 
