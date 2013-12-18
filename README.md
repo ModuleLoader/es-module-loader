@@ -8,7 +8,7 @@ A separate browser specification in turn defines the `window.System` loader, a d
 
 This polyfill implements the `Loader` and `Module` globals, exactly as specified in the [2013-12-02 ES6 Module Specification Draft](https://github.com/jorendorff/js-loaders/blob/e60d3651/specs/es6-modules-2013-12-02.pdf) and the `System` browser loader exactly as suggested in the [sample implementation](https://github.com/jorendorff/js-loaders/blob/964623c75d/browser-loader.js).
 
-The complete combined polyfill comes to 16KB minified, making it suitable for production use in future.
+The complete combined polyfill comes to 16KB minified, making it suitable for production use in future, provided that modules are built into ES5 making them independent of Traceur. Build workflows are currently in progress.
 
 * Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#getting-started) in all modern browsers including IE8+
 * Adds support for the `<script type="module">` tag allowing inline module loading.
@@ -72,7 +72,7 @@ The dynamic loader returns an instance of the `Module` class, which contains get
 
 A module is simply a JavaScript file written with module syntax to possibly import from other modules, defining its own exports.
 
-CommonJS and AMD JavaScript files are modules.
+[CommonJS](http://wiki.commonjs.org/wiki/CommonJS) and [AMD](https://github.com/amdjs/amdjs-api/wiki/AMD) JavaScript files are modules.
 
 A module loader provides the ability to dynamically load modules, and also keeps track of all loaded modules in a module registry.
 
@@ -162,7 +162,7 @@ import-default.js:
 There are a few other variations of module syntax, the full list of supported statements is listed below.
 
 ```javascript
-//import 'jquery';                      // import a module  ** awaiting support in Traceur
+import 'jquery';                        // import a module without any import bindings
 import $ from 'jquery';                 // import the default export of a module
 import { $ } from 'jquery';             // import a named export of a module
 import { $ as jQuery } from 'jquery';   // import a named export to a different name
@@ -269,35 +269,37 @@ The ES6 specification defines a loader through five hooks:
 
 Variations of these hooks can allow creating many different styles of loader.
 
-Evey hook is optional for a new loader, with default behaviours defined.
+Each hook can either return a result directly, or a promise (thenable) for the result.
 
 To create a new loader, use the `Loader` constructor:
 
 ```javascript
 var MyLoader = new Loader({
-  global: window,
-  strict: false,
-  normalize: function (name, referer) {
-    return canonicalName;
+  normalize: function (name, parentName, parentAddress) {
+    return resolvedName;
   },
-  locate: function (normalized, options) {
-    return this.baseURL + '/' + normalized + '.js';
+  locate: function (load) {
+    // load.name is normalized name
+    return this.baseURL + '/' + load.name + '.js';
   },
-  fetch: function (url, fulfill, reject, options) {
-    myXhr.get(url, fulfill, reject);
+  fetch: function (load) {
+    // return a promise. Alternatively, just use the system fetch
+    // promise -return System.fetch(load)
+    var defer = MyPromiseLibrary.createDeferred();
+    myXhr.get(load.address, defer.resolve, defer.reject);
+    return defer.promise;
   },
-  translate: function (source, options) {
-    return compile(source);
+  translate: function (load) {
+    return load.source;
   },
-  instantiate: function (source, options) {
-
+  instantiate: function (load) {
     // use standard es6 linking
-    return System.instantiate;
+    return System.instantiate(load);
 
     // provide custom linking
     // useful for providing AMD and CJS support
     return {
-      imports: ['some', 'dependencies'],
+      deps: ['some', 'dependencies'],
       execute: function(depA, depB) {
         return new Module({
           some: 'export'
