@@ -348,7 +348,7 @@ Notes on the exact specification implementation differences are included below.
 * Implemented to https://github.com/jorendorff/js-loaders/blob/master/browser-loader.js,
   except for Instantiate function
 
-* Instantate function determines if ES6 module syntax is being used, if so parses with 
+* Instantiate function determines if ES6 module syntax is being used, if so parses with 
   Traceur and returns a dynamic InstantiateResult for loading ES6 module syntax in ES5.
 
 * Custom loaders thus can be implemented by using this System.instantiate function as 
