@@ -271,14 +271,10 @@ Variations of these hooks can allow creating many different styles of loader.
 
 Each hook can either return a result directly, or a promise (thenable) for the result.
 
-Evey hook is optional for a new loader, with default behaviours defined.
-
 To create a new loader, use the `Loader` constructor:
 
 ```javascript
 var MyLoader = new Loader({
-  global: window,
-  strict: false,
   normalize: function (name, parentName, parentAddress) {
     return resolvedName;
   },
