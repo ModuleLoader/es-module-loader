@@ -26,13 +26,20 @@
     [a, b] = [1, 2];
     console.log(a); // 1
   &lt;/script>
+    </pre>
+    <p>Click on the button below and this function will be run:</p>
+    <pre>
   &lt;script>
-    // dynamic loading API
-    System.import('test2').then(function(module) {
-      new module.Foo(); // -> Created the ES6 class foo!
-    });
+    function buttonClick() {
+      // dynamic loading API
+      System.import('test2').then(function(module) {
+        new module.Foo();
+      });
+    }
   &lt;/script>
     </pre>
+    <button onclick="buttonClick()">Load test2</button>
+    <p>Note that if you click on the button again, a new Foo module will be created, but 'test2' will not be reloaded.</p>
   </div>
   <footer>
   </footer>
@@ -48,10 +55,12 @@
     console.log(a); // -> 1
   </script>
   <script>
-    // dynamic loading API
-    System.import('test2').then(function(module) {
-      new module.Foo();
-    });
+    function buttonClick() {
+      // dynamic loading API
+      System.import('test2').then(function(module) {
+        new module.Foo();
+      });
+    }
   </script>
 </body>
 </html>
