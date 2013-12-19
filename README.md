@@ -4,7 +4,7 @@ _Fully up to date with the latest specification_
 
 The new ES6 module specification defines a module system in JavaScript using `import` and `export` syntax, along with a module loader factory (`new Loader`).
 
-A separate browser specification in turn defines the `window.System` loader, a dynamic browser loader for JavaScript modules, as well as a `<script type="module">` tag.
+A separate browser specification defines the `window.System` loader, a dynamic browser loader for JavaScript modules, as well as a new `<module>` tag (`<script type="module">` for compatibility with existing browsers).
 
 This polyfill implements the `Loader` and `Module` globals, exactly as specified in the [2013-12-02 ES6 Module Specification Draft](https://github.com/jorendorff/js-loaders/blob/e60d3651/specs/es6-modules-2013-12-02.pdf) and the `System` browser loader exactly as suggested in the [sample implementation](https://github.com/jorendorff/js-loaders/blob/964623c75d/browser-loader.js).
 
@@ -70,16 +70,18 @@ The dynamic loader returns an instance of the `Module` class, which contains get
 
 ### Modules and Module Loaders
 
-A module is simply a JavaScript file written with module syntax to possibly import from other modules, defining its own exports.
+A module is simply a JavaScript file written with module syntax. Modules _export_ values, which can then be _imported_ by other modules.
 
 [CommonJS](http://wiki.commonjs.org/wiki/CommonJS) and [AMD](https://github.com/amdjs/amdjs-api/wiki/AMD) JavaScript files are modules.
 
 A module loader provides the ability to dynamically load modules, and also keeps track of all loaded modules in a module registry.
 
 Typically, in production, the module registry would be populated by an initial compiled bundle of modules. Later in the page state, it may become necessary to dynamically
-load a new module. This module can then share dependencies with the intitial page bundle without having to reload any dependencies.
+load a new module. This module can then share dependencies with the initial page bundle without having to reload any dependencies.
 
 The ES6 Module Specification defines the module syntax for ES6 module files, and also defines a module loader factory class for creating ES6-compatible module loaders.
+
+Module code is treated differently to scripts due to the nature of exports and imports. This is why the `<script type="module">` tag (which will become the `<module>` tag in modern browsers) is introduced to distinguish script code from module code. Scripts cannot export or import, but are able to use the dynamic loader System.import(...).
 
 ### Module Names and baseURL
 
@@ -181,6 +183,8 @@ export * from 'crypto';                 // export all exports from another modul
 
 module crypto from 'crypto';            // import an entire module instance object
 ```
+
+Note that any valid declaration can be exported. In ES6, this includes `class` (as in the example above), `const`, and `let`.
 
 ## Dynamic Module Loading
 
@@ -365,6 +369,8 @@ Notes on the exact specification implementation differences are included below.
   classification), either from require('traceur') on the server, or the 
   'data-traceur-src' property on the current script in the browser, or if not set, 
   'traceur.js' in the same URL path as the current script in the browser.
+
+* The `<script type="module">` tag is supported, but the `<module>` tag is not
 
 * ondemand / paths functionality currently not yet implemented
 
