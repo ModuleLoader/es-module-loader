@@ -81,7 +81,7 @@ load a new module. This module can then share dependencies with the initial page
 
 The ES6 Module Specification defines the module syntax for ES6 module files, and also defines a module loader factory class for creating ES6-compatible module loaders.
 
-Module code is treated differently to scripts due to the nature of exports and imports. This is why the `<script type="module">` tag (which will become the `<module>` tag in modern browsers) is introduced to distinguish script code from module code. Scripts cannot export or import, but are able to use the dynamic loader System.import(...).
+Module code is treated differently to scripts due to the nature of exports and imports. This is why the `<script type="module">` tag (which will become the `<module>` tag in modern browsers) is introduced to distinguish script code from module code. Scripts cannot export or import, but are able to use the dynamic loader `System.import(...)`.
 
 ### Module Names and baseURL
 
