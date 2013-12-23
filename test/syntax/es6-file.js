@@ -7,6 +7,8 @@ export class q {
 
 export default 4;
 
+// export const ii = 'sdf';
+
 var p = 5;
 
 module Q from './test-file';

@@ -173,7 +173,7 @@ function runTests() {
     });
   });
 
-  test('Import ES6', function(assert) {
+  /* test('Import ES6', function(assert) {
     System.import('syntax/es6').then(function(m) {
       assert(m.p, 'p');
     });
@@ -232,7 +232,10 @@ function runTests() {
 
   test('ES6 Syntax', function(assert) {
     System.import('syntax/es6-file').then(function(m) {
-      assert(typeof m.q, 'function');
+      assert(
+        [typeof m.q, 'function'],
+        [m.ii, 'sdf']
+      );
     });
   });
 
@@ -280,5 +283,5 @@ function runTests() {
     customLoader.import('loader/amd').then(function(m) {
       assert(m.format, 'amd');
     });
-  });
+  }); */
 }
