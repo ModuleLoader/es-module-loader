@@ -40,8 +40,7 @@
     "test": "grunt test"
   },
   "files": [
-    "lib/es6-module-loader.js",
-    "lib/esprima-es6.min.js"
+    "lib/es6-module-loader.js"
   ],
   "dependencies": {
     "traceur": "0.0.8"
