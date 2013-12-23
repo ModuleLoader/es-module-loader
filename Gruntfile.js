@@ -18,6 +18,9 @@ module.exports = function (grunt) {
           dest: 'dist/<%= pkg.name %>.js'
       },
       traceur: {
+          options: {
+            banner: '/*\n  Traceur Compiler 0.0.9 - https://github.com/google/traceur-compiler \n*/\n'
+          },
           src: 'lib/traceur.js',
           dest: 'dist/traceur.js'
       }
