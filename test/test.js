@@ -173,16 +173,92 @@ function runTests() {
     });
   });
 
-  /* test('Import ES6', function(assert) {
+  test('Import ES6', function(assert) {
     System.import('syntax/es6').then(function(m) {
       assert(m.p, 'p');
     });
   });
 
+
+
   test('Import ES6 with dep', function(assert) {
     System.import('syntax/es6-withdep').then(function(m) {
       assert(m.p, 'p');
     });
+  });
+
+  test('Direct import without bindings', function(assert) {
+    System.import('syntax/direct').then(function(m) {
+      console.log('got direct');
+      assert(!!m, true);
+    });
+  });
+
+
+  test('Load order test: A', function(assert) {
+    System.import('loads/a').then(function(m) {
+      assert(
+        [m.a, 'a'],
+        [m.b, 'b']
+      );
+    });
+  });
+
+  test('Load order test: C', function(assert) {
+    System.import('loads/c').then(function(m) {
+      assert(
+        [m.c, 'c'],
+        [m.a, 'a'],
+        [m.b, 'b']
+      );
+    });
+  });
+
+  test('Load order test: S', function(assert) {
+    System.import('loads/s').then(function(m) {
+      assert(
+        [m.s, 's'],
+        [m.c, 'c'],
+        [m.a, 'a'],
+        [m.b, 'b']
+      );
+    });
+  });
+
+  test('Load order test: _a', function(assert) {
+    System.import('loads/_a').then(function(m) {
+      assert(
+        [m.b, 'b'],
+        [m.d, 'd'],
+        [m.g, 'g'],
+        [m.a, 'a']
+      );
+    })
+  });
+  test('Load order test: _e', function(assert) {
+    System.import('loads/_e').then(function(m) {
+      assert(
+        [m.c, 'c'],
+        [m.e, 'e']
+      );
+    })
+  });
+  test('Load order test: _f', function(assert) {
+    System.import('loads/_f').then(function(m) {
+      assert(
+        [m.g, 'g'],
+        [m.f, 'f']
+      );
+    })
+  });
+  test('Load order test: _h', function(assert) {
+    System.import('loads/_h').then(function(m) {
+      assert(
+        [m.i, 'i'],
+        [m.a, 'a'],
+        [m.h, 'h']
+      );
+    })
   });
 
   test('Export Syntax', function(assert) {
@@ -233,8 +309,7 @@ function runTests() {
   test('ES6 Syntax', function(assert) {
     System.import('syntax/es6-file').then(function(m) {
       assert(
-        [typeof m.q, 'function'],
-        [m.ii, 'sdf']
+        [typeof m.q, 'function']
       );
     });
   });
@@ -283,5 +358,5 @@ function runTests() {
     customLoader.import('loader/amd').then(function(m) {
       assert(m.format, 'amd');
     });
-  }); */
+  });
 }
