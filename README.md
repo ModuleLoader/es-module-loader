@@ -218,8 +218,8 @@ Any reference to `jquery` in other modules will also use this same version.
 It is also possible to define wildcard paths rules. The most specific rule will be used:
 
 ```javascript
-  System.paths['underscore/*'] = 'https://npm.jspm.io/underscore/*.js';
-  System.import('underscore/index').then(function(_) {
+  System.paths['lodash/*'] = '/js/lodash/*.js'
+  System.import('lodash/map').then(function(map) {
     // ...
   });
 ```
