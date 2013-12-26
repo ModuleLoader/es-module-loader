@@ -30,7 +30,7 @@ Then include the `es6-module-loader.js` file on its own in the page:
   <script src="es6-module-loader.js"></script>
 ```
 
-Traceur will be downloaded only when needed for ES6 syntax parsing, detected as the existence of module syntax, or as specified by the `metadata.es6` property.
+Traceur will be downloaded only when needed for ES6 syntax parsing, detected as the existence of module syntax, or as specified by the `metadata.format = 'es6'` property.
 
 Write an ES6 module:
 
