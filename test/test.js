@@ -314,6 +314,27 @@ function runTests() {
     });
   });
 
+  test('Custom path', function(assert) {
+    System.paths['bar'] = 'loader/custom-path.js';
+    System.import('bar').then(function(m) {
+      assert(m.bar, 'bar');
+    })
+  });
+
+  test('Custom path wildcard', function(assert) {
+    System.paths['bar/*'] = 'loader/custom-folder/*.js';
+    System.import('bar/path').then(function(m) {
+      assert(m.bar, 'baa');
+    });
+  });
+
+  test('Custom path most specific', function(assert) {
+    System.paths['bar/bar'] = 'loader/specific-path.js';
+    System.import('bar/bar').then(function(m) {
+      assert(m.path, true);
+    });
+  });
+
 
   var customLoader = new Loader({
     normalize: function(name, parentName, parentAddress) {

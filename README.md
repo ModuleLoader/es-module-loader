@@ -198,6 +198,32 @@ The dynamic module loader uses promises for resolution. Modules can have both a 
   });
 ```
 
+## Paths Implementation
+
+_Note: This is a specification under discussion and not at all confirmed. This implementation will likely change._
+
+The System loader provides paths rules used by the standard `locate` function.
+
+For example, we might want to load `jquery` from a CDN location. For this we can provide a paths rule:
+
+```javascript
+  System.paths['jquery'] = '//code.jquery.com/jquery-1.10.2.min.js';
+  System.import('jquery').then(function($) {
+    // ...
+  });
+```
+
+Any reference to `jquery` in other modules will also use this same version.
+
+It is also possible to define wildcard paths rules. The most specific rule will be used:
+
+```javascript
+  System.paths['underscore/*'] = 'https://npm.jspm.io/underscore/*.js';
+  System.import('underscore/index').then(function(_) {
+    // ...
+  });
+```
+
 ## Moving to Production
 
 When in production, one wouldn't want to load ES6 modules and syntax in the browser. Rather the modules would be built into ES5 and AMD to be loaded.
