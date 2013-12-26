@@ -316,7 +316,14 @@ function runTests() {
 
 
   var customLoader = new Loader({
-    normalize: System.normalize,
+    normalize: function(name, parentName, parentAddress) {
+      return {
+        then: function(resolve, reject) {
+          var normalized = System.normalize(name, parentName, parentAddress);
+          resolve(normalized);
+        }
+      };
+    },
     locate: function(load) {
       if (load.name.substr(0, 5) == 'path/')
         load.name = 'loader/' + load.name.substr(5);
