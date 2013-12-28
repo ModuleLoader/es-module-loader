@@ -119,25 +119,14 @@ function runTests() {
 
   test('Normalize - backwards compat', System.normalize('./a.js'), 'a.js');
 
-  /*
   test('Normalize - URL', function(assert) {
     try {
-      assert(System.normalize('http://example.org/a/b.html'), 'http://example.org/a/b.html');
+      System.normalize('http://example.org/a/b.html');
     }
     catch(e) {
-      assert(e, 'http://example.org/a/b.html');
+      assert();
     }
   });
-
-  test('Normalize - Canonicalize URL', function(assert) {
-    try {
-      assert(System.normalize('http://example.org/a/../b.html'), 'http://example.org/b.html');
-    }
-    catch(e) {
-      assert(e, 'http://example.org/b.html')
-    }
-  });
-  */
 
   System.baseURL = 'http://example.org/a/';
 
