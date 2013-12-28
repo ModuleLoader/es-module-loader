@@ -66,6 +66,16 @@ Or we can also use the dynamic loader:
 
 The dynamic loader returns an instance of the `Module` class, which contains getters for the named exports (in this case, `q`).
 
+Note that the dynamic module loader uses promises for resolution. Modules can have both a resolve and reject handler:
+
+```javascript
+  System.import('some-module').then(function(m) {
+    // got Module instance m
+  }, function(err) {
+    // error
+  });
+```
+
 ## Terminology
 
 ### Modules and Module Loaders
@@ -185,18 +195,6 @@ module crypto from 'crypto';            // import an entire module instance obje
 ```
 
 Note that any valid declaration can be exported. In ES6, this includes `class` (as in the example above), `const`, and `let`.
-
-## Dynamic Module Loading
-
-The dynamic module loader uses promises for resolution. Modules can have both a resolve and reject handler:
-
-```javascript
-  System.import('some-module').then(function(m) {
-    // got Module instance m
-  }, function(err) {
-    // error
-  });
-```
 
 ## Paths Implementation
 
@@ -370,7 +368,7 @@ Notes on the exact specification implementation differences are included below.
 
 * With this assumption, instead of Link, LinkDynamicModules is run directly
 
-* ES6 support is thus provided through the translate function of the System loader
+* ES6 support is thus provided through the instantiate function of the System loader
 
 * EnsureEvaluated is removed, but may in future implement dynamic execution pending 
   issue - https://github.com/jorendorff/js-loaders/issues/63
@@ -398,7 +396,7 @@ Notes on the exact specification implementation differences are included below.
 
 * The `<script type="module">` tag is supported, but the `<module>` tag is not
 
-* ondemand / paths functionality currently not yet implemented
+* The implemented ondemand / paths functionality is provisional and subject to change
 
 To follow the current the specification changes, see the marked issues https://github.com/ModuleLoader/es6-module-loader/issues?labels=specification&page=1&state=open.
 
