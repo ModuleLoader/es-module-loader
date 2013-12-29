@@ -329,12 +329,15 @@ function runTests() {
 
   var customLoader = new Loader({
     normalize: function(name, parentName, parentAddress) {
-      return {
-        then: function(resolve, reject) {
-          var normalized = System.normalize(name, parentName, parentAddress);
-          resolve(normalized);
+      return new Promise(function(resolve, reject) {
+        if (name == 'asdfasdf') {
+          return setTimeout(function() {
+            resolve('loader/async-norm');
+          }, 500);
         }
-      };
+        var normalized = System.normalize(name, parentName, parentAddress);
+        resolve(normalized);
+      });
     },
     locate: function(load) {
       if (load.name.substr(0, 5) == 'path/')
@@ -377,6 +380,13 @@ function runTests() {
   test('Custom loader AMD support', function(assert) {
     customLoader.import('loader/amd').then(function(m) {
       assert(m.format, 'amd');
+    });
+  });
+  test('Async Normalize', function(assert) {
+    customLoader.normalize('asdfasdf').then(function(normalized) {
+      return customLoader.import(normalized);
+    }).then(function(m) {
+      assert(m.n, 'n');
     });
   });
 }
