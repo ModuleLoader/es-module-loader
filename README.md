@@ -347,6 +347,7 @@ var MyLoader = new Loader({
 
 For a more in-depth overview of creating with custom loaders, some resources are provided below:
 * The [System Loader implementation](https://github.com/ModuleLoader/es6-module-loader/blob/master/lib/es6-module-loader.js#L804)
+* [ES6 Loader API guide](https://gist.github.com/dherman/7568080)
 * [ES6 Module Specification, latest draft](https://github.com/jorendorff/js-loaders/blob/e60d3651/specs/es6-modules-2013-12-02.pdf)
 * [Yehuda Katz's essay](https://gist.github.com/wycats/51c96e3adcdb3a68cbc3) (outdated)
 
