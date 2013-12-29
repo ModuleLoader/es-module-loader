@@ -173,6 +173,8 @@ function runTests() {
   test('Import ES6 with dep', function(assert) {
     System.import('syntax/es6-withdep').then(function(m) {
       assert(m.p, 'p');
+    }, function(e) {
+      console.log(e);
     });
   });
 
@@ -361,10 +363,11 @@ function runTests() {
     }
   });
 
+
   test('Custom loader standard load', function(assert) {
     customLoader.import('loader/test').then(function(m) {
       assert(m.loader, 'custom');
-    });
+    }).catch(function() {});
   });
   test('Custom loader special rules', function(assert) {
     customLoader.import('path/custom').then(function(m) {
