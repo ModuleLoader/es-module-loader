@@ -368,9 +368,11 @@ function runTests() {
 
 
   test('Custom loader standard load', function(assert) {
-    customLoader.import('loader/test').then(function(m) {
+    var p = customLoader.import('loader/test').then(function(m) {
       assert(m.loader, 'custom');
-    }).catch(function() {});
+    });
+    if (p.catch)
+      p.catch(function() {});
   });
   test('Custom loader special rules', function(assert) {
     customLoader.import('path/custom').then(function(m) {
