@@ -335,6 +335,8 @@ function runTests() {
             resolve('loader/async-norm');
           }, 500);
         }
+        else if (name == 'error')
+          throw 'error';
         var normalized = System.normalize(name, parentName, parentAddress);
         resolve(normalized);
       });
@@ -382,6 +384,11 @@ function runTests() {
   test('Custom loader AMD support', function(assert) {
     customLoader.import('loader/amd').then(function(m) {
       assert(m.format, 'amd');
+    });
+  });
+  test('Custom loader hook error', function(assert) {
+    customLoader.import('error').then(function(m) {}, function(e) {
+      assert(!!e, true);
     });
   });
   test('Async Normalize', function(assert) {
