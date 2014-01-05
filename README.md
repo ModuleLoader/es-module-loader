@@ -275,7 +275,7 @@ For use in NodeJS, the `Module`, `Loader` and `System` globals are provided as e
 ```javascript
   var System = require('es6-module-loader').System;
   
-  System.import('some-module', callback);
+  System.import('some-module').then(callback);
 ```
 
 Traceur support requires `npm install traceur`, allowing ES6 syntax in NodeJS:
@@ -283,7 +283,7 @@ Traceur support requires `npm install traceur`, allowing ES6 syntax in NodeJS:
 ```javascript
   var System = require('es6-module-loader').System;
 
-  System.import('es6-file', function(module) {
+  System.import('es6-file').then(function(module) {
     module.classMethod();
   });
 ```
