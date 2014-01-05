@@ -335,20 +335,43 @@ function runTests() {
             resolve('loader/async-norm');
           }, 500);
         }
-        else if (name == 'error')
-          throw 'error';
+        
+        if (name == 'error1')
+          return setTimeout(function(){ reject('error1'); }, 100);
+
         var normalized = System.normalize(name, parentName, parentAddress);
         resolve(normalized);
       });
     },
     locate: function(load) {
+        if (load.name == 'error2')
+          return new Promise(function(resolve, reject) {
+            setTimeout(function(){ reject('error2'); }, 100);
+          });
+
       if (load.name.substr(0, 5) == 'path/')
         load.name = 'loader/' + load.name.substr(5);
       return System.locate(load);
     },
-    fetch: System.fetch,
-    translate: System.translate,
+    fetch: function(load) {
+      if (load.name == 'error3')
+        throw 'error3';
+      if (load.name == 'error4' || load.name == 'error5')
+        return 'asdf';
+      return System.fetch.apply(this, arguments);
+    },
+    translate: function(load) {
+      if (load.name == 'error4')
+        return new Promise(function(resolve, reject) {
+          setTimeout(function(){ reject('error4'); }, 100);
+        });
+      return System.translate.apply(this, arguments);
+    },
     instantiate: function(load) {
+      if (load.name == 'error5')
+        return new Promise(function(resolve, reject) {
+          setTimeout(function(){ reject('error5'); }, 100);
+        });
       // very bad AMD support
       if (load.source.indexOf('define') == -1)
         return System.instantiate(load);
@@ -386,11 +409,34 @@ function runTests() {
       assert(m.format, 'amd');
     });
   });
-  test('Custom loader hook error', function(assert) {
-    customLoader.import('error').then(function(m) {}, function(e) {
-      assert(!!e, true);
+  test('Custom loader hook - normalize error', function(assert) {
+    customLoader.import('loader/error1-parent').then(function(m) {
+      console.log('got n');
+    }, function(e) {
+      assert(e, 'error1');
     });
   });
+  test('Custom loader hook - locate error', function(assert) {
+    customLoader.import('error2').then(function(m) {}, function(e) {
+      assert(e, 'error2');
+    });
+  });
+  test('Custom loader hook - fetch error', function(assert) {
+    customLoader.import('error3').then(function(m) {}, function(e) {
+      assert(e, 'error3');
+    });
+  });
+  test('Custom loader hook - translate error', function(assert) {
+    customLoader.import('error4').then(function(m) {}, function(e) {
+      assert(e, 'error4');
+    });
+  });
+  test('Custom loader hook - instantiate error', function(assert) {
+    customLoader.import('error5').then(function(m) {}, function(e) {
+      assert(e, 'error5');
+    });
+  });
+
   test('Async Normalize', function(assert) {
     customLoader.normalize('asdfasdf').then(function(normalized) {
       return customLoader.import(normalized);
