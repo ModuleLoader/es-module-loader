@@ -133,6 +133,11 @@ function runTests() {
   test('Locate', System.locate({ name: '@abc/def' }), 'http://example.org/a/@abc/def.js');
   test('Locate', System.locate({ name: 'abc/def' }), 'http://example.org/a/abc/def.js');
 
+  // paths
+  System.paths['path/*'] = '/test/*.js';
+  test('Locate paths', System.locate({ name: 'path/test' }), 'http://example.org/test/test.js');
+
+
   System.baseURL = oldBaseURL;
 
 
@@ -385,7 +390,10 @@ function runTests() {
       return {
         deps: deps,
         execute: function() {
-          return new Module(factory.apply(null, arguments));
+          var deps = [];
+          for (var i = 0; i < arguments.length; i++)
+            deps.push(customLoader.get(arguments[i]));
+          return new Module(factory.apply(null, deps));
         }
       }
     }

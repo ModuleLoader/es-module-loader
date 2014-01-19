@@ -335,7 +335,10 @@ var MyLoader = new Loader({
     // useful for providing AMD and CJS support
     return {
       deps: ['some', 'dependencies'],
-      execute: function(depA, depB) {
+      execute: function(depNameA, depNameB) {
+        // depNameA, depNameB normalized names
+        var depA = MyLoader.get(depNameA);
+        var depB = MyLoader.get(depNameB);
         return new Module({
           some: 'export'
         });
