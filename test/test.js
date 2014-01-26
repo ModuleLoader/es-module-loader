@@ -310,6 +310,14 @@ function runTests() {
     });
   });
 
+  test('Module Name meta', function(assert) {
+    System.import('loader/moduleName').then(function(m) {
+      assert(
+        [m.name, 'loader/moduleName']
+      );
+    })
+  });
+
   test('Custom path', function(assert) {
     System.paths['bar'] = 'loader/custom-path.js';
     System.import('bar').then(function(m) {
