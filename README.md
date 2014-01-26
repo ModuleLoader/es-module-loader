@@ -425,6 +425,7 @@ _Also, please don't edit files in the "dist" subdirectory as they are generated 
 
 ## Credit
 Copyright (c) 2014 Luke Hoban, Addy Osmani, Guy Bedford
+
 Promises Integration from [Promiscuous](https://github.com/RubenVerborgh/promiscuous/), Copyright (c) 2013-2014 Ruben Verborgh, MIT License
 
 ## License
