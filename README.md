@@ -423,6 +423,9 @@ _Also, please don't edit files in the "dist" subdirectory as they are generated 
 * 0.3.0 Traceur support, better error reporting, source maps support, normalization simplifications
 * 0.2.4 NodeJS support, relative normalization fixes, IE8 support
 
+## Credit
+Copyright (c) 2014 Luke Hoban, Addy Osmani, Guy Bedford
+Promises Integration from [Promiscuous](https://github.com/RubenVerborgh/promiscuous/), Copyright (c) 2013-2014 Ruben Verborgh, MIT License
+
 ## License
-Copyright (c) 2012 Luke Hoban, Addy Osmani, Guy Bedford  
 Licensed under the MIT license.
