@@ -414,6 +414,7 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 _Also, please don't edit files in the "dist" subdirectory as they are generated via grunt. You'll find source code in the "lib" subdirectory!_
 
 ## Release History
+* 0.4.2 promises fixes, __moduleName support, btoa language fixes, instantiation using normalized names as arguments
 * 0.4.1 various tests and bug fixes, paths config, native promises support, promises update, export * support without Traceur
 * 0.4.0 Update to revised specification exact algorithm
 * 0.3.3 Traceur parser update, detection regex fixes, better error messages
