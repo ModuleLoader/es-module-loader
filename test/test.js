@@ -283,7 +283,7 @@ function runTests() {
         [m.q, 4],
         [m.z, 5]
       );
-    }, function(err) {
+    }).catch(function(err) {
       console.log('error');
       console.log(err);
     });
@@ -428,7 +428,7 @@ function runTests() {
   test('Custom loader hook - normalize error', function(assert) {
     customLoader.import('loader/error1-parent').then(function(m) {
       console.log('got n');
-    }, function(e) {
+    }).catch(function(e) {
       assert(e, 'error1');
     });
   });
