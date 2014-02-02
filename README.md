@@ -306,46 +306,67 @@ Variations of these hooks can allow creating many different styles of loader.
 
 Each hook can either return a result directly, or a promise (thenable) for the result.
 
+To use custom loader hooks, one would typically override the System loader hooks on the `System` global directly:
+
+```javascript
+  // store the old normalization function
+  var systemNormalize = System.normalize.bind(System);
+  // override the normalization function
+  System.normalize = function(name, parentName, parentAddress) {
+    if (name == 'my/custom/rule')
+      return 'custom/name';
+    else
+      return systemNormalize(name, parentName, parentAddress);
+  }
+```
+
+This is the recommended way of overriding the loader.
+
+The signatures for all the loader hooks is provided below:
+
 To create a new loader, use the `Loader` constructor:
 
 ```javascript
-var MyLoader = new Loader({
-  normalize: function (name, parentName, parentAddress) {
-    return resolvedName;
-  },
-  locate: function (load) {
-    // load.name is normalized name
-    return this.baseURL + '/' + load.name + '.js';
-  },
-  fetch: function (load) {
-    // return a promise. Alternatively, just use the system fetch
-    // promise -return System.fetch(load)
-    var defer = MyPromiseLibrary.createDeferred();
-    myXhr.get(load.address, defer.resolve, defer.reject);
-    return defer.promise;
-  },
-  translate: function (load) {
-    return load.source;
-  },
-  instantiate: function (load) {
-    // use standard es6 linking
-    return System.instantiate(load);
 
-    // provide custom linking
-    // useful for providing AMD and CJS support
-    return {
-      deps: ['some', 'dependencies'],
-      execute: function(depNameA, depNameB) {
-        // depNameA, depNameB normalized names
-        var depA = MyLoader.get(depNameA);
-        var depB = MyLoader.get(depNameB);
-        return new Module({
-          some: 'export'
-        });
-      }
-    };
-  }
-});
+function normalize(name, parentName, parentAddress) {
+  return resolvedName;
+}
+
+function locate(load) {
+  // load.name is normalized name
+  return this.baseURL + '/' + load.name + '.js';
+}
+
+function fetch(load) {
+  // return a promise. Alternatively, just use the system fetch
+  // promise -return System.fetch(load)
+  var defer = MyPromiseLibrary.createDeferred();
+  myXhr.get(load.address, defer.resolve, defer.reject);
+  return defer.promise;
+}
+
+function translate(load) {
+  return load.source;
+}
+
+function instantiate(load) {
+  // use standard es6 linking
+  return System.instantiate(load);
+
+  // provide custom linking
+  // useful for providing AMD and CommonJS support
+  return {
+    deps: ['some', 'dependencies'],
+    execute: function(depNameA, depNameB) {
+      // depNameA, depNameB normalized names
+      var depA = System.get(depNameA);
+      var depB = System.get(depNameB);
+      return new Module({
+        some: 'export'
+      });
+    }
+  };
+}
 ```
 
 For a more in-depth overview of creating with custom loaders, some resources are provided below:
@@ -406,7 +427,7 @@ To follow the current the specification changes, see the marked issues https://g
 
 ## Projects using us
 
-* [JSPM Loader](https://github.com/jspm/jspm-loader/) is a RequireJS-style loader using our polyfill to load ES6, AMD, CommonJS and global modules 
+* [SystemJS](https://github.com/guybedford/systemjs) provides the `System` loader with AMD, CommonJS and global module support, as well as semver version management and a RequireJS-style plugin system and map configuration.
 
 ## Contributing
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [grunt](https://github.com/cowboy/grunt).
