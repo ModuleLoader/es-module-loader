@@ -2,23 +2,27 @@
 
 _Fully up to date with the latest specification_
 
-The new ES6 module specification defines a module system in JavaScript using `import` and `export` syntax, along with a module loader factory (`new Loader`).
+Dynamically loads ES6 modules in NodeJS and current browsers.
 
-A separate browser specification defines the `window.System` loader, a dynamic browser loader for JavaScript modules, as well as a new `<module>` tag (`<script type="module">` for compatibility with existing browsers).
-
-This polyfill implements the `Loader` and `Module` globals, exactly as specified in the [2013-12-02 ES6 Module Specification Draft](https://github.com/jorendorff/js-loaders/blob/e60d3651/specs/es6-modules-2013-12-02.pdf) and the `System` browser loader exactly as suggested in the [sample implementation](https://github.com/jorendorff/js-loaders/blob/964623c75d/browser-loader.js).
-
-The complete combined polyfill comes to 16KB minified, making it suitable for production use in future, provided that modules are built into ES5 making them independent of Traceur. Build workflows are currently in progress.
+The complete combined polyfill comes to 16KB minified, making it suitable for production use, provided that modules are built into ES5 making them independent of Traceur. Build workflows are currently in progress.
 
 * Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#getting-started) in all modern browsers including IE8+
 * Adds support for the `<script type="module">` tag allowing inline module loading.
 * Uses [Traceur](https://github.com/google/traceur-compiler) for compiling ES6 modules and syntax into ES5 in the browser with source map support
-* Use as a base for creating a [custom spec-compliant module loader](#creating-a-custom-loader)
+* Loader hooks can be used to [extend the System loader with custom functionality](#creating-a-custom-loader)
 * Fully compatible with NodeJS allowing for spec-compliant server-side module loading
 
-_Not yet suitable for production use while the specification is still subject to change._
-
 See the [demo folder](https://github.com/ModuleLoader/es6-module-loader/blob/master/demo/index.html) in this repo for a working example demonstrating both module loading the module tag.
+
+_Note that while the specification draft has been written, it is still subject to change._
+
+## Background
+
+The new ES6 module specification defines a module system in JavaScript using `import` and `export` syntax. For dynamically loading modules, a dynamic module loader factory is also included in the specification (`new Loader`).
+
+A separate browser specification defines a dynamic ES6 module loader loader for the browser, `window.System`, as well as a `<script type="module">` tag for using modules.
+
+This polyfill implements the `Loader` and `Module` globals, exactly as specified in the [2013-12-02 ES6 Module Specification Draft](https://github.com/jorendorff/js-loaders/blob/e60d3651/specs/es6-modules-2013-12-02.pdf) and the `System` browser loader exactly as suggested in the [sample implementation](https://github.com/jorendorff/js-loaders/blob/964623c75d/browser-loader.js).
 
 ## Getting Started
 
