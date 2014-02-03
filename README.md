@@ -431,7 +431,7 @@ To follow the current the specification changes, see the marked issues https://g
 
 ## Projects using us
 
-* [SystemJS](https://github.com/guybedford/systemjs) provides the `System` loader with AMD, CommonJS and global module support, as well as semver version management and a RequireJS-style plugin system and map configuration.
+* [SystemJS](https://github.com/systemjs/systemjs) provides the `System` loader with AMD, CommonJS and global module support, as well as semver version management and a RequireJS-style plugin system and map configuration.
 
 ## Contributing
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [grunt](https://github.com/cowboy/grunt).
