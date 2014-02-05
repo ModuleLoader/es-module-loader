@@ -1,7 +1,5 @@
 # ES6 Module Loader Polyfill
 
-_Fully up to date with the latest specification_
-
 Dynamically loads ES6 modules in NodeJS and current browsers.
 
 The complete combined polyfill comes to 16KB minified, making it suitable for production use, provided that modules are built into ES5 making them independent of Traceur. Build workflows are currently in progress.
