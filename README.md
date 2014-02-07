@@ -93,7 +93,7 @@ load a new module. This module can then share dependencies with the initial page
 
 The ES6 Module Specification defines the module syntax for ES6 module files, and also defines a module loader factory class for creating ES6-compatible module loaders.
 
-Module code is treated differently to scripts due to the nature of exports and imports. This is why the `<script type="module">` tag (which will become the `<module>` tag in modern browsers) is introduced to distinguish script code from module code. Scripts cannot export or import, but are able to use the dynamic loader `System.import(...)`.
+Module code is treated differently to scripts due to the nature of exports and imports. This is why the `<script type="module">` tag is introduced to distinguish script code from module code. Scripts cannot export or import, but are able to use the dynamic loader `System.import(...)`.
 
 ### Module Names and baseURL
 
@@ -387,51 +387,7 @@ For a more in-depth overview of creating with custom loaders, some resources are
 
 ## Specification Notes
 
-Notes on the exact specification implementation differences are included below.
-
-### Loader Polyfill
-
-* Implemented exactly to the 2013-12-02 Specification Draft -
-  https://github.com/jorendorff/js-loaders/blob/e60d3651/specs/es6-modules-2013-12-02.pdf
-  with the only exceptions as described here
-
-* Abstract functions have been combined where possible, and their associated functions 
-  commented
-
-* Declarative Module Support is entirely disabled, and an error will be thrown if 
-  the instantiate loader hook returns undefined
-
-* With this assumption, instead of Link, LinkDynamicModules is run directly
-
-* ES6 support is thus provided through the instantiate function of the System loader
-
-* EnsureEvaluated is removed, but may in future implement dynamic execution pending 
-  issue - https://github.com/jorendorff/js-loaders/issues/63
-
-* Realm implementation is entirely omitted. As such, Loader.global and Loader.realm
-  accessors will throw errors, as well as Loader.eval
-
-* Loader module table iteration currently not yet implemented
-
-### System Loader Implementation
-
-* Implemented to https://github.com/jorendorff/js-loaders/blob/master/browser-loader.js,
-  except for Instantiate function
-
-* Instantiate function determines if ES6 module syntax is being used, if so parses with 
-  Traceur and returns a dynamic InstantiateResult for loading ES6 module syntax in ES5.
-
-* Custom loaders thus can be implemented by using this System.instantiate function as 
-  the fallback loading scenario, after other module format detections.
-
-* Traceur is loaded dynamically when module syntax is detected by a regex (with over-
-  classification), either from require('traceur') on the server, or the 
-  'data-traceur-src' property on the current script in the browser, or if not set, 
-  'traceur.js' in the same URL path as the current script in the browser.
-
-* The `<script type="module">` tag is supported, but the `<module>` tag is not
-
-* The implemented ondemand / paths functionality is provisional and subject to change
+See the source of https://github.com/ModuleLoader/es6-module-loader/blob/master/lib/es6-module-loader.js, which contains comments detailing the exact specification notes and design decisions.
 
 To follow the current the specification changes, see the marked issues https://github.com/ModuleLoader/es6-module-loader/issues?labels=specification&page=1&state=open.
 
