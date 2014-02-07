@@ -123,7 +123,7 @@ In CommonJS one might write:
 ```javascript
   exports.someMethod = function() {
 
-  }
+  };
 
   exports.another = {};
 ```
