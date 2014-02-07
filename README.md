@@ -8,9 +8,9 @@ The complete combined polyfill comes to 16KB minified, making it suitable for pr
 * Adds support for the `<script type="module">` tag allowing inline module loading.
 * Uses [Traceur](https://github.com/google/traceur-compiler) for compiling ES6 modules and syntax into ES5 in the browser with source map support
 * Loader hooks can be used to [extend the System loader with custom functionality](#creating-a-custom-loader)
-* Fully compatible with NodeJS allowing for spec-compliant server-side module loading
+* Fully [compatible with NodeJS](#nodejs-support) allowing for spec-compliant server-side module loading
 
-See the [demo folder](https://github.com/ModuleLoader/es6-module-loader/blob/master/demo/index.html) in this repo for a working example demonstrating both module loading the module tag.
+See the [demo folder](https://github.com/ModuleLoader/es6-module-loader/blob/master/demo/index.html) in this repo for a working example demonstrating both module loading the module tag in the browser.
 
 _Note that while the specification draft has been written, it is still subject to change._
 
