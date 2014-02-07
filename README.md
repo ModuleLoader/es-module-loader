@@ -292,8 +292,10 @@ some-module.js:
   export var p = 'NodeJS test';
 ```
 
+Running the application:
 ```
-  node index.js // NodeJS test
+> node index.js
+NodeJS test
 ```
 
 ### Custom Traceur Location
