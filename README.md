@@ -272,22 +272,28 @@ A named module is just like an anonymous module, but defines the module in the r
 
 ## NodeJS Support
 
+```
+  npm install es6-module-loader
+```
+
 For use in NodeJS, the `Module`, `Loader` and `System` globals are provided as exports:
 
+index.js:
 ```javascript
   var System = require('es6-module-loader').System;
   
-  System.import('some-module').then(callback);
+  System.import('some-module').then(function(m) {
+    console.log(m.p);
+  });
 ```
 
-Traceur support requires `npm install traceur`, allowing ES6 syntax in NodeJS:
-
+some-module.js:
 ```javascript
-  var System = require('es6-module-loader').System;
+  export var p = 'NodeJS test';
+```
 
-  System.import('es6-file').then(function(module) {
-    module.classMethod();
-  });
+```
+  node index.js // NodeJS test
 ```
 
 ### Custom Traceur Location
