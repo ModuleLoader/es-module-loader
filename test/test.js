@@ -167,6 +167,14 @@ function runTests() {
     });
   });
 
+  test('Import a script once loaded', function(assert) {
+    System.import('syntax/script').then(function(m) {
+      System.import('syntax/script').then(function(m) {
+        assert(!!m, true);
+      });
+    });
+  });
+
   test('Import ES6', function(assert) {
     System.import('syntax/es6').then(function(m) {
       assert(m.p, 'p');
