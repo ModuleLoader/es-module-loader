@@ -4,7 +4,7 @@ Dynamically loads ES6 modules in NodeJS and current browsers.
 
 The complete combined polyfill comes to 16KB minified, making it suitable for production use, provided that modules are built into ES5 making them independent of Traceur. Build workflows are currently in progress.
 
-* Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#getting-started) in all modern browsers including IE8+
+* Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#getting-started) in all modern browsers including IE9+.
 * Adds support for the `<script type="module">` tag allowing inline module loading.
 * Uses [Traceur](https://github.com/google/traceur-compiler) for compiling ES6 modules and syntax into ES5 in the browser with source map support
 * Loader hooks can be used to [extend the System loader with custom functionality](#creating-a-custom-loader)
