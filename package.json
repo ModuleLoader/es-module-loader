@@ -24,7 +24,8 @@
   "devDependencies": {
     "grunt": "~0.4.1",
     "grunt-contrib-uglify": "~0.2.2",
-    "grunt-contrib-jshint": "~0.6.0"
+    "grunt-contrib-jshint": "~0.6.0",
+    "grunt-contrib-concat": "~0.3.0"
   },
   "keywords": [
     "script",
@@ -37,7 +38,7 @@
   },
   "main": "lib/es6-module-loader",
   "scripts": {
-    "test": "grunt test"
+    "test": "node test/test"
   },
   "files": [
     "lib/es6-module-loader.js"
