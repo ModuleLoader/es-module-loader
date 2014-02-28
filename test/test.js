@@ -51,7 +51,7 @@ if (typeof window != 'undefined') {
 }
 else {
   // nodejs
-  var ml = require('../lib/es6-module-loader');
+  var ml = require('../lib');
 
   System = ml.System;
   Loader = ml.Loader;

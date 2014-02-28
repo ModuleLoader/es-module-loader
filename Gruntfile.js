@@ -9,12 +9,35 @@ module.exports = function (grunt) {
         ' *  Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>;' +
         ' Licensed <%= _.pluck(pkg.licenses, "type").join(", ") %>\n */\n'
     },
+    jshint: {
+      options: {
+        jshintrc: '.jshintrc'
+      },
+      dist: [
+        'lib/index.js',
+        'lib/promise.js',
+        'lib/module.js',
+        'lib/loader.js',
+        'lib/system.js'
+      ]
+    },
+    concat: {
+      dist: {
+        src: [
+            'lib/promise.js',
+            'lib/module.js',
+            'lib/loader.js',
+            'lib/system.js'
+        ],
+        dest: 'tmp/<%= pkg.name %>.js'
+      }
+    },
     uglify: {
       options: {
         banner: '<%= meta.banner %>'
       },
       dist: {
-          src: 'lib/<%= pkg.name %>.js',
+          src: 'tmp/<%= pkg.name %>.js',
           dest: 'dist/<%= pkg.name %>.js'
       },
       traceur: {
@@ -24,20 +47,13 @@ module.exports = function (grunt) {
           src: 'lib/traceur.js',
           dest: 'dist/traceur.js'
       }
-    },
-    jshint: {
-      options: {
-        jshintrc: '.jshintrc'
-      },
-      dist: [
-        'lib/es6-module-loader.js',
-        'test/es6-module-loader_test.js'
-      ]
     }
   });
 
+  grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-uglify');
 
-  grunt.registerTask('default', [/*'jshint', */'uglify']);
+  grunt.registerTask('lint', ['jshint']);
+  grunt.registerTask('default', [/*'jshint', */'concat', 'uglify']);
 };
