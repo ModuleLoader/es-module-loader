@@ -11,7 +11,14 @@
   <!-- <script src="promise-0.1.1.js"></script> -->
 
   <script src="test.js"></script>
-  <script src="../dist/es6-module-loader.js" data-init="runTests"></script>
+
+
+  <script src="../lib/traceur.js"></script>
+  <script src="../lib/es6-module-loader.js"></script>
+
+  <script>
+    runTests();
+  </script>
 
   <script type="module" name="named-module">
     class q {
