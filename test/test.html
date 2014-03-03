@@ -14,7 +14,7 @@
 
 
   <script src="../lib/traceur.js"></script>
-  <script src="../lib/es6-module-loader.js"></script>
+  <script src="../tmp/es6-module-loader.js"></script>
 
   <script>
     runTests();
@@ -48,6 +48,10 @@
       test('Named &lt;script type="module"> tag', function(assert) {
         System.import('named-module').then(function(m) {
           assert(m.p, 'hi');
+        }, function(e) {
+          setTimeout(function() {
+            throw e;
+          }, 1);
         });
       });
       test('Anonymous &lt;script type="module"> tag', function(assert) {

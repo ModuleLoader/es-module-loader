@@ -187,7 +187,9 @@ function runTests() {
     System.import('syntax/es6-withdep').then(function(m) {
       assert(m.p, 'p');
     }, function(e) {
-      console.log(e);
+      setTimeout(function() {
+        throw e;
+      }, 1);
     });
   });
 
@@ -306,6 +308,10 @@ function runTests() {
         [m.d, 4],
         [typeof m.q.foo, 'function']
       );
+    }).catch(function(e) {
+      setTimeout(function() {
+        throw e;
+      }, 1);
     });
   });
 
