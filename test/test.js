@@ -353,7 +353,6 @@ function runTests() {
     });
   });
 
-
   var customLoader = new Loader({
     normalize: function(name, parentName, parentAddress) {
       return new Promise(function(resolve, reject) {
@@ -421,7 +420,6 @@ function runTests() {
     }
   });
 
-
   test('Custom loader standard load', function(assert) {
     var p = customLoader.import('loader/test').then(function(m) {
       assert(m.loader, 'custom');
@@ -437,6 +435,10 @@ function runTests() {
   test('Custom loader AMD support', function(assert) {
     customLoader.import('loader/amd').then(function(m) {
       assert(m.format, 'amd');
+    }).catch(function(e) {
+      setTimeout(function() {
+        throw e;
+      }, 1);
     });
   });
   test('Custom loader hook - normalize error', function(assert) {
