@@ -399,6 +399,7 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 _Also, please don't edit files in the "dist" subdirectory as they are generated via grunt. You'll find source code in the "lib" subdirectory!_
 
 ## Release History
+* 0.5.1 Minor fixes and adjustment, Traceur transform bug fix, remove alias handling code
 * 0.5.0 Traceur update and separation, deferred execution pipeline, IE9 compatibility fixes, code separation
 * 0.4.3 ES6 detection fix, Traceur runtime inclusion
 * 0.4.2 promises fixes, __moduleName support, btoa language fixes, instantiation using normalized names as arguments
