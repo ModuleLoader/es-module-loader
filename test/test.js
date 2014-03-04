@@ -278,7 +278,7 @@ function runTests() {
         [m.p, 5],
         [typeof m.foo, 'function'],
         [typeof m.q, 'object'],
-        [typeof m.default, 'function'],
+        [typeof m['default'], 'function'],
         [m.s, 4],
         [m.t, 4],
         [typeof m.m, 'object']
