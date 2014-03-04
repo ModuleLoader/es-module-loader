@@ -38,7 +38,12 @@ if (typeof window != 'undefined') {
   tests = {
     addTest: function(id, name) {
       var p = document.createElement('tr');
-      p.innerHTML = '<td>' + name + '</td><td class="result-' + id + '"></td>'
+      var td = document.createElement('td');
+      td.innerHTML = name;
+      p.appendChild(td);
+      td = document.createElement('td');
+      td.className = 'result-' + id;
+      p.appendChild(td);
       document.querySelector('.test tbody').appendChild(p);
     },
     completeTest: function(id, name, failure, summary) {
@@ -273,7 +278,7 @@ function runTests() {
         [m.p, 5],
         [typeof m.foo, 'function'],
         [typeof m.q, 'object'],
-        [m.default.name, 'bar'],
+        [typeof m.default, 'function'],
         [m.s, 4],
         [m.t, 4],
         [typeof m.m, 'object']
@@ -302,7 +307,7 @@ function runTests() {
   test('Import Syntax', function(assert) {
     System.import('syntax/import').then(function(m) {
       assert(
-        [m.a.name, 'bar'],
+        [typeof m.a, 'function'],
         [m.b, 4],
         [m.c, 5],
         [m.d, 4],
