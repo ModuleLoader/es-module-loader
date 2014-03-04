@@ -2,15 +2,17 @@
 
 Dynamically loads ES6 modules in NodeJS and current browsers.
 
-The complete combined polyfill comes to 16KB minified, making it suitable for production use, provided that modules are built into ES5 making them independent of Traceur. Build workflows are currently in progress.
+The complete combined polyfill comes to 15KB minified, making it suitable for production use, provided that modules are built into ES5 making them independent of Traceur. Build workflows are currently in progress.
 
 * Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#getting-started) in all modern browsers including IE9+.
-* Adds support for the `<script type="module">` tag allowing inline module loading.
 * Uses [Traceur](https://github.com/google/traceur-compiler) for compiling ES6 modules and syntax into ES5 in the browser with source map support
+* Adds support for the `<script type="module">` tag allowing inline module loading.
 * Loader hooks can be used to [extend the System loader with custom functionality](#creating-a-custom-loader)
-* Fully [compatible with NodeJS](#nodejs-support) allowing for spec-compliant server-side module loading
+* [Compatible with NodeJS](#nodejs-support) allowing for server-side module loading
 
 See the [demo folder](https://github.com/ModuleLoader/es6-module-loader/blob/master/demo/index.html) in this repo for a working example demonstrating both module loading the module tag in the browser.
+
+For an example of a universal module loader based on this polyfill for loading AMD, CommonJS and globals, see [SystemJS](https://github.com/systemjs/systemjs).
 
 _Note that while the specification draft has been written, it is still subject to change._
 
@@ -26,13 +28,17 @@ This polyfill implements the `Loader` and `Module` globals, exactly as specified
 
 Download both [es6-module-loader.js](https://raw.github.com/ModuleLoader/es6-module-loader/master/dist/es6-module-loader.js) and [traceur.js](https://raw.github.com/ModuleLoader/es6-module-loader/master/lib/traceur.js) into the same folder.
 
-Then include the `es6-module-loader.js` file on its own in the page:
+If using ES6 syntax (optional), include Traceur in the page first:
+
+```html
+  <script src="traceur.js"></script>
+```
+
+Then include `es6-module-loader.js`:
 
 ```html
   <script src="es6-module-loader.js"></script>
 ```
-
-Traceur will be downloaded only when needed for ES6 syntax parsing, detected as the existence of module syntax, or as specified by the `metadata.es6 = true` property.
 
 Write an ES6 module:
 
@@ -298,10 +304,6 @@ Running the application:
 NodeJS test
 ```
 
-### Custom Traceur Location
-
-To set a custom path to the Traceur parser, specify the `data-traceur-src` attribute on the `<script>` tag used to include the module loader.
-
 ## Creating a Custom Loader
 
 The ES6 specification defines a loader through five hooks:
@@ -391,16 +393,13 @@ See the source of https://github.com/ModuleLoader/es6-module-loader/blob/master/
 
 To follow the current the specification changes, see the marked issues https://github.com/ModuleLoader/es6-module-loader/issues?labels=specification&page=1&state=open.
 
-## Projects using us
-
-* [SystemJS](https://github.com/systemjs/systemjs) provides the `System` loader with AMD, CommonJS and global module support, as well as semver version management and a RequireJS-style plugin system and map configuration.
-
 ## Contributing
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [grunt](https://github.com/cowboy/grunt).
 
 _Also, please don't edit files in the "dist" subdirectory as they are generated via grunt. You'll find source code in the "lib" subdirectory!_
 
 ## Release History
+* 0.5.0 Traceur update and separation, deferred execution pipeline, IE9 compatibility fixes, code separation
 * 0.4.3 ES6 detection fix, Traceur runtime inclusion
 * 0.4.2 promises fixes, __moduleName support, btoa language fixes, instantiation using normalized names as arguments
 * 0.4.1 various tests and bug fixes, paths config, native promises support, promises update, export * support without Traceur
