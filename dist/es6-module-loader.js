@@ -1,5 +1,5 @@
 /*
- *  es6-module-loader v0.5.0
+ *  es6-module-loader v0.5.1
  *  https://github.com/ModuleLoader/es6-module-loader
  *  Implemented to the 2013-12-02 ES6 module specification draft
  *  Copyright (c) 2014 Guy Bedford, Luke Hoban, Addy Osmani; Licensed MIT
