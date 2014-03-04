@@ -1,7 +1,7 @@
 {
   "name": "es6-module-loader",
   "description": "An ES6 Module Loader shim",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "homepage": "https://github.com/ModuleLoader/es6-module-loader",
   "author": {
     "name": "Guy Bedford, Luke Hoban, Addy Osmani",
@@ -36,7 +36,7 @@
   "engines": {
     "node": ">=0.8.0"
   },
-  "main": "lib/es6-module-loader",
+  "main": "lib/index",
   "scripts": {
     "test": "node test/test"
   },
