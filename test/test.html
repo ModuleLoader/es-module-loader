@@ -46,7 +46,7 @@
   <script>
     setTimeout(function() {
       test('Named &lt;script type="module"> tag', function(assert) {
-        System.import('named-module').then(function(m) {
+        System['import']('named-module').then(function(m) {
           assert(m.p, 'hi');
         }, function(e) {
           setTimeout(function() {
