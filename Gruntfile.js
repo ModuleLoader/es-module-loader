@@ -16,7 +16,6 @@ module.exports = function (grunt) {
       dist: [
         'lib/index.js',
         'lib/promise.js',
-        'lib/module.js',
         'lib/loader.js',
         'lib/system.js'
       ]
