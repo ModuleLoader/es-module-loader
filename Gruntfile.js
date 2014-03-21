@@ -41,7 +41,10 @@ module.exports = function (grunt) {
     },
     uglify: {
       options: {
-        banner: '<%= meta.banner %>'
+        banner: '<%= meta.banner %>',
+        compress: {
+          drop_console: true
+        }
       },
       dist: {
         src: 'tmp/<%= pkg.name %>.js',
@@ -49,7 +52,10 @@ module.exports = function (grunt) {
       },
       traceur: {
         options: {
-          banner: '/*\n  Traceur Compiler 0.0.25 - https://github.com/google/traceur-compiler \n*/\n'
+          banner: '/*\n  Traceur Compiler 0.0.25 - https://github.com/google/traceur-compiler \n*/\n',
+          compress: {
+            drop_console: false
+          }
         },
         src: 'lib/traceur.js',
         dest: 'dist/traceur.js'
