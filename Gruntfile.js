@@ -7,7 +7,7 @@ module.exports = function (grunt) {
         '<%= pkg.homepage ? " *  " + pkg.homepage + "\\n" : "" %>' +
         ' *  Implemented to the 2013-12-02 ES6 module specification draft\n' +
         ' *  Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>;' +
-        ' Licensed <%= _.pluck(pkg.licenses, "type").join(", ") %>\n */\n'
+        ' Licensed <%= _.pluck(pkg.licenses, "type").join(", ") %>\n */'
     },
     jshint: {
       options: {
@@ -41,18 +41,22 @@ module.exports = function (grunt) {
     },
     uglify: {
       options: {
-        banner: '<%= meta.banner %>',
+        banner: '<%= meta.banner %>\n',
         compress: {
           drop_console: true
         }
       },
       dist: {
+        options: {
+          banner: '<%= meta.banner %>\n'
+          + '/*\n *  ES6 Promises shim from when.js, Copyright (c) 2010-2014 Brian Cavalier, John Hann, MIT License\n */\n'
+        },
         src: 'tmp/<%= pkg.name %>.js',
         dest: 'dist/<%= pkg.name %>.js'
       },
       traceur: {
         options: {
-          banner: '/*\n  Traceur Compiler 0.0.25 - https://github.com/google/traceur-compiler \n*/\n',
+          banner: '/*\n * Traceur Compiler 0.0.25 - https://github.com/google/traceur-compiler \n */\n',
           compress: {
             drop_console: false
           }
