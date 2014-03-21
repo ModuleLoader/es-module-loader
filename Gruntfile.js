@@ -54,16 +54,6 @@ module.exports = function (grunt) {
         src: 'tmp/<%= pkg.name %>.js',
         dest: 'dist/<%= pkg.name %>.js'
       },
-      traceur: {
-        options: {
-          banner: '/*\n * Traceur Compiler 0.0.25 - https://github.com/google/traceur-compiler \n */\n',
-          compress: {
-            drop_console: false
-          }
-        },
-        src: 'lib/traceur.js',
-        dest: 'dist/traceur.js'
-      },
       polyfillOnly: {
         src: 'tmp/<%= pkg.name %>-sans-promises.js',
         dest: 'dist/<%= pkg.name %>-sans-promises.js'
