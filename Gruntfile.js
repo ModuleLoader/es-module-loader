@@ -23,12 +23,20 @@ module.exports = function (grunt) {
     concat: {
       dist: {
         src: [
-            'lib/promise.js',
-            'lib/module.js',
-            'lib/loader.js',
-            'lib/system.js'
+          'lib/promise.js',
+          'lib/module.js',
+          'lib/loader.js',
+          'lib/system.js'
         ],
         dest: 'tmp/<%= pkg.name %>.js'
+      },
+      polyfillOnly: {
+        src: [
+          'lib/module.js',
+          'lib/loader.js',
+          'lib/system.js'
+        ],
+        dest: 'tmp/<%= pkg.name %>-sans-promises.js'
       }
     },
     uglify: {
@@ -36,15 +44,19 @@ module.exports = function (grunt) {
         banner: '<%= meta.banner %>'
       },
       dist: {
-          src: 'tmp/<%= pkg.name %>.js',
-          dest: 'dist/<%= pkg.name %>.js'
+        src: 'tmp/<%= pkg.name %>.js',
+        dest: 'dist/<%= pkg.name %>.js'
       },
       traceur: {
-          options: {
-            banner: '/*\n  Traceur Compiler 0.0.25 - https://github.com/google/traceur-compiler \n*/\n'
-          },
-          src: 'lib/traceur.js',
-          dest: 'dist/traceur.js'
+        options: {
+          banner: '/*\n  Traceur Compiler 0.0.25 - https://github.com/google/traceur-compiler \n*/\n'
+        },
+        src: 'lib/traceur.js',
+        dest: 'dist/traceur.js'
+      },
+      polyfillOnly: {
+        src: 'tmp/<%= pkg.name %>-sans-promises.js',
+        dest: 'dist/<%= pkg.name %>-sans-promises.js'
       }
     }
   });
