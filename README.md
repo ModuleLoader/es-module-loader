@@ -2,13 +2,14 @@
 
 Dynamically loads ES6 modules in NodeJS and current browsers.
 
-The complete combined polyfill comes to 15KB minified, making it suitable for production use, provided that modules are built into ES5 making them independent of Traceur. Build workflows are currently in progress.
-
 * Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#getting-started) in all modern browsers including IE9+.
 * Uses [Traceur](https://github.com/google/traceur-compiler) for compiling ES6 modules and syntax into ES5 in the browser with source map support
 * Adds support for the `<script type="module">` tag allowing inline module loading.
 * Loader hooks can be used to [extend the System loader with custom functionality](#creating-a-custom-loader)
 * [Compatible with NodeJS](#nodejs-support) allowing for server-side module loading
+* Polyfills ES6 Promises in the browser with a bundled [when.js](https://github.com/cujojs/when/blob/master/docs/es6-promise-shim.md) implementation.
+
+The complete combined polyfill comes to 22KB minified, making it suitable for production use, provided that modules are built into ES5 making them independent of Traceur. Build workflows are currently in progress.
 
 See the [demo folder](https://github.com/ModuleLoader/es6-module-loader/blob/master/demo/index.html) in this repo for a working example demonstrating both module loading the module tag in the browser.
 
@@ -351,10 +352,9 @@ function locate(load) {
 
 function fetch(load) {
   // return a promise. Alternatively, just use the system fetch
-  // promise -return System.fetch(load)
-  var defer = MyPromiseLibrary.createDeferred();
-  myXhr.get(load.address, defer.resolve, defer.reject);
-  return defer.promise;
+  return new Promise(function(resolve, reject) {
+    myXhr.get(load.address, resolve, reject);
+  });
 }
 
 function translate(load) {
@@ -414,7 +414,7 @@ _Also, please don't edit files in the "dist" subdirectory as they are generated 
 ## Credit
 Copyright (c) 2014 Luke Hoban, Addy Osmani, Guy Bedford
 
-Promises Integration from [Promiscuous](https://github.com/RubenVerborgh/promiscuous/), Copyright (c) 2013-2014 Ruben Verborgh, MIT License
+ES6 Promises integration from [when.js](https://github.com/cujojs/when/blob/master/docs/es6-promise-shim.md), Copyright (c) 2010-2014 Brian Cavalier, John Hann, MIT License
 
 ## License
 Licensed under the MIT license.
