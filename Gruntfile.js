@@ -5,7 +5,7 @@ module.exports = function (grunt) {
     meta: {
       banner: '/*\n *  <%= pkg.name %> v<%= pkg.version %>\n' +
         '<%= pkg.homepage ? " *  " + pkg.homepage + "\\n" : "" %>' +
-        ' *  Implemented to the 2013-12-02 ES6 module specification draft\n' +
+        ' *  Implemented to the Jan 20 2014 ES6 specification draft rev 22\n' +
         ' *  Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>;' +
         ' Licensed <%= _.pluck(pkg.licenses, "type").join(", ") %>\n */'
     },

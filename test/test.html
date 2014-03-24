@@ -5,7 +5,6 @@
 
   <script src="test.js"></script>
 
-
   <!-- set this to the path to traceur.js -->
   <script src="../node_modules/traceur/bin/traceur.js"></script>
 
@@ -14,8 +13,10 @@
     // delete window.Promise;
   </script>
 
+  <script src="../lib/loader.js"></script>
+  <script src="../lib/system.js"></script>
+
   <script>
-    // test promise polyfill
     // delete window.Promise;
   </script>
 
@@ -24,14 +25,11 @@
   <script src="../lib/loader.js"></script>
   <script src="../lib/system.js"></script>
 
-  <!-- run Grunt first to create this file -->
-  <script src="../dist/es6-module-loader.js"></script>
-
   <script>
     runTests();
   </script>
 
-  <script type="module" name="named-module">
+  <!-- <script type="module" name="named-module">
     class q {
       constructor() {
         this.p = 'hi';
@@ -47,11 +45,12 @@
       }
     }
   </script>
-
+  -->
   <!-- 
   Not yet supported
   <script type="module" src="loader/anon.js"></script> 
   -->
+  <!--
   <script type="module" name="named" src="loader/named.js"></script>
 
   <script>
@@ -76,4 +75,5 @@
       });
     }, 500);
   </script>
+  -->
 

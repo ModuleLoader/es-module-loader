@@ -29,6 +29,10 @@ var test = function(name, initialize) {
     else
       passed++;
     tests.completeTest(testId, name, failure, { passed: passed, failed: failed, total: testCnt });
+  }, function(err) {
+    setTimeout(function() {
+      throw err;
+    });
   });
 }
 
@@ -79,10 +83,10 @@ else {
 
 function runTests() {
   // Normalize tests - identical to https://github.com/google/traceur-compiler/blob/master/test/unit/runtime/System.js
-
+  
   var oldBaseURL = System.baseURL;
   System.baseURL = 'http://example.org/a/b.html';
-
+  
   test('Normalize - No Referer', System.normalize('d/e/f'), 'd/e/f');
   // test('Normalize - Below baseURL', System.normalize('../e/f'), '../e/f');
 
@@ -170,38 +174,32 @@ function runTests() {
   });
 
 
-  test('Import a script', function(assert) {
+  test('Import a script', function(assert, err) {
     System['import']('syntax/script').then(function(m) {
       assert(!!m, true);
-    });
+    }, err);
   });
 
-  test('Import a script once loaded', function(assert) {
+  test('Import a script once loaded', function(assert, err) {
     System['import']('syntax/script').then(function(m) {
       System['import']('syntax/script').then(function(m) {
         assert(!!m, true);
-      });
+      }, err);
     });
   });
 
-  test('Import ES6', function(assert) {
+  test('Import ES6', function(assert, err) {
     System['import']('syntax/es6').then(function(m) {
       assert(m.p, 'p');
-    });
+    }, err);
   });
-
-
-
-  test('Import ES6 with dep', function(assert) {
+  
+  test('Import ES6 with dep', function(assert, err) {
     System['import']('syntax/es6-withdep').then(function(m) {
       assert(m.p, 'p');
-    }, function(e) {
-      setTimeout(function() {
-        throw e;
-      }, 1);
-    });
+    }, err);
   });
-
+  
   test('Direct import without bindings', function(assert) {
     System['import']('syntax/direct').then(function(m) {
       console.log('got direct');
@@ -209,27 +207,26 @@ function runTests() {
     });
   });
 
-
-  test('Load order test: A', function(assert) {
+  test('Load order test: A', function(assert, err) {
     System['import']('loads/a').then(function(m) {
       assert(
         [m.a, 'a'],
         [m.b, 'b']
       );
-    });
+    }, err);
   });
 
-  test('Load order test: C', function(assert) {
+  test('Load order test: C', function(assert, err) {
     System['import']('loads/c').then(function(m) {
       assert(
         [m.c, 'c'],
         [m.a, 'a'],
         [m.b, 'b']
       );
-    });
+    }, err);
   });
 
-  test('Load order test: S', function(assert) {
+  test('Load order test: S', function(assert, err) {
     System['import']('loads/s').then(function(m) {
       assert(
         [m.s, 's'],
@@ -237,7 +234,7 @@ function runTests() {
         [m.a, 'a'],
         [m.b, 'b']
       );
-    });
+    }, err);
   });
 
   test('Load order test: _a', function(assert) {
@@ -364,6 +361,17 @@ function runTests() {
       assert(m.path, true);
     });
   });
+  
+  var customModules = {};
+  var customFactories = {};
+
+  var executeModule = function(name) {
+    if (!customFactories[name])
+      return;
+    var module = customFactories[name].apply(null, []);
+    customModules[name] = module;
+    return module;
+  }
 
   var customLoader = new Reflect.Loader({
     normalize: function(name, parentName, parentAddress) {
@@ -420,15 +428,33 @@ function runTests() {
         factory = _factory;
       }
       eval(load.source);
-      return {
-        deps: deps,
-        execute: function() {
-          var deps = [];
-          for (var i = 0; i < arguments.length; i++)
-            deps.push(customLoader.get(arguments[i]));
-          return new Module(factory.apply(null, deps));
-        }
-      }
+
+      customFactories[load.name] = factory;
+
+      // normalize all dependencies now
+      var normalizePromises = [];
+      for (var i = 0; i < deps.length; i++)
+        normalizePromises.push(Promise.resolve(System.normalize(deps[i], load.name)));
+
+      return Promise.all(normalizePromises).then(function(resolvedDeps) {
+
+        return {
+          deps: deps,
+          execute: function() {
+            if (customModules[load.name])
+              return new Module(customModules[load.name]);
+
+            // first ensure all dependencies have been executed
+            for (var i = 0; i < resolvedDeps.length; i++)
+              resolvedDeps[i] = executeModule(resolvedDeps[i]);
+
+            var module = factory.apply(null, resolvedDeps);
+          
+            customModules[load.name] = module;
+            return new Module(module);
+          }
+        };
+      });
     }
   });
 
@@ -444,6 +470,7 @@ function runTests() {
       assert(m.path, true);
     });
   });
+  
   test('Custom loader AMD support', function(assert) {
     customLoader['import']('loader/amd').then(function(m) {
       assert(m.format, 'amd');
@@ -453,6 +480,7 @@ function runTests() {
       }, 1);
     });
   });
+
   test('Custom loader hook - normalize error', function(assert) {
     customLoader['import']('loader/error1-parent').then(function(m) {
       console.log('got n');
