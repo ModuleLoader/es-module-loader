@@ -2,44 +2,31 @@
 
 Dynamically loads ES6 modules in NodeJS and current browsers.
 
-* Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#getting-started) in all modern browsers including IE9+.
-* Uses [Traceur](https://github.com/google/traceur-compiler) for compiling ES6 modules and syntax into ES5 in the browser with source map support
-* Adds support for the `<script type="module">` tag allowing inline module loading.
-* Loader hooks can be used to [extend the System loader with custom functionality](#creating-a-custom-loader)
-* [Compatible with NodeJS](#nodejs-support) allowing for server-side module loading
+* Implemented to the [Jan 20 ES6 Specification draft, rev 22](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-ecmascript-language-modules-and-scripts).
+* Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#getting-started).
+* Uses [Traceur](https://github.com/google/traceur-compiler) for compiling ES6 modules and syntax into ES5 in the browser with source map support.
 * Polyfills ES6 Promises in the browser with a bundled [when.js](https://github.com/cujojs/when/blob/master/docs/es6-promise-shim.md) implementation.
-
-The complete combined polyfill comes to 22KB minified, making it suitable for production use, provided that modules are built into ES5 making them independent of Traceur. Build workflows are currently in progress.
+* [Compatible with NodeJS](#nodejs-support) allowing for server-side module loading.
+* Supports ES6 module loading in IE9+, and any other module formats in IE8+.
+* The complete combined polyfill comes to 7.4KB minified and gzipped, making it suitable for production use, provided that modules are built into ES5 making them independent of Traceur.
+For an overview of build workflows, [see the production guide](#moving-to-production).
 
 See the [demo folder](https://github.com/ModuleLoader/es6-module-loader/blob/master/demo/index.html) in this repo for a working example demonstrating both module loading the module tag in the browser.
 
 For an example of a universal module loader based on this polyfill for loading AMD, CommonJS and globals, see [SystemJS](https://github.com/systemjs/systemjs).
 
-_Current version tested against **[Traceur 0.0.30](https://github.com/google/traceur-compiler/tree/traceur%400.0.30)**._
+_The current version is tested against **[Traceur 0.0.32](https://github.com/google/traceur-compiler/tree/traceur%400.0.32)**._
 
-_Note that while the specification draft has been written, it is still subject to change._
-
-## Background
-
-The new ES6 module specification defines a module system in JavaScript using `import` and `export` syntax. For dynamically loading modules, a dynamic module loader factory is also included in the specification (`new Loader`).
-
-A separate browser specification defines a dynamic ES6 module loader loader for the browser, `window.System`, as well as a `<script type="module">` tag for using modules.
-
-This polyfill implements the `Loader` and `Module` globals, exactly as specified in the [2013-12-02 ES6 Module Specification Draft](https://github.com/jorendorff/js-loaders/blob/e60d3651/specs/es6-modules-2013-12-02.pdf) and the `System` browser loader exactly as suggested in the [sample implementation](https://github.com/jorendorff/js-loaders/blob/964623c75d/browser-loader.js).
+_Note the ES6 module specification is still in draft, and subject to change._
 
 ## Getting Started
 
-Download both [es6-module-loader.js](https://raw.githubusercontent.com/ModuleLoader/es6-module-loader/v0.5.1/dist/es6-module-loader.js) and [traceur.js](https://raw.githubusercontent.com/google/traceur-compiler/traceur@0.0.30/bin/traceur.js) into the same folder.
+Download both [es6-module-loader.js](https://raw.githubusercontent.com/ModuleLoader/es6-module-loader/v0.5.4/dist/es6-module-loader.js) and [traceur.js](https://raw.githubusercontent.com/google/traceur-compiler/traceur@0.0.32/bin/traceur.js) into the same folder.
 
-If using ES6 syntax (optional), include traceur.js in the page first:
+If using ES6 syntax (optional), include `traceur.js` in the page first then include `es6-module-loader.js`:
 
 ```html
   <script src="traceur.js"></script>
-```
-
-Then include `es6-module-loader.js`:
-
-```html
   <script src="es6-module-loader.js"></script>
 ```
 
@@ -54,7 +41,7 @@ mymodule.js:
   }
 ```
 
-We can then load this module with a module tag in the page:
+Load this module with a module tag in the page:
 
 ```html
 <script type="module">
@@ -87,7 +74,13 @@ Note that the dynamic module loader uses promises for resolution. Modules can ha
   });
 ```
 
-## Terminology
+## Background
+
+### Specifications
+
+The new ES6 module specification defines a module system in JavaScript using `import` and `export` syntax. For dynamically loading modules, a dynamic module loader factory is also included in the specification (`new Loader`).
+
+A separate browser specification defines a dynamic ES6 module loader for the browser, `window.System`, as well as a `<module>` tag for using modules.
 
 ### Modules and Module Loaders
 
@@ -233,13 +226,14 @@ It is also possible to define wildcard paths rules. The most specific rule will 
   });
 ```
 
+<a name="moving-to-production">
 ## Moving to Production
 
 When in production, one wouldn't want to load ES6 modules and syntax in the browser. Rather the modules would be built into ES5 and AMD to be loaded.
 
-Also, suitable bundling would need to be used.
+Additionally, suitable bundling would need to be used.
 
-We are actively working on these workflows.
+Traceur provides build outputs that can be loaded with extensions to the module loader including AMD, CommonJS and a System.register build.
 
 ## Module Tag
 
@@ -394,6 +388,8 @@ For a more in-depth overview of creating with custom loaders, some resources are
 See the source of https://github.com/ModuleLoader/es6-module-loader/blob/master/lib/es6-module-loader.js, which contains comments detailing the exact specification notes and design decisions.
 
 To follow the current the specification changes, see the marked issues https://github.com/ModuleLoader/es6-module-loader/issues?labels=specification&page=1&state=open.
+
+
 
 ## Contributing
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [grunt](https://github.com/cowboy/grunt).
