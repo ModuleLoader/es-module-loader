@@ -58,6 +58,10 @@ else {
   // nodejs
   var ml = require('../lib');
 
+  process.on('uncaughtException', function(err) {
+    console.log('Caught: ' + err);
+  });
+
   System = ml.System;
   Loader = ml.Loader;
   Module = ml.Module;
@@ -323,6 +327,9 @@ function runTests() {
 
   test('ES6 Syntax', function(assert) {
     System['import']('syntax/es6-file').then(function(m) {
+      setTimeout(function() {
+        (new m.q()).foo();
+      });
       assert(
         [typeof m.q, 'function']
       );
