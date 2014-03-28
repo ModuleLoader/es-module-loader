@@ -2,7 +2,7 @@
 
 Dynamically loads ES6 modules in NodeJS and current browsers.
 
-* Implemented to the [Jan 20 ES6 Specification draft, rev 22](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-ecmascript-language-modules-and-scripts).
+* Implemented to the 2013-12-02 ES6 module specification draft.
 * Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#getting-started).
 * Uses [Traceur](https://github.com/google/traceur-compiler) for compiling ES6 modules and syntax into ES5 in the browser with source map support.
 * Polyfills ES6 Promises in the browser with a bundled [when.js](https://github.com/cujojs/when/blob/master/docs/es6-promise-shim.md) implementation.
