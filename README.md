@@ -377,6 +377,9 @@ function instantiate(load) {
 }
 ```
 
+_Note: The instantiate function is currently implemented based on an older spec concept. This is being
+updated to match the spec in the [next spec update](https://github.com/ModuleLoader/es6-module-loader/pull/113)._
+
 For a more in-depth overview of creating with custom loaders, some resources are provided below:
 * The [System Loader implementation](https://github.com/ModuleLoader/es6-module-loader/blob/master/lib/es6-module-loader.js#L804)
 * [ES6 Loader API guide](https://gist.github.com/dherman/7568080)
