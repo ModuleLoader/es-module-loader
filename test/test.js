@@ -104,7 +104,7 @@ function runTests() {
       System.normalize('a/b/../c');
     }
     catch(e) {
-      assert(e.message, 'Illegal module name"a/b/../c"');
+      assert(e.message, 'Illegal module name "a/b/../c"');
     }
   });
   test('Normalize - embedded ..', function(assert) {
@@ -112,7 +112,7 @@ function runTests() {
       System.normalize('a/../b', refererName);
     }
     catch(e) {
-      assert(e.message, 'Illegal module name"a/../b"');
+      assert(e.message, 'Illegal module name "a/../b"');
     }
   });
   test('Normalize - embedded ..', function(assert) {
@@ -120,7 +120,7 @@ function runTests() {
       System.normalize('a/b/../c', refererName);
     }
     catch(e) {
-      assert(e.message, 'Illegal module name"a/b/../c"');
+      assert(e.message, 'Illegal module name "a/b/../c"');
     }
   });
 
