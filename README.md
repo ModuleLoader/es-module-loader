@@ -235,6 +235,8 @@ Additionally, suitable bundling would need to be used.
 
 Traceur provides build outputs that can be loaded with extensions to the module loader including AMD, CommonJS and a System.register build.
 
+For an overview of some compilation approaches see http://guybedford.com/practical-workflows-for-es6-modules.
+
 ## Module Tag
 
 The module tag supports both named and anonymous use.
