@@ -28,7 +28,7 @@ module.exports = function (grunt) {
           'lib/loader.js',
           'lib/system.js'
         ],
-        dest: 'tmp/<%= pkg.name %>.js'
+        dest: 'dist/<%= pkg.name %>.js'
       },
       polyfillOnly: {
         src: [
@@ -36,7 +36,7 @@ module.exports = function (grunt) {
           'lib/loader.js',
           'lib/system.js'
         ],
-        dest: 'tmp/<%= pkg.name %>-sans-promises.js'
+        dest: 'dist/<%= pkg.name %>-sans-promises.js'
       }
     },
     uglify: {
@@ -51,12 +51,12 @@ module.exports = function (grunt) {
           banner: '<%= meta.banner %>\n'
           + '/*\n *  ES6 Promises shim from when.js, Copyright (c) 2010-2014 Brian Cavalier, John Hann, MIT License\n */\n'
         },
-        src: 'tmp/<%= pkg.name %>.js',
-        dest: 'dist/<%= pkg.name %>.js'
+        src: 'dist/<%= pkg.name %>.js',
+        dest: 'dist/<%= pkg.name %>.min.js'
       },
       polyfillOnly: {
-        src: 'tmp/<%= pkg.name %>-sans-promises.js',
-        dest: 'dist/<%= pkg.name %>-sans-promises.js'
+        src: 'dist/<%= pkg.name %>-sans-promises.js',
+        dest: 'dist/<%= pkg.name %>-sans-promises.min.js'
       }
     }
   });
