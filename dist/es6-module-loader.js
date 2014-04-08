@@ -1446,7 +1446,7 @@ function logloads(loads) {
 
       defineProperty(this, 'global', {
         get: function() {
-          throw new TypeError('global accessor not provided by polyfill');
+          return global;
         }
       });
       defineProperty(this, 'realm', {
@@ -1506,6 +1506,8 @@ function logloads(loads) {
         throw new TypeError('Eval not implemented in polyfill')
       },
       get: function(key) {
+        if (!this._modules[key])
+          return;
         ensureEvaluated(this._modules[key], this);
         return this._modules[key].module;
       },
