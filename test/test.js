@@ -365,7 +365,7 @@ function runTests() {
     });
   });
 
-  var customLoader = new Loader({
+  var customLoader = new Reflect.Loader({
     normalize: function(name, parentName, parentAddress) {
       return new Promise(function(resolve, reject) {
         if (name == 'asdfasdf') {
