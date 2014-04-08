@@ -1622,7 +1622,8 @@ function logloads(loads) {
     if (typeof exports === 'object')
       module.exports = Loader;
 
-    global.Loader || (global.Loader = Loader);
+    global.Reflect = global.Reflect || {};
+    global.Reflect.Loader = global.Reflect.Loader || Loader;
     global.LoaderPolyfill = Loader;
     global.Module = Module;
 
@@ -1657,7 +1658,7 @@ function logloads(loads) {
 
 (function (global) {
   var isBrowser = typeof window != 'undefined';
-  var Loader = global.Loader || require('./loader');
+  var Loader = global.Reflect && global.Reflect.Loader || require('./loader');
   var Promise = global.Promise || require('./promise');
 
   // Helpers
