@@ -83,7 +83,7 @@ function runTests() {
   var oldBaseURL = System.baseURL;
   System.baseURL = 'http://example.org/a/b.html';
 
-  test('Normalize - No Referer', System.normalize('d/e/f'), 'd/e/f');
+  /*test('Normalize - No Referer', System.normalize('d/e/f'), 'd/e/f');
   // test('Normalize - Below baseURL', System.normalize('../e/f'), '../e/f');
 
   var refererName = 'dir/file';
@@ -135,21 +135,53 @@ function runTests() {
     catch(e) {
       assert();
     }
-  });
+  });*/
 
+
+  makeBase = function(href){
+    var base = document.createElement('base');
+    document.head.appendChild(base);
+    base.href = href;
+    return {
+      restore: function(){
+        document.head.removeChild(base);
+      }
+	};
+  },
+  runLocateTests = function(locateTests){
+  	for(var i = 0 ; i < locateTests.length; i++) {
+  	  var locateTest = locateTests[i];
+  	  System.baseURL = locateTest[0];
+  	  test("Locate - "+locateTest[3], System.locate({ name: locateTest[1] }), locateTest[2] );
+    }
+  };
+  
+  runLocateTests([
+  	['http://example.org/a/',	'@abc/def',	'http://example.org/a/@abc/def.js',	'@ works'],
+  	['http://example.org/a/',	'abc/def',	'http://example.org/a/abc/def.js',	'domain+name'],
+  ]);
+  	
+  var base = makeBase('http://example.org/a/b.html');
+  
+  runLocateTests([
+  	['..',	'foo',	'http://example.org/foo.js',	'relative+name .. + foo'],
+  	['../',	'foo',	'http://example.org/foo.js',	'relative+name ../ + foo'],
+  ]);
+  base.restore();
+  base = makeBase('http://example.org/a/b/c/d.html');
+  
+  runLocateTests([
+  	['..',	'../foo',	'http://example.org/a/foo.js',	'relative+relative .. + ../foo'],
+  ]);
+  
+  base.restore();
+  
   System.baseURL = 'http://example.org/a/';
-
-  test('Locate', System.locate({ name: '@abc/def' }), 'http://example.org/a/@abc/def.js');
-  test('Locate', System.locate({ name: 'abc/def' }), 'http://example.org/a/abc/def.js');
-
   // paths
   System.paths['path/*'] = '/test/*.js';
   test('Locate paths', System.locate({ name: 'path/test' }), 'http://example.org/test/test.js');
 
-
   System.baseURL = oldBaseURL;
-
-
 
   // More Normalize tests
 
@@ -488,4 +520,5 @@ function runTests() {
       assert(m.n, 'n');
     });
   });
+  
 }

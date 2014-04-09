@@ -763,6 +763,9 @@ function logloads(loads) {
     } : null);
   }
   function toAbsoluteURL(base, href) {
+    return joinURLs( joinURLs(baseRef(), base), href );
+  }
+  function joinURLs(base, href) {
     function removeDotSegments(input) {
       var output = [];
       input.replace(/^(\.\.?(\/|$))+/, '')
@@ -786,7 +789,17 @@ function logloads(loads) {
       (href.protocol || href.authority || href.pathname ? href.search : (href.search || base.search)) +
       href.hash;
   }
-
+  // Returns the "page's" baseURI
+  function baseRef(){
+    if( typeof window === 'undefined' ) {
+      return __dirname;
+    } else if(document.baseURI != null) {
+      return document.baseURI;
+    } else {
+      var bases = document.getElementsByTagName("base");
+      return bases[0] && bases[0].href || window.location.href;
+    }
+  }
   var fetchTextFromURL;
   if (isBrowser) {
     fetchTextFromURL = function(url, fulfill, reject) {
