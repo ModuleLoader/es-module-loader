@@ -1406,7 +1406,8 @@ function logloads(loads) {
             load.module = {
               name: load.name,
               dependencies: load.dependencies,
-              body: load.body
+              body: load.body,
+              address: load.address
             };
           }
           else {
