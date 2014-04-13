@@ -454,7 +454,9 @@ function logloads(loads) {
         for (var i = 0; i < deps.length; i++)
           deps[i] = module.dependencies[deps[i]];
 
+        global.System = loader;
         module.module = new Module(execute.apply(global, deps));
+        global.System = sys;
       }
 
       __eval(source, global, module.name);
@@ -720,8 +722,8 @@ function logloads(loads) {
       eval('var __moduleName = "' + (__moduleName || '').replace('"', '\"') + '"; with(global) { (function() { ' + __source + ' \n }).call(global); }');
     }
     catch(e) {
-      if (e.name == 'SyntaxError')
-        e.message = 'Evaluating ' + __sourceURL + '\n\t' + e.message;
+      if (e.name == 'SyntaxError') 
+        e.message = 'Evaluating ' + (__sourceURL || __moduleName) + '\n\t' + e.message;
       throw e;
     }
   }
