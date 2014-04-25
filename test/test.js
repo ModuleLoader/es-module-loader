@@ -82,6 +82,7 @@ else {
 }
 
 function runTests() {
+
   // Normalize tests - identical to https://github.com/google/traceur-compiler/blob/master/test/unit/runtime/System.js
   
   var oldBaseURL = System.baseURL;
@@ -207,6 +208,15 @@ function runTests() {
     }, err);
   });
 
+  test('Circular Dependencies', function(assert, err) {
+    System['import']('syntax/circular1').then(function(m) {
+      assert(
+        [first, 'world'],
+        [second, 'another']
+      );
+    }, err);
+  });
+
   test('Load order test: A', function(assert, err) {
     System['import']('loads/a').then(function(m) {
       assert(
@@ -247,6 +257,7 @@ function runTests() {
       );
     })
   });
+  
   test('Load order test: _e', function(assert) {
     System['import']('loads/_e').then(function(m) {
       assert(
@@ -321,8 +332,7 @@ function runTests() {
     });
   });
 
-
-  test('ES6 Syntax', function(assert) {
+  test('ES6 Syntax', function(assert, err) {
     System['import']('syntax/es6-file').then(function(m) {
       setTimeout(function() {
         (new m.q()).foo();
@@ -330,7 +340,7 @@ function runTests() {
       assert(
         [typeof m.q, 'function']
       );
-    });
+    }, err);
   });
 
   test('Module Name meta', function(assert) {
@@ -442,7 +452,7 @@ function runTests() {
           deps: deps,
           execute: function() {
             if (customModules[load.name])
-              return new Module(customModules[load.name]);
+              return Module(customModules[load.name]);
 
             // first ensure all dependencies have been executed
             for (var i = 0; i < resolvedDeps.length; i++)
