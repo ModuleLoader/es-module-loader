@@ -200,11 +200,11 @@ function runTests() {
     }, err);
   });
   
-  test('Direct import without bindings', function(assert) {
+  test('Direct import without bindings', function(assert, err) {
     System['import']('syntax/direct').then(function(m) {
       console.log('got direct');
       assert(!!m, true);
-    });
+    }, err);
   });
 
   test('Load order test: A', function(assert, err) {
@@ -287,10 +287,10 @@ function runTests() {
     });
   });
 
-  test('Re-export', function(assert) {
+  test('Re-export', function(assert, err) {
     System['import']('syntax/reexport1').then(function(m) {
       assert(m.p, 5);
-    });
+    }, err);
   });
 
   test('Re-export with new name', function(assert) {
