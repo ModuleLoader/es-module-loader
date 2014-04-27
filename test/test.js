@@ -174,7 +174,6 @@ function runTests() {
     assert(System.normalize('../a/b', '../../c/d'), '../../a/b');
   });
 
-
   test('Import a script', function(assert, err) {
     System['import']('syntax/script').then(function(m) {
       assert(!!m, true);
@@ -209,11 +208,13 @@ function runTests() {
   });
 
   test('Circular Dependencies', function(assert, err) {
-    System['import']('syntax/circular1').then(function(m) {
-      assert(
-        [first, 'world'],
-        [second, 'another']
-      );
+    System['import']('syntax/circular1').then(function(m1) {
+      System['import']('syntax/circular2').then(function(m2) {
+        assert(
+          [m2.output, 'test circular 1'],
+          [m1.output, 'test circular 2']
+        );
+      }, err);
     }, err);
   });
 
@@ -304,19 +305,24 @@ function runTests() {
     }, err);
   });
 
-  test('Re-export with new name', function(assert) {
+  test('Re-export with new name', function(assert, err) {
     System['import']('syntax/reexport2').then(function(m) {
       assert(
         [m.q, 4],
         [m.z, 5]
       );
-    })['catch'](function(err) {
-      console.log('error');
-      console.log(err);
-    });
+    }, err);
   });
 
-  test('Import Syntax', function(assert) {
+  test('Re-export binding', function(assert, err) {
+    System['import']('syntax/reexport-binding').then(function(m) {
+      System['import']('syntax/rebinding').then(function(m) {
+        assert(m.p, 3);
+      });
+    }, err);
+  });
+
+  test('Import Syntax', function(assert, err) {
     System['import']('syntax/import').then(function(m) {
       assert(
         [typeof m.a, 'function'],
@@ -325,11 +331,7 @@ function runTests() {
         [m.d, 4],
         [typeof m.q.foo, 'function']
       );
-    })['catch'](function(e) {
-      setTimeout(function() {
-        throw e;
-      }, 1);
-    });
+    }, err);
   });
 
   test('ES6 Syntax', function(assert, err) {

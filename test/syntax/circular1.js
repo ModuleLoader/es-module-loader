@@ -1,9 +1,11 @@
-import { fn } from './circular2';
+import {fn2, variable2} from './circular2';
 
-export var hello = 'world';
+export var variable1 = 'test circular 1';
 
-fn();
+fn2();
 
-hello = 'another';
+export var output;
 
-fn();
+export function fn1() {
+  output = variable2;
+}

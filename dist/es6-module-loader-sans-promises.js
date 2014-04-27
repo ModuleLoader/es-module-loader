@@ -51,9 +51,9 @@ function logloads(loads) {
   return log;
 } */
 
-(function (global) {
+(function (__global) {
   (function() {
-    var Promise = global.Promise || require('es6-promise').Promise;
+    var Promise = __global.Promise || require('es6-promise').Promise;
 
     var traceur;
 
@@ -210,55 +210,66 @@ function logloads(loads) {
 
         var depsList;
         if (instantiateResult === undefined) {
-          if (!global.traceur)
+          if (!__global.traceur)
             throw new TypeError('Include Traceur for module syntax support');
 
-          traceur = traceur || global.traceur;
+          traceur = traceur || __global.traceur;
           load.address = load.address || 'anon' + ++anonCnt;
 
           console.assert(load.source, 'Non-empty source');
 
-          var parser = new traceur.syntax.Parser(new traceur.syntax.SourceFile(load.address, load.source));
-          var body = parser.parseModule();
+          try {
+            var parser = new traceur.syntax.Parser(new traceur.syntax.SourceFile(load.address, load.source));
+            var body = parser.parseModule();
 
-          load.kind = 'declarative';
-          depsList = getImports(body);
+            load.kind = 'declarative';
+            depsList = getImports(body);
 
-          traceur.options.sourceMaps = true;
-          traceur.options.modules = 'instantiate';
+            traceur.options.sourceMaps = true;
+            traceur.options.modules = 'instantiate';
 
-          var reporter = new traceur.util.ErrorReporter();
+            var reporter = new traceur.util.ErrorReporter();
 
-          reporter.reportMessageInternal = function(location, kind, format, args) {
-            throw kind + '\n' + location;
+            reporter.reportMessageInternal = function(location, kind, format, args) {
+              throw new SyntaxError(kind, location.start && location.start.line_, location.start && location.start.column_);
+            }
+
+            // traceur expects its version of System
+            var curSystem = __global.System;
+            __global.System = __global.traceurSystem;
+
+            var tree = (new traceur.codegeneration.module.AttachModuleNameTransformer(load.name)).transformAny(body);
+            tree = (new traceur.codegeneration.FromOptionsTransformer(reporter)).transform(tree);
+
+            var sourceMapGenerator = new traceur.outputgeneration.SourceMapGenerator({ file: load.address });
+            var options = { sourceMapGenerator: sourceMapGenerator };
+
+            var source = traceur.outputgeneration.TreeWriter.write(tree, options);
+
+            if (__global.btoa)
+              source += '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(options.sourceMap))) + '\n';
+
+            // now run System.register
+            var curRegister = System.register;
+            
+            System.register = function(name, deps, declare) {
+              // store the registered declaration as load.declare
+              load.declare = declare;
+            }
+
+            __eval(source, __global, load.name);
           }
-
-          // traceur expects its version of System
-          var sys = global.System;
-          global.System = global.traceurSystem;
-
-          var tree = (new traceur.codegeneration.module.AttachModuleNameTransformer(load.name)).transformAny(body);
-          tree = (new traceur.codegeneration.FromOptionsTransformer(reporter)).transform(tree);
-
-          var sourceMapGenerator = new traceur.outputgeneration.SourceMapGenerator({ file: load.address });
-          var options = { sourceMapGenerator: sourceMapGenerator };
-
-          var source = traceur.outputgeneration.TreeWriter.write(tree, options);
-
-          if (global.btoa)
-            source += '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(options.sourceMap))) + '\n';
-
-          // now run System.register
-          var sysRegister = System.register;
-          
-          System.register = function(name, deps, declare) {
-            // store the registered declaration as load.declare
-            load.declare = declare;
+          catch(e) {
+            if (e.name == 'SyntaxError' || e.name == 'TypeError') 
+              e.message = 'Evaluating ' + (load.name || load.address) + '\n\t' + e.message;
+            if (curRegister)
+              System.register = curRegister;
+            if (curSystem)
+              __global.System = curSystem;
+            throw e;
           }
-          __eval(source, global, load.name);
-
-          System.register = sysRegister;
-          global.System = sys;
+          System.register = curRegister;
+          __global.System = curSystem;
         }
         else if (typeof instantiateResult == 'object') {
           depsList = instantiateResult.deps || [];
@@ -567,13 +578,13 @@ function logloads(loads) {
           // 15.2.5.6 LinkDynamicModules adjusted
           else {
             var module = load.execute();
-            if (!(module instanceof Module))
+            if (!(module.__esModule))
               throw new TypeError('Execution must define a Module instance');
             load.module = {
               module: module
             };
+            load.status = 'linked';
           }
-          load.status = 'linked';
           finishLoad(loader, load);
         }
 
@@ -584,33 +595,30 @@ function logloads(loads) {
 
     // custom declarative linking function
     function linkDeclarativeModule(load, loads, loader) {
+      // only link if already not already started linking (stops at circular)
       if (load.module)
         return;
 
-<<<<<<< HEAD
-      for (var i = 0; i < loads.length; i++) {
-        var load = loads[i];
-        if (load.kind == 'declarative') {
-          // To Support Circular references:
-          // parse the body to read out the export values
-          // use these export values to create a module shell
-          // create an empty underlying exports object to be populated
-=======
       // declare the module with an empty depMap
-      var depMap = {};
-      var sys = global.System;
-      global.System = loader;
-      var registryEntry = load.declare.call(global, depMap);
+      var depMap = [];
+      var sys = __global.System;
+      __global.System = loader;
+      var registryEntry = load.declare.call(__global, depMap);
 
-      global.System = sys;
->>>>>>> circular references support
+      __global.System = sys;
 
       var moduleDependencies = [];
+
+      // module is just a plain object, until we evaluate it
+      var module = registryEntry.exports;
+
+      console.assert(!load.module, 'Load module already declared!');
 
       load.module = {
         name: load.name,
         dependencies: moduleDependencies,
         execute: registryEntry.execute,
+        exports: module,
         evaluated: false
       };
 
@@ -629,41 +637,38 @@ function logloads(loads) {
             if (loads[j].name != depName)
               continue;
             
-            // link if already not already linked (stops at circular)
-            if (!loads[j].module)
-              linkDeclarativeModule(loads[j], loads, loader);
+            linkDeclarativeModule(loads[j], loads, loader);
             
-            depModule = loads[j].module;
+            depModule = loads[j].exports || loads[j].module;
           }
         }
 
-        var depModuleModule = depModule.module;
+        console.assert(depModule, 'Dependency module not found!');
+        console.assert(depModule.exports, 'Dependency module not found!');
 
         if (registryEntry.exportStar && indexOf.call(registryEntry.exportStar, load.dependencies[i].key) != -1) {
           // we are exporting * from this dependency
-          for (var p in depModule.module) (function(p) {
-            // if the property is already defined throw?
-            defineProperty(registryEntry.exports, p, {
-              enumerable: true,
-              get: function() {
-                return depModuleModule[p];
-              },
-              set: function(value) {
-                depModuleModule[p] = value;
-              }
-            });
-          })(p);
+          (function(depModuleModule) {
+            for (var p in depModuleModule) (function(p) {
+              // if the property is already defined throw?
+              defineProperty(module, p, {
+                enumerable: true,
+                get: function() {
+                  return depModuleModule[p];
+                },
+                set: function(value) {
+                  depModuleModule[p] = value;
+                }
+              });
+            })(p);
+          })(depModule.exports);
         }
 
-        console.assert(depModule, 'Dependency module not found!');
-        console.assert(depModuleModule, 'Dependency module not found!');
-
         moduleDependencies.push(depModule);
-        depMap[load.dependencies[i].key] = depModuleModule;
+        depMap[i] = depModule.exports;
       }
 
-      // at this point we define the module object
-      load.module.module = Module(registryEntry.exports);
+      load.status = 'linked';
     }
       
 
@@ -692,7 +697,7 @@ function logloads(loads) {
 
     // 15.2.6.2 EnsureEvaluated adjusted
     function ensureEvaluated(module, seen, loader) {
-      if (module.evaluated)
+      if (module.evaluated || !module.dependencies)
         return;
 
       seen.push(module);
@@ -709,7 +714,8 @@ function logloads(loads) {
         return;
 
       module.evaluated = true;
-      module.execute.call(global);
+      module.execute.call(__global);
+      module.module = Module(module.exports);
       delete module.execute;
     }
 
@@ -788,11 +794,13 @@ function logloads(loads) {
       'import': function(name, options) {
         // run normalize first
         var loaderObj = this;
+
         return new Promise(function(resolve) {
           resolve(loaderObj.normalize.call(this, name, options && options.name, options && options.address))
         })
         .then(function(name) {
           var loader = loaderObj._loader;
+          
           if (loader.modules[name]) {
             ensureEvaluated(loader.modules[name], [], loader._loader);
             return Promise.resolve(loader.modules[name].module);
@@ -818,7 +826,7 @@ function logloads(loads) {
         return !!this._loader.modules[name];
       },
       set: function(name, module) {
-        if (!(module instanceof Module))
+        if (!(module.__esModule))
           throw new TypeError('Set must be a module');
         this._loader.modules[name] = {
           module: module
@@ -901,10 +909,10 @@ function logloads(loads) {
       if (typeof obj != 'object')
         throw new TypeError('Expected object');
 
-      if (!(this instanceof Module))
-        return new Module(obj);
+      var self = {
+        __esModule: true
+      };
 
-      var self = this;
       for (var key in obj) {
         (function (key) {
           defineProperty(self, key, {
@@ -916,31 +924,26 @@ function logloads(loads) {
           });
         })(key);
       }
+
       if (Object.preventExtensions)
-        Object.preventExtensions(this);
+        Object.preventExtensions(self);
+
+      return self;
     }
-    // Module.prototype = null;
 
 
     if (typeof exports === 'object')
       module.exports = Loader;
 
-    global.Reflect = global.Reflect || {};
-    global.Reflect.Loader = global.Reflect.Loader || Loader;
-    global.LoaderPolyfill = Loader;
-    global.Module = Module;
+    __global.Reflect = __global.Reflect || {};
+    __global.Reflect.Loader = __global.Reflect.Loader || Loader;
+    __global.LoaderPolyfill = Loader;
+    __global.Module = Module;
 
   })();
 
-  function __eval(__source, global, __moduleName) {
-    try {
-      eval('var __moduleName = "' + (__moduleName || '').replace('"', '\"') + '"; with(global) { (function() { ' + __source + ' \n }).call(global); }');
-    }
-    catch(e) {
-      if (e.name == 'SyntaxError')
-        e.message = 'Evaluating ' + (__sourceURL || __moduleName) + '\n\t' + e.message;
-      throw e;
-    }
+  function __eval(__source, __global, __moduleName) {
+    eval('var __moduleName = "' + (__moduleName || '').replace('"', '\"') + '"; with(__global) { (function() { ' + __source + ' \n }).call(__global); }');
   }
 
 })(typeof global !== 'undefined' ? global : this);

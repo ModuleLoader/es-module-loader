@@ -1,8 +1,11 @@
-import { hello } from './circular1';
+import {fn1, variable1} from './circular1';
 
-export function fn() {
-  if (!global.first)
-    global.first = hello;
-  else
-    global.second = hello;
+export var variable2 = 'test circular 2';
+
+fn1();
+
+export var output;
+
+export function fn2() {
+  output = variable1;
 }
