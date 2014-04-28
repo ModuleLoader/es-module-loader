@@ -22,6 +22,7 @@
     }
   ],
   "devDependencies": {
+    "es6-promise": "1.0.0",
     "grunt": "~0.4.1",
     "grunt-contrib-uglify": "~0.2.2",
     "grunt-contrib-jshint": "~0.6.0",

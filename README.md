@@ -284,7 +284,7 @@ For use in NodeJS, the `Module`, `Loader` and `System` globals are provided as e
 index.js:
 ```javascript
   var System = require('es6-module-loader').System;
-  
+
   System.import('some-module').then(function(m) {
     console.log(m.p);
   });
@@ -415,7 +415,7 @@ _Also, please don't edit files in the "dist" subdirectory as they are generated 
 ## Credit
 Copyright (c) 2014 Luke Hoban, Addy Osmani, Guy Bedford
 
-ES6 Promises integration from [when.js](https://github.com/cujojs/when/blob/master/docs/es6-promise-shim.md), Copyright (c) 2010-2014 Brian Cavalier, John Hann, MIT License
+ES6 Promises integration from [es6-promise](https://github.com/jakearchibald/es6-promise).
 
 ## License
 Licensed under the MIT license.
