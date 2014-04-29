@@ -3,16 +3,16 @@
 
   <body></body>
 
-  <script>
-    // test promise polyfills
-    // window.Promise = null;
-  </script>
-
   <script src="test.js"></script>
 
 
   <!-- set this to the path to traceur.js -->
   <script src="../../traceur-compiler/bin/traceur.js"></script>
+
+  <script>
+    // test promise polyfill
+    // delete window.Promise;
+  </script>
 
   <!-- run Grunt first to create this file -->
   <script src="../dist/es6-module-loader.js"></script>
