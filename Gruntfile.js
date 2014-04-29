@@ -15,7 +15,6 @@ module.exports = function (grunt) {
       },
       dist: [
         'lib/index.js',
-        'lib/promise.js',
         'lib/loader.js',
         'lib/system.js'
       ]
@@ -23,7 +22,7 @@ module.exports = function (grunt) {
     concat: {
       dist: {
         src: [
-          'lib/promise.js',
+          'node_modules/es6-promise/dist/promise-1.0.0.js',
           'lib/module.js',
           'lib/loader.js',
           'lib/system.js'
