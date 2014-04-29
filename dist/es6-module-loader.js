@@ -735,6 +735,67 @@ function logloads(loads) {
   return log;
 } */
 
+
+/* function checkInvariants() {
+  // see https://bugs.ecmascript.org/show_bug.cgi?id=2603#c1
+
+  var loads = System._loader.loads;
+  var linkSets = [];
+  
+  for (var i = 0; i < loads.length; i++) {
+    var load = loads[i];
+    console.assert(load.status == 'loading' || load.status == 'loaded', 'Each load is loading or loaded');
+
+    for (var j = 0; j < load.linkSets.length; j++) {
+      var linkSet = load.linkSets[j];
+
+      for (var k = 0; k < linkSet.loads.length; k++)
+        console.assert(loads.indexOf(linkSet.loads[k]) != -1, 'linkSet loads are a subset of loader loads');
+
+      if (linkSets.indexOf(linkSet) == -1)
+        linkSets.push(linkSet);
+    }
+  }
+
+  for (var i = 0; i < loads.length; i++) {
+    var load = loads[i];
+    for (var j = 0; j < linkSets.length; j++) {
+      var linkSet = linkSets[j];
+
+      if (linkSet.loads.indexOf(load) != -1)
+        console.assert(load.linkSets.indexOf(linkSet) != -1, 'linkSet contains load -> load contains linkSet');
+
+      if (load.linkSets.indexOf(linkSet) != -1)
+        console.assert(linkSet.loads.indexOf(load) != -1, 'load contains linkSet -> linkSet contains load');
+    }
+  }
+
+  for (var i = 0; i < linkSets.length; i++) {
+    var linkSet = linkSets[i];
+    for (var j = 0; j < linkSet.loads.length; j++) {
+      var load = linkSet.loads[j];
+
+      for (var k = 0; k < load.dependencies.length; k++) {
+        var depName = load.dependencies[k].value;
+        var depLoad;
+        for (var l = 0; l < loads.length; l++) {
+          if (loads[l].name != depName)
+            continue;
+          depLoad = loads[l];
+          break;
+        }
+
+        // loading records are allowed not to have their dependencies yet
+        // if (load.status != 'loading')
+        //  console.assert(depLoad, 'depLoad found');
+
+        // console.assert(linkSet.loads.indexOf(depLoad) != -1, 'linkset contains all dependencies');
+      }
+    }
+  }
+} */
+
+
 (function (__global) {
   (function() {
     var Promise = __global.Promise || require('es6-promise').Promise;
@@ -835,9 +896,7 @@ function logloads(loads) {
         load = createLoad(name);
         loader.loads.push(load);
 
-        setTimeout(function() {
-          proceedToLocate(loader, load);
-        }, 7);
+        proceedToLocate(loader, load);
 
         return load;
       });
@@ -860,7 +919,7 @@ function logloads(loads) {
         p
         // 15.2.4.4.1 CallFetch
         .then(function(address) {
-          if (load.linkSets.length == 0)
+          if (load.status != 'loading')
             return;
           load.address = address;
 
@@ -874,14 +933,14 @@ function logloads(loads) {
       p
       // 15.2.4.5.1 CallTranslate
       .then(function(source) {
-        if (load.linkSets.length == 0)
+        if (load.status != 'loading')
           return;
         return loader.loaderObj.translate({ name: load.name, metadata: load.metadata, address: load.address, source: source });
       })
 
       // 15.2.4.5.2 CallInstantiate
       .then(function(source) {
-        if (load.linkSets.length == 0)
+        if (load.status != 'loading')
           return;
         load.source = source;
         return loader.loaderObj.instantiate({ name: load.name, metadata: load.metadata, address: load.address, source: source });
@@ -889,7 +948,7 @@ function logloads(loads) {
 
       // 15.2.4.5.3 InstantiateSucceeded
       .then(function(instantiateResult) {
-        if (load.linkSets.length == 0)
+        if (load.status != 'loading')
           return;
 
         var depsList;
@@ -908,6 +967,9 @@ function logloads(loads) {
 
             load.kind = 'declarative';
             depsList = getImports(body);
+
+            var oldSourceMaps = traceur.options.sourceMaps;
+            var oldModules = traceur.options.modules;
 
             traceur.options.sourceMaps = true;
             traceur.options.modules = 'instantiate';
@@ -950,10 +1012,16 @@ function logloads(loads) {
               System.register = curRegister;
             if (curSystem)
               __global.System = curSystem;
+            if (oldSourceMaps)
+              traceur.options.sourceMaps = oldSourceMaps;
+            if (oldModules)
+              traceur.options.modules = oldModules;
             throw e;
           }
           System.register = curRegister;
           __global.System = curSystem;
+          traceur.options.sourceMaps = oldSourceMaps;
+          traceur.options.modules = oldModules;
         }
         else if (typeof instantiateResult == 'object') {
           depsList = instantiateResult.deps || [];
@@ -965,7 +1033,7 @@ function logloads(loads) {
 
         // 15.2.4.6 ProcessLoadDependencies
         load.dependencies = [];
-        load.depsList = depsList
+        load.depsList = depsList;
         var loadPromises = [];
         for (var i = 0, l = depsList.length; i < l; i++) (function(request) {
           loadPromises.push(
@@ -1427,7 +1495,7 @@ function logloads(loads) {
 
       defineProperty(this, 'global', {
         get: function() {
-          return global;
+          return __global;
         }
       });
       defineProperty(this, 'realm', {
@@ -1853,7 +1921,8 @@ function logloads(loads) {
   if (global.System && global.traceur)
     global.traceurSystem = global.System;
 
-  global.System = System;
+  if (isBrowser)
+    global.System = System;
 
   // <script type="module"> support
   // allow a data-init function callback once loaded
