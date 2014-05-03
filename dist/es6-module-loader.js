@@ -1357,7 +1357,6 @@ function logloads(loads) {
 
     // custom declarative linking function
     function linkDeclarativeModule(load, loads, loader) {
-      // only link if already not already started linking (stops at circular)
       if (load.module)
         return;
 
@@ -1390,20 +1389,22 @@ function logloads(loads) {
         if (loader.modules[depName]) {
           depModule = loader.modules[depName];
         }
-        // otherwise we need to link the dependency
         else {
           for (var j = 0; j < loads.length; j++) {
             if (loads[j].name != depName)
               continue;
             
-            linkDeclarativeModule(loads[j], loads, loader);
+            // only link if already not already started linking (stops at circular / dynamic)
+            if (!loads[j].module)
+              linkDeclarativeModule(loads[j], loads, loader);
             
-            depModule = loads[j].exports || loads[j].module;
+            depModule = loads[j].module;
           }
         }
 
+        var depModuleModule = depModule.exports || depModule.module;
+
         console.assert(depModule, 'Dependency module not found!');
-        console.assert(depModule.exports, 'Dependency module not found!');
 
         if (registryEntry.exportStar && indexOf.call(registryEntry.exportStar, load.dependencies[i].key) != -1) {
           // we are exporting * from this dependency
@@ -1420,11 +1421,11 @@ function logloads(loads) {
                 }
               });
             })(p);
-          })(depModule.exports);
+          })(depModuleModule);
         }
 
         moduleDependencies.push(depModule);
-        depMap[i] = depModule.exports;
+        depMap[i] = depModuleModule;
       }
 
       load.status = 'linked';
