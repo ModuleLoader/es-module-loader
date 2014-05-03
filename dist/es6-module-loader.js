@@ -879,10 +879,12 @@ function logloads(loads) {
       .then(function(name) {
         var load;
         if (loader.modules[name]) {
-          load = createLoad(name);
+          return { name: name };
+          // See https://bugs.ecmascript.org/show_bug.cgi?id=2795
+          /* load = createLoad(name);
           load.status = 'linked';
           load.module = loader.modules[name];
-          return load;
+          return load; */
         }
 
         for (var i = 0, l = loader.loads.length; i < l; i++) {
@@ -919,6 +921,7 @@ function logloads(loads) {
         p
         // 15.2.4.4.1 CallFetch
         .then(function(address) {
+          // adjusted, see https://bugs.ecmascript.org/show_bug.cgi?id=2602
           if (load.status != 'loading')
             return;
           load.address = address;
@@ -1051,6 +1054,9 @@ function logloads(loads) {
                 value: depLoad.name
               });
 
+              if (!depLoad.status)
+                return;
+
               if (depLoad.status != 'linked') {
                 var linkSets = load.linkSets.concat([]);
                 for (var i = 0, l = linkSets.length; i < l; i++)
@@ -1085,6 +1091,9 @@ function logloads(loads) {
         console.assert(load.status == 'loading', 'is loading on fail');
         load.status = 'failed';
         load.exception = exc;
+
+        loader.loaderObj.failed = loader.loaderObj.failed || [];
+        loader.loaderObj.failed.push(load);
 
         var linkSets = load.linkSets.concat([]);
         for (var i = 0, l = linkSets.length; i < l; i++)
@@ -1166,6 +1175,7 @@ function logloads(loads) {
       linkSet.loads.push(load);
       load.linkSets.push(linkSet);
 
+      // adjustment, see https://bugs.ecmascript.org/show_bug.cgi?id=2603
       if (load.status != 'loaded') {
         linkSet.loadingCount++;
       }
@@ -1253,7 +1263,7 @@ function logloads(loads) {
     // 15.2.5.3 Module Linking Groups
 
     // 15.2.5.3.2 BuildLinkageGroups alternative implementation
-    // Adjustments:
+    // Adjustments (also see https://bugs.ecmascript.org/show_bug.cgi?id=2755)
     // 1. groups is an already-interleaved array of group kinds
     // 2. load.groupIndex is set when this function runs
     // 3. load.groupIndex is the interleaved index ie 0 declarative, 1 dynamic, 2 declarative, ... (or starting with dynamic)
@@ -1281,7 +1291,7 @@ function logloads(loads) {
             // otherwise it is the same as the parent
             var loadDepGroupIndex = load.groupIndex + (loadDep.kind != load.kind);
 
-            if (!loadDep.groupIndex) {
+            if (loadDep.groupIndex === undefined) {
               loadDep.groupIndex = loadDepGroupIndex;
             }
             else if (loadDep.groupIndex != loadDepGroupIndex) {
@@ -1330,7 +1340,7 @@ function logloads(loads) {
           // 15.2.5.6 LinkDynamicModules adjusted
           else {
             var module = load.execute();
-            if (!(module.__esModule))
+            if (!module || !module.__esModule)
               throw new TypeError('Execution must define a Module instance');
             load.module = {
               module: module
@@ -1353,11 +1363,8 @@ function logloads(loads) {
 
       // declare the module with an empty depMap
       var depMap = [];
-      var sys = __global.System;
-      __global.System = loader;
-      var registryEntry = load.declare.call(__global, depMap);
 
-      __global.System = sys;
+      var registryEntry = load.declare.call(__global, depMap);
 
       var moduleDependencies = [];
 
@@ -1505,7 +1512,7 @@ function logloads(loads) {
       });
     }
 
-    // NB importPromises hacks ability to import a module twice without error - https://github.com/jorendorff/js-loaders/issues/60
+    // importPromises adds ability to import a module twice without error - https://bugs.ecmascript.org/show_bug.cgi?id=2601
     var importPromises = {};
     Loader.prototype = {
       define: function(name, source, options) {
@@ -1547,9 +1554,8 @@ function logloads(loads) {
         // run normalize first
         var loaderObj = this;
 
-        return new Promise(function(resolve) {
-          resolve(loaderObj.normalize.call(this, name, options && options.name, options && options.address))
-        })
+        // added, see https://bugs.ecmascript.org/show_bug.cgi?id=2659
+        return Promise.resolve(loaderObj.normalize(name, options && options.name, options && options.address))
         .then(function(name) {
           var loader = loaderObj._loader;
           
