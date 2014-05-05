@@ -1003,7 +1003,7 @@ function logloads(loads) {
             
             System.register = function(name, deps, declare) {
               // store the registered declaration as load.declare
-              load.declare = declare;
+              load.declare = typeof name == 'string' ? declare : deps;
             }
 
             __eval(source, __global, load.name);
@@ -1527,7 +1527,7 @@ function logloads(loads) {
           throw new TypeError('Module is already loading.');
         importPromises[name] = new Promise(asyncStartLoadPartwayThrough({
           step: options && options.address ? 'fetch' : 'translate',
-          loader: this,
+          loader: this._loader,
           moduleName: name,
           moduleMetadata: options && options.metadata || {},
           moduleSource: source,
@@ -1542,7 +1542,7 @@ function logloads(loads) {
         }
         if (importPromises[request])
           return importPromises[request];
-        importPromises[request] = loadModule(this._loader);
+        importPromises[request] = loadModule(this._loader, request, {});
         return importPromises[request].then(function() { delete importPromises[request]; })
       },
       module: function(source, options) {
@@ -1554,7 +1554,7 @@ function logloads(loads) {
         var p = linkSet.done.then(function() {
           return evaluateLoadedModule(loader, load);
         });
-        proceedToTranslate(this, load, sourcePromise);
+        proceedToTranslate(loader, load, sourcePromise);
         return p;
       },
       'import': function(name, options) {
@@ -1955,15 +1955,8 @@ function logloads(loads) {
       for (var i = 0; i < scripts.length; i++) {
         var script = scripts[i];
         if (script.type == 'module') {
-          // <script type="module" name="" src=""> support
-          var name = script.getAttribute('name');
-          var address = script.getAttribute('src');
           var source = script.innerHTML;
-
-          (name
-            ? System.define(name, source, { address: address })
-            : System.module(source, { address: address })
-          ).then(function() {}, function(err) { nextTick(function() { throw err; }); });
+          System.module(source)['catch'](function(err) { setTimeout(function() { throw err; }); });
         }
       }
     }
