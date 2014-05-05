@@ -607,13 +607,19 @@ function logloads(loads) {
             // otherwise it is the same as the parent
             var loadDepGroupIndex = load.groupIndex + (loadDep.kind != load.kind);
 
-            if (loadDep.groupIndex === undefined) {
+            // the group index of an entry is always the maximum
+            if (loadDep.groupIndex === undefined || loadDep.groupIndex < loadDepGroupIndex) {
+              
+              // if already in a group, remove from the old group
+              if (loadDep.groupIndex) {
+                groups[loadDep.groupIndex].splice(groups[loadDep.groupIndex].indexOf(loadDep), 1);
+
+                // if the old group is empty, then we have a mixed depndency cycle
+                if (groups[loadDep.groupIndex].length == 0)
+                  throw new TypeError("Mixed dependency cycle detected");
+              }
+
               loadDep.groupIndex = loadDepGroupIndex;
-            }
-            else if (loadDep.groupIndex != loadDepGroupIndex) {
-              // if the dependency already has a group index
-              // a groupIndex inconsistency implies a mixed dependency cycle
-              throw new TypeError('Mixed dependency cycle detected.');
             }
 
             buildLinkageGroups(loadDep, loads, groups, loader);
