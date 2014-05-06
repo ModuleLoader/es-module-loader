@@ -5,7 +5,6 @@ module.exports = function (grunt) {
     meta: {
       banner: '/*\n *  <%= pkg.name %> v<%= pkg.version %>\n' +
         '<%= pkg.homepage ? " *  " + pkg.homepage + "\\n" : "" %>' +
-        ' *  Implemented to the Jan 20 2014 ES6 specification draft rev 22\n' +
         ' *  Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>;' +
         ' Licensed <%= _.pluck(pkg.licenses, "type").join(", ") %>\n */'
     },
@@ -48,7 +47,6 @@ module.exports = function (grunt) {
       dist: {
         options: {
           banner: '<%= meta.banner %>\n'
-          + '/*\n *  ES6 Promises shim from when.js, Copyright (c) 2010-2014 Brian Cavalier, John Hann, MIT License\n */\n'
         },
         src: 'dist/<%= pkg.name %>.js',
         dest: 'dist/<%= pkg.name %>.min.js'

@@ -218,6 +218,17 @@ function runTests() {
     }, err);
   });
 
+  test('Circular Test', function(assert, err) {
+    System['import']('syntax/even').then(function(m) {
+      assert(
+        [m.even(10), true],
+        [m.counter, 6],
+        [m.even(15), false],
+        [m.counter, 14]
+      );
+    }, err);
+  });
+
   test('Load order test: A', function(assert, err) {
     System['import']('loads/a').then(function(m) {
       assert(
