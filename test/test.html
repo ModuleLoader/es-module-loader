@@ -5,7 +5,6 @@
 
   <script src="test.js"></script>
 
-
   <!-- set this to the path to traceur.js -->
   <script src="../node_modules/traceur/bin/traceur.js"></script>
 
@@ -14,20 +13,13 @@
     // delete window.Promise;
   </script>
 
-  <!-- run Grunt first to create this file -->
-  <script src="../dist/es6-module-loader.js"></script>
+  <script src="../node_modules/es6-promise/dist/promise-1.0.0.js"></script>
+
+  <script src="../lib/loader.js"></script>
+  <script src="../lib/system.js"></script>
 
   <script>
     runTests();
-  </script>
-
-  <script type="module" name="named-module">
-    class q {
-      constructor() {
-        this.p = 'hi';
-      }
-    }
-    export var p = new q().p;
   </script>
 
   <script type="module">
@@ -38,32 +30,13 @@
     }
   </script>
 
-  <!-- 
-  Not yet supported
-  <script type="module" src="loader/anon.js"></script> 
-  -->
-  <script type="module" name="named" src="loader/named.js"></script>
 
   <script>
     setTimeout(function() {
-      test('Named &lt;script type="module"> tag', function(assert) {
-        System['import']('named-module').then(function(m) {
-          assert(m.p, 'hi');
-        }, function(e) {
-          setTimeout(function() {
-            throw e;
-          }, 1);
-        });
-      });
       test('Anonymous &lt;script type="module"> tag', function(assert) {
         assert(typeof window.anon, 'function');
       });
-      /* test('&lt;script type="module"> with src', function(assert) {
-        assert(typeof window.anon2, 'function');
-      }); */
-      test('&lt;script type="module"> named with src', function(assert) {
-        assert(System.get('named').q,'test');
-      });
     }, 500);
   </script>
+
 
