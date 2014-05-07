@@ -5,7 +5,7 @@ Dynamically loads ES6 modules in NodeJS and current browsers.
 * Implemented exactly to the April 27 2014 ES6 specification draft.
 * Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#basic-use).
 * Uses [Traceur](https://github.com/google/traceur-compiler) for compiling ES6 modules and syntax into ES5 in the browser with source map support.
-* Fully supports [ES6 circular references and bindings](#circular-references-&-bindings).
+* Fully supports [ES6 circular references and bindings](#circular-references--bindings).
 * Polyfills ES6 Promises in the browser with a bundled [es6-promise](https://github.com/jakearchibald/es6-promise) implementation.
 * [Compatible with NodeJS](#nodejs-support) allowing for server-side module loading and tracing extensions.
 * Supports ES6 module loading in IE9+, and dynamic module formats in IE8+.
@@ -23,7 +23,7 @@ _Note the ES6 module specification is still in draft, and subject to change._
 
 ### Basic Use
 
-Download both [es6-module-loader.js](https://raw.githubusercontent.com/ModuleLoader/es6-module-loader/v0.5.4/dist/es6-module-loader.js) and [traceur.js](https://raw.githubusercontent.com/google/traceur-compiler/traceur@0.0.32/bin/traceur.js) into the same folder.
+Download both [es6-module-loader.js](https://raw.githubusercontent.com/ModuleLoader/es6-module-loader/v0.6.0/dist/es6-module-loader.js) and [traceur.js](https://raw.githubusercontent.com/google/traceur-compiler/traceur@0.0.41/bin/traceur.js) into the same folder.
 
 If using ES6 syntax (optional), include `traceur.js` in the page first then include `es6-module-loader.js`:
 
@@ -62,6 +62,62 @@ The dynamic loader returns a `Module` object, which contains getters for the nam
 _Because the loader is promise-based we need to add a catch handler in order to detect loading errors._
 
 [Read the wiki on overview of ES6 modules and syntax](https://github.com/ModuleLoader/es6-module-loader/wiki/A-Brief-ES6-Modules-Overview).
+
+### Module Tag
+
+A simple analog to the module tag is provided with:
+
+```html
+<script type="module">
+  // loads the 'q' export from 'mymodule.js' in the same path as the page
+  import { q } from 'mymodule';
+
+  new q(); // -> 'this is an es6 class!'
+</script>
+```
+
+Ideally this should be based on polyfilling the `<module>` tag, as `<script type="module">` is not in the spec.
+
+As such this approach is not really suitable for anything more than experimentation.
+
+See an overview of the specification module tag features here - https://github.com/dherman/web-modules/blob/master/module-tag/explainer.md.
+
+### baseURL
+
+All modules are loaded relative to the `baseURL`, which by default is set to the current page path.
+
+We can alter this with:
+
+```javascript
+  System.baseURL = '/js/lib';
+  System.import('module'); // now loads "/js/lib/module.js"
+```
+
+### Paths Implementation
+
+_Note: This is a specification under discussion and not confirmed. This implementation will likely change._
+
+The System loader provides paths rules used by the standard `locate` function.
+
+For example, we might want to load `jquery` from a CDN location. For this we can provide a paths rule:
+
+```javascript
+  System.paths['jquery'] = '//code.jquery.com/jquery-1.10.2.min.js';
+  System.import('jquery').then(function($) {
+    // ...
+  });
+```
+
+Any reference to `jquery` in other modules will also use this same version.
+
+It is also possible to define wildcard paths rules. The most specific rule will be used:
+
+```javascript
+  System.paths['lodash/*'] = '/js/lodash/*.js'
+  System.import('lodash/map').then(function(map) {
+    // ...
+  });
+```
 
 ### Circular References & Bindings
 
@@ -102,67 +158,63 @@ odd.js
   });
 ```
 
-### Extending the Loader
-
-The loader in its default state provides only ES6 loading.
-
-We can extend it to load AMD, CommonJS and global scripts as well as various other custom functionality through the loader hooks.
-
-[Read the wiki on extending the loader here](https://github.com/ModuleLoader/es6-module-loader/wiki/Extending-the-ES6-Loader).
-
-### Module Tag
-
-A simple analog to the module tag is provided with:
-
-```html
-<script type="module">
-  // loads the 'q' export from 'mymodule.js' in the same path as the page
-  import { q } from 'mymodule';
-
-  new q(); // -> 'this is an es6 class!'
-</script>
-```
-
-Ideally this should be based on polyfilling the `<module>` tag, as `<script type="module">` is not in the spec.
-
-As such this approach is not really suitable for anything more than experimentation.
-
-See an overview of the specification module tag features here - https://github.com/dherman/web-modules/blob/master/module-tag/explainer.md.
-
-### Paths Implementation
-
-_Note: This is a specification under discussion and not confirmed. This implementation will likely change._
-
-The System loader provides paths rules used by the standard `locate` function.
-
-For example, we might want to load `jquery` from a CDN location. For this we can provide a paths rule:
-
-```javascript
-  System.paths['jquery'] = '//code.jquery.com/jquery-1.10.2.min.js';
-  System.import('jquery').then(function($) {
-    // ...
-  });
-```
-
-Any reference to `jquery` in other modules will also use this same version.
-
-It is also possible to define wildcard paths rules. The most specific rule will be used:
-
-```javascript
-  System.paths['lodash/*'] = '/js/lodash/*.js'
-  System.import('lodash/map').then(function(map) {
-    // ...
-  });
-```
-
-<a name="moving-to-production">
 ### Moving to Production
 
-When in production, one wouldn't want to load ES6 modules and syntax in the browser. Rather the modules would be built into ES5 and AMD to be loaded.
+When in production, it is not suitable to load ES6 modules and syntax in the browser.
 
-Additionally, suitable bundling would need to be used.
+There is a `modules=instantiate` build output in Traceur that can be used with the ES6 Module Loader, provided it has the [System.register extension](https://github.com/systemjs/systemjs/blob/master/lib/extension-register.js)
+from [SystemJS](https://github.com/systemjs/systemjs).
 
-Traceur provides build outputs that can be loaded with extensions to the module loader including AMD, CommonJS and a System.register build.
+The benefit of this output is that it provides full support for circular references and live module bindings.
+
+Alternatively, Traceur can also output `amd` or `cjs` as well.
+
+A basic example of using this extension with a build would be the following:
+
+#### Building all files into one bundle
+
+1. Build all ES6 modules into ES5 System.register form:
+
+  ```
+    traceur --out app-build.js app/app.js --modules=instantiate
+  ```
+
+2. Load [`traceur-runtime.js`](https://raw.githubusercontent.com/google/traceur-compiler/traceur@0.0.41/bin/traceur.js), `es6-module-loader.js` and then apply the register extension before doing the import or loading the bundle as a script:
+
+  ```html
+    <script src="traceur-runtime.js"></script>
+    <script src="es6-module-loader.js"></script>
+    <script>
+      /*
+       * This should be a separate external script
+       * Register function is included from https://github.com/systemjs/systemjs/blob/master/lib/extension-register.js
+       */
+      function register(loader) { 
+        // ...
+      }
+
+      // this needs to be added to apply the extension
+      register(System);
+    </script>
+
+    <!-- now include the bundle -->
+    <script src="app-build.js"></script>
+
+    <!-- now we can import and get modules from the bundle -->
+    <script>
+      System.import('app/app');
+    </script>
+  ```
+
+#### Building into separate files
+
+We can also build separate files with:
+
+```
+  traceur --dir app app-build --modules=instantiate
+```
+
+With the above, we can load from the separate files identical to loading ES6.
 
 ### NodeJS Usage
 
@@ -191,6 +243,14 @@ Running the application:
 > node index.js
 NodeJS test
 ```
+
+### Extending the Loader
+
+The loader in its default state provides only ES6 loading.
+
+We can extend it to load AMD, CommonJS and global scripts as well as various other custom functionality through the loader hooks.
+
+[Read the wiki on extending the loader here](https://github.com/ModuleLoader/es6-module-loader/wiki/Extending-the-ES6-Loader).
 
 ### Specification Notes
 
