@@ -1034,6 +1034,7 @@ function logloads(loads) {
         // 15.2.4.6 ProcessLoadDependencies
         load.dependencies = [];
         load.depsList = depsList;
+
         var loadPromises = [];
         for (var i = 0, l = depsList.length; i < l; i++) (function(request) {
           loadPromises.push(
@@ -1210,6 +1211,26 @@ function logloads(loads) {
         return;
 
       var startingLoad = linkSet.loads[0];
+
+      // non-executing link variation for loader tracing
+      // on the server
+      if (linkSet.loader.loaderObj.execute === false) {
+        var loads = [].concat(linkSet.loads);
+        for (var i = 0; i < loads.length; i++) {
+          var load = loads[i];
+          load.module = load.kind == 'dynamic' ? {
+            module: Module({})
+          } : {
+            name: load.name,
+            module: Module({}),
+            evaluated: true
+          };
+          load.status = 'linked';
+          finishLoad(linkSet.loader, load);
+        }
+        return linkSet.resolve(startingLoad);
+      }
+
       try {
         link(linkSet);
       }
@@ -1241,6 +1262,19 @@ function logloads(loads) {
 
     // 15.2.5.2.5
     function finishLoad(loader, load) {
+      // add to global trace if tracing
+      if (loader.loaderObj.trace) {
+        if (!loader.loaderObj.loads)
+          loader.loaderObj.loads = {};
+        loader.loaderObj.loads[load.name] = {
+          name: load.name,
+          dependencies: load.dependencies,
+          address: load.address,
+          metadata: load.metadata,
+          source: load.source,
+          kind: load.kind
+        };
+      }
       // if not anonymous, add to the module table
       if (load.name) {
         console.assert(!loader.modules[load.name], 'load not in module table');
