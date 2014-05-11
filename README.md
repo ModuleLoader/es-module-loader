@@ -179,7 +179,7 @@ A basic example of using this extension with a build would be the following:
     traceur --out app-build.js app/app.js --modules=instantiate
   ```
 
-2. Load `traceur-runtime.js` (included in the `bin` folder when installing Traceur through Bower or npm), `es6-module-loader.js` and then apply the register extension before doing the import or loading the bundle as a script:
+2. If using additional ES6 features apart from modules syntax, load `traceur-runtime.js` (included in the `bin` folder when installing Traceur through Bower or npm). Then include `es6-module-loader.js` and then apply the register extension before doing the import or loading the bundle as a script:
 
   ```html
     <script src="traceur-runtime.js"></script>
