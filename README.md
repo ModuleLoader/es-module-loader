@@ -167,6 +167,8 @@ from [SystemJS](https://github.com/systemjs/systemjs).
 
 The benefit of this output is that it provides full support for circular references and live module bindings.
 
+This output format is explained here - https://github.com/ModuleLoader/es6-module-loader/wiki/System.register-Explained.
+
 Alternatively, Traceur can also output `amd` or `cjs` as well.
 
 A basic example of using this extension with a build would be the following:
