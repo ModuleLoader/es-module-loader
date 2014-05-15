@@ -17,13 +17,13 @@ See the [demo folder](https://github.com/ModuleLoader/es6-module-loader/blob/mas
 
 For an example of a universal module loader based on this polyfill for loading AMD, CommonJS and globals, see [SystemJS](https://github.com/systemjs/systemjs).
 
-_The current version is tested against **[Traceur 0.0.41](https://github.com/google/traceur-compiler/tree/0.0.41)**._
+_The current version is tested against **[Traceur 0.0.42](https://github.com/google/traceur-compiler/tree/0.0.42)**._
 
 _Note the ES6 module specification is still in draft, and subject to change._
 
 ### Basic Use
 
-Download both [es6-module-loader.js](https://raw.githubusercontent.com/ModuleLoader/es6-module-loader/v0.6.0/dist/es6-module-loader.js) and [traceur.js](https://raw.githubusercontent.com/google/traceur-compiler/traceur@0.0.41/bin/traceur.js) into the same folder.
+Download both [es6-module-loader.js](https://raw.githubusercontent.com/ModuleLoader/es6-module-loader/v0.6.0/dist/es6-module-loader.js) and [traceur.js](https://raw.githubusercontent.com/google/traceur-compiler/traceur@0.0.42/bin/traceur.js) into the same folder.
 
 If using ES6 syntax (optional), include `traceur.js` in the page first then include `es6-module-loader.js`:
 
