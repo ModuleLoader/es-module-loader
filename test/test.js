@@ -296,6 +296,21 @@ function runTests() {
     })
   });
 
+  test('Dependency race error check (fix pending)', function(assert) {
+    var systemNormalize = System.normalize;
+    System.normalize = function(name) {
+      if (name == 'loadmain')
+        return 'loads/main';
+      return systemNormalize.apply(this, arguments);
+    }
+    System['import']('loadmain').then(function(m) {
+      assert('Module returned despite error');
+    }, function(e) {
+      assert(!!e, true);
+    });
+    System['import']('loads/deperror');
+  });
+
   test('Export Syntax', function(assert) {
     System['import']('syntax/export').then(function(m) {
       assert(

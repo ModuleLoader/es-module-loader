@@ -1090,9 +1090,6 @@ function logloads(loads) {
         load.status = 'failed';
         load.exception = exc;
 
-        loader.loaderObj.failed = loader.loaderObj.failed || [];
-        loader.loaderObj.failed.push(load);
-
         var linkSets = load.linkSets.concat([]);
         for (var i = 0, l = linkSets.length; i < l; i++)
           linkSetFailed(linkSets[i], exc);
@@ -1213,7 +1210,8 @@ function logloads(loads) {
       var startingLoad = linkSet.loads[0];
 
       // non-executing link variation for loader tracing
-      // on the server
+      // on the server. Not in spec.
+      /***/
       if (linkSet.loader.loaderObj.execute === false) {
         var loads = [].concat(linkSet.loads);
         for (var i = 0; i < loads.length; i++) {
@@ -1230,6 +1228,7 @@ function logloads(loads) {
         }
         return linkSet.resolve(startingLoad);
       }
+      /***/
 
       try {
         link(linkSet);
@@ -1245,9 +1244,16 @@ function logloads(loads) {
 
     // 15.2.5.2.4
     function linkSetFailed(linkSet, exc) {
+      var loader = linkSet.loader;
       var loads = linkSet.loads.concat([]);
       for (var i = 0, l = loads.length; i < l; i++) {
         var load = loads[i];
+
+        // store all failed load records
+        loader.loaderObj.failed = loader.loaderObj.failed || [];
+        if (loader.loaderObj.failed.indexOf(load) == -1)
+          loader.loaderObj.failed.push(load);
+
         var linkIndex = indexOf.call(load.linkSets, linkSet);
         console.assert(linkIndex != -1, 'link not present');
         load.linkSets.splice(linkIndex, 1);
