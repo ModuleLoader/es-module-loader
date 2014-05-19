@@ -38,7 +38,7 @@
   },
   "main": "lib/index",
   "scripts": {
-    "test": "node test/test"
+    "test": "cd test && node test"
   },
   "dependencies": {
     "traceur": "0.0.41",

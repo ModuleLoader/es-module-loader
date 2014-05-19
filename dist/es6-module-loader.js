@@ -1750,7 +1750,7 @@ function logloads(loads) {
   })();
 
   function __eval(__source, __global, __moduleName) {
-    eval('var __moduleName = "' + (__moduleName || '').replace('"', '\"') + '"; with(__global) { (function() { ' + __source + ' \n }).call(__global); }');
+    eval('var __moduleName = "' + (__moduleName || '').replace('"', '\"') + '"; (function() { ' + __source + ' \n }).call(__global);');
   }
 
 })(typeof global !== 'undefined' ? global : this);
