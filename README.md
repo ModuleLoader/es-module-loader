@@ -246,6 +246,43 @@ Running the application:
 NodeJS test
 ```
 
+### Tracing API
+
+This is not in the specification, but is provided since it is such a natural extension of loading and not much code at all.
+
+Enable tracing and start importing modules:
+
+```javascript
+  loader.trace = true;
+  loader.execute = true; // optional, disables execution of module bodies
+
+  loader.import('some/module').then(function() {
+    /*
+      Now we have:
+      
+        loader.loads['some/module'] == {
+          name: 'some/module',
+          deps: ['./unnormalized', 'deps'],
+          depMap: {
+            './unnormalized': 'normalized',
+            'deps': 'deps'
+          },
+          address: '/resolvedURL',
+          metadata: { metadata object from load },
+          source: 'translated source code string',
+          kind: 'dynamic' (instantiated) or 'declarative' (ES6 module pipeline)
+        }
+
+      With the dependency load records
+        loader.loads['normalized']
+        loader.loads['deps']
+      also set.
+    */
+  });
+```
+
+Then start importing modules
+
 ### Extending the Loader
 
 The loader in its default state provides only ES6 loading.
