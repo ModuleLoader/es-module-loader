@@ -1,0 +1,22 @@
+<!doctype html>
+  <script src="../dist/es6-module-loader.js"></script>
+  <script>
+    System.set('module0', Module({}));
+    System.instantiate = function(load) {
+      return {
+        deps: ['module1'],
+        execute: function() {
+          return Module({});
+        }
+      };
+    }
+
+    function start() {
+      var startTime = +Date.now();
+      for (var i = 1; i <= 1000; i++)
+        System.define('module' + i, "function() {} var p = 5; // non-trivial code");
+      System.import('module1000').then(function() {
+        console.log(Date.now() - startTime);
+      });
+    }
+  </script>
