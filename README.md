@@ -7,7 +7,7 @@ Dynamically loads ES6 modules in NodeJS and current browsers.
 * Uses [Traceur](https://github.com/google/traceur-compiler) for compiling ES6 modules and syntax into ES5 in the browser with source map support.
 * Fully supports [ES6 circular references and bindings](#circular-references--bindings).
 * Polyfills ES6 Promises in the browser with a bundled [es6-promise](https://github.com/jakearchibald/es6-promise) implementation.
-* [Compatible with NodeJS](#nodejs-support) allowing for server-side module loading and tracing extensions.
+* [Compatible with NodeJS](#nodejs-usage) allowing for server-side module loading and tracing extensions.
 * Supports ES6 module loading in IE9+, and dynamic module formats in IE8+.
 * The complete combined polyfill comes to 7KB minified and gzipped, making it suitable for production use, provided that modules are [built into ES5 making them independent of Traceur](#moving-to-production).
 
