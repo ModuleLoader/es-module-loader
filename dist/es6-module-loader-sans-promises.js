@@ -6,7 +6,7 @@
     - Implemented exactly to the 2014-04-27 Specification Draft.
       Loader implemented to the modules draft from
       https://github.com/jorendorff/js-loaders/blob/e60d3651/specs/es6-modules-2013-12-02.pdf
-    
+
     - All functions are commented with their spec numbers, with spec differences commented.
 
     - All spec bugs are commented in this code with links to the spec bugs.
@@ -17,7 +17,7 @@
     - When the traceur global is detected, declarative modules are transformed by Traceur
       into the `instantiate` System.register output.
 
-    - Realm implementation is entirely omitted. As such, the Loader.realm accessor will 
+    - Realm implementation is entirely omitted. As such, the Loader.realm accessor will
       throw an error, as well as Loader.eval. Realm arguments are not passed.
 
     - Loader module table iteration currently not yet implemented
@@ -54,7 +54,7 @@ function logloads(loads) {
 
   var loads = System._loader.loads;
   var linkSets = [];
-  
+
   for (var i = 0; i < loads.length; i++) {
     var load = loads[i];
     console.assert(load.status == 'loading' || load.status == 'loaded', 'Each load is loading or loaded');
@@ -167,7 +167,7 @@ function logloads(loads) {
     }
 
     // 15.2.3.2.2 createLoadRequestObject, absorbed into calling functions
-    
+
     // 15.2.4
 
     // 15.2.4.1
@@ -216,7 +216,7 @@ function logloads(loads) {
         return load;
       });
     }
-    
+
     // 15.2.4.3
     function proceedToLocate(loader, load) {
       proceedToFetch(loader, load,
@@ -244,6 +244,106 @@ function logloads(loads) {
       );
     }
 
+    // Returns an array of ModuleSpecifiers
+    function parse(load) {
+      if (!__global.traceur)
+        throw new TypeError('Include Traceur for module syntax support');
+
+      // given a syntax tree, return the import list
+      function getImports(moduleTree) {
+        var imports = [];
+
+        function addImport(name) {
+          if (indexOf.call(imports, name) == -1)
+            imports.push(name);
+        }
+
+        traverse(moduleTree, function(node) {
+          // import {} from 'foo';
+          // export * from 'foo';
+          // export { ... } from 'foo';
+          // module x from 'foo';
+          if (node.type == 'EXPORT_DECLARATION') {
+            if (node.declaration.moduleSpecifier)
+              addImport(node.declaration.moduleSpecifier.token.processedValue);
+          }
+          else if (node.type == 'IMPORT_DECLARATION')
+            addImport(node.moduleSpecifier.token.processedValue);
+          else if (node.type == 'MODULE_DECLARATION')
+            addImport(node.expression.token.processedValue);
+        });
+        return imports;
+      }
+
+      traceur = traceur || __global.traceur;
+
+      console.assert(load.source, 'Non-empty source');
+
+      var depsList;
+      try {
+        var parser = new traceur.syntax.Parser(new traceur.syntax.SourceFile(load.address, load.source));
+        var body = parser.parseModule();
+
+        load.kind = 'declarative';
+        depsList = getImports(body);
+
+        var oldSourceMaps = traceur.options.sourceMaps;
+        var oldModules = traceur.options.modules;
+
+        traceur.options.sourceMaps = true;
+        traceur.options.modules = 'instantiate';
+
+        var reporter = new traceur.util.ErrorReporter();
+
+        reporter.reportMessageInternal = function(location, kind, format, args) {
+          throw new SyntaxError(kind, location.start && location.start.line_, location.start && location.start.column_);
+        }
+
+        // traceur expects its version of System
+        var curSystem = __global.System;
+        __global.System = __global.traceurSystem;
+
+        var tree = (new traceur.codegeneration.module.AttachModuleNameTransformer(load.name)).transformAny(body);
+        tree = (new traceur.codegeneration.FromOptionsTransformer(reporter)).transform(tree);
+
+        var sourceMapGenerator = new traceur.outputgeneration.SourceMapGenerator({ file: load.address });
+        var options = { sourceMapGenerator: sourceMapGenerator };
+
+        var source = traceur.outputgeneration.TreeWriter.write(tree, options);
+
+        if (__global.btoa)
+          source += '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(options.sourceMap))) + '\n';
+
+        // now run System.register
+        var curRegister = System.register;
+
+        System.register = function(name, deps, declare) {
+          // store the registered declaration as load.declare
+          load.declare = typeof name == 'string' ? declare : deps;
+        }
+
+        __eval(source, __global, load.name);
+      }
+      catch(e) {
+        if (e.name == 'SyntaxError' || e.name == 'TypeError')
+          e.message = 'Evaluating ' + (load.name || load.address) + '\n\t' + e.message;
+        if (curRegister)
+          System.register = curRegister;
+        if (curSystem)
+          __global.System = curSystem;
+        if (oldSourceMaps)
+          traceur.options.sourceMaps = oldSourceMaps;
+        if (oldModules)
+          traceur.options.modules = oldModules;
+        throw e;
+      }
+      System.register = curRegister;
+      __global.System = curSystem;
+      traceur.options.sourceMaps = oldSourceMaps;
+      traceur.options.modules = oldModules;
+      return depsList;
+    }
+
     // 15.2.4.5
     function proceedToTranslate(loader, load, p) {
       p
@@ -269,75 +369,8 @@ function logloads(loads) {
 
         var depsList;
         if (instantiateResult === undefined) {
-          if (!__global.traceur)
-            throw new TypeError('Include Traceur for module syntax support');
-
-          traceur = traceur || __global.traceur;
           load.address = load.address || 'anon' + ++anonCnt;
-
-          console.assert(load.source, 'Non-empty source');
-
-          try {
-            var parser = new traceur.syntax.Parser(new traceur.syntax.SourceFile(load.address, load.source));
-            var body = parser.parseModule();
-
-            load.kind = 'declarative';
-            depsList = getImports(body);
-
-            var oldSourceMaps = traceur.options.sourceMaps;
-            var oldModules = traceur.options.modules;
-
-            traceur.options.sourceMaps = true;
-            traceur.options.modules = 'instantiate';
-
-            var reporter = new traceur.util.ErrorReporter();
-
-            reporter.reportMessageInternal = function(location, kind, format, args) {
-              throw new SyntaxError(kind, location.start && location.start.line_, location.start && location.start.column_);
-            }
-
-            // traceur expects its version of System
-            var curSystem = __global.System;
-            __global.System = __global.traceurSystem;
-
-            var tree = (new traceur.codegeneration.module.AttachModuleNameTransformer(load.name)).transformAny(body);
-            tree = (new traceur.codegeneration.FromOptionsTransformer(reporter)).transform(tree);
-
-            var sourceMapGenerator = new traceur.outputgeneration.SourceMapGenerator({ file: load.address });
-            var options = { sourceMapGenerator: sourceMapGenerator };
-
-            var source = traceur.outputgeneration.TreeWriter.write(tree, options);
-
-            if (__global.btoa)
-              source += '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(options.sourceMap))) + '\n';
-
-            // now run System.register
-            var curRegister = System.register;
-            
-            System.register = function(name, deps, declare) {
-              // store the registered declaration as load.declare
-              load.declare = typeof name == 'string' ? declare : deps;
-            }
-
-            __eval(source, __global, load.name);
-          }
-          catch(e) {
-            if (e.name == 'SyntaxError' || e.name == 'TypeError') 
-              e.message = 'Evaluating ' + (load.name || load.address) + '\n\t' + e.message;
-            if (curRegister)
-              System.register = curRegister;
-            if (curSystem)
-              __global.System = curSystem;
-            if (oldSourceMaps)
-              traceur.options.sourceMaps = oldSourceMaps;
-            if (oldModules)
-              traceur.options.modules = oldModules;
-            throw e;
-          }
-          System.register = curRegister;
-          __global.System = curSystem;
-          traceur.options.sourceMaps = oldSourceMaps;
-          traceur.options.modules = oldModules;
+          depsList = parse(load);
         }
         else if (typeof instantiateResult == 'object') {
           depsList = instantiateResult.deps || [];
@@ -423,7 +456,7 @@ function logloads(loads) {
         var name = stepState.moduleName;
         var step = stepState.step;
 
-        if (loader.modules[name]) 
+        if (loader.modules[name])
           throw new TypeError('"' + name + '" already exists in the module table');
 
         // NB this still seems wrong for LoadModule as we may load a dependency
@@ -433,7 +466,7 @@ function logloads(loads) {
             throw new TypeError('"' + name + '" already loading');
 
         var load = createLoad(name);
-        
+
         load.metadata = stepState.moduleMetadata;
 
         var linkSet = createLinkSet(loader, load);
@@ -502,7 +535,7 @@ function logloads(loads) {
         for (var j = 0, d = loader.loads.length; j < d; j++) {
           if (loader.loads[j].name != name)
             continue;
-          
+
           addLoadToLinkSet(linkSet, loader.loads[j]);
           break;
         }
@@ -651,7 +684,7 @@ function logloads(loads) {
 
             // the group index of an entry is always the maximum
             if (loadDep.groupIndex === undefined || loadDep.groupIndex < loadDepGroupIndex) {
-              
+
               // if already in a group, remove from the old group
               if (loadDep.groupIndex) {
                 groups[loadDep.groupIndex].splice(groups[loadDep.groupIndex].indexOf(loadDep), 1);
@@ -757,11 +790,11 @@ function logloads(loads) {
           for (var j = 0; j < loads.length; j++) {
             if (loads[j].name != depName)
               continue;
-            
+
             // only link if already not already started linking (stops at circular / dynamic)
             if (!loads[j].module)
               linkDeclarativeModule(loads[j], loads, loader);
-            
+
             depModule = loads[j].module;
           }
         }
@@ -794,7 +827,7 @@ function logloads(loads) {
 
       load.status = 'linked';
     }
-      
+
 
 
     // 15.2.5.5.1 LinkImports not implemented
@@ -816,7 +849,7 @@ function logloads(loads) {
      * module.module        bound module object
      * module.execute       execution function for module
      * module.dependencies  list of module objects for dependencies
-     * 
+     *
      */
 
     // 15.2.6.2 EnsureEvaluated adjusted
@@ -880,6 +913,7 @@ function logloads(loads) {
     // importPromises adds ability to import a module twice without error - https://bugs.ecmascript.org/show_bug.cgi?id=2601
     var importPromises = {};
     Loader.prototype = {
+      constructor: Loader,
       define: function(name, source, options) {
         if (importPromises[name])
           throw new TypeError('Module is already loading.');
@@ -923,12 +957,12 @@ function logloads(loads) {
         return Promise.resolve(loaderObj.normalize(name, options && options.name, options && options.address))
         .then(function(name) {
           var loader = loaderObj._loader;
-          
+
           if (loader.modules[name]) {
             ensureEvaluated(loader.modules[name], [], loader._loader);
             return Promise.resolve(loader.modules[name].module);
           }
-          
+
           return (importPromises[name] || (importPromises[name] = loadModule(loader, name, options || {})))
             .then(function(load) {
               delete importPromises[name];
@@ -947,6 +981,9 @@ function logloads(loads) {
       },
       has: function(name) {
         return !!this._loader.modules[name];
+      },
+      newModule: function (obj) {
+        return new Module(obj);
       },
       set: function(name, module) {
         if (!(module.__esModule))
@@ -1000,31 +1037,6 @@ function logloads(loads) {
       }
     }
 
-    // given a syntax tree, return the import list
-    function getImports(moduleTree) {
-      var imports = [];
-
-      function addImport(name) {
-        if (indexOf.call(imports, name) == -1)
-          imports.push(name);
-      }
-
-      traverse(moduleTree, function(node) {
-        // import {} from 'foo';
-        // export * from 'foo';
-        // export { ... } from 'foo';
-        // module x from 'foo';
-        if (node.type == 'EXPORT_DECLARATION') {
-          if (node.declaration.moduleSpecifier)
-            addImport(node.declaration.moduleSpecifier.token.processedValue);
-        }
-        else if (node.type == 'IMPORT_DECLARATION')
-          addImport(node.moduleSpecifier.token.processedValue);
-        else if (node.type == 'MODULE_DECLARATION')
-          addImport(node.expression.token.processedValue);
-      });
-      return imports;
-    }
     var anonCnt = 0;
 
     // Module Object
