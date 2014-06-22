@@ -544,6 +544,15 @@ function logloads(loads) {
       // snapshot(linkSet.loader);
     }
 
+    function doLink(linkSet) {
+      try {
+        link(linkSet);
+      }
+      catch(exc) {
+        return linkSetFailed(linkSet, exc);
+      }
+    }
+
     // 15.2.5.2.3
     function updateLinkSetOnLoad(linkSet, load) {
       console.assert(load.status == 'loaded' || load.status == 'linked', 'loaded or linked');
@@ -579,12 +588,7 @@ function logloads(loads) {
       }
       /***/
 
-      try {
-        link(linkSet);
-      }
-      catch(exc) {
-        return linkSetFailed(linkSet, exc);
-      }
+      doLink(linkSet);
 
       console.assert(linkSet.loads.length == 0, 'loads cleared');
 
@@ -1117,20 +1121,20 @@ function logloads(loads) {
       hash     : m[8] || ''
     } : null);
   }
+  function removeDotSegments(input) {
+    var output = [];
+    input.replace(/^(\.\.?(\/|$))+/, '')
+      .replace(/\/(\.(\/|$))+/g, '/')
+      .replace(/\/\.\.$/, '/../')
+      .replace(/\/?[^\/]*/g, function (p) {
+        if (p === '/..')
+          output.pop();
+        else
+          output.push(p);
+    });
+    return output.join('').replace(/^\//, input.charAt(0) === '/' ? '/' : '');
+  }
   function toAbsoluteURL(base, href) {
-    function removeDotSegments(input) {
-      var output = [];
-      input.replace(/^(\.\.?(\/|$))+/, '')
-        .replace(/\/(\.(\/|$))+/g, '/')
-        .replace(/\/\.\.$/, '/../')
-        .replace(/\/?[^\/]*/g, function (p) {
-          if (p === '/..')
-            output.pop();
-          else
-            output.push(p);
-      });
-      return output.join('').replace(/^\//, input.charAt(0) === '/' ? '/' : '');
-    }
 
     href = parseURI(href || '');
     base = parseURI(base || '');
