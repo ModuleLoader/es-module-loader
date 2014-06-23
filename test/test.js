@@ -202,7 +202,6 @@ function runTests() {
   
   test('Direct import without bindings', function(assert, err) {
     System['import']('syntax/direct').then(function(m) {
-      console.log('got direct');
       assert(!!m, true);
     }, err);
   });
@@ -296,17 +295,14 @@ function runTests() {
     })
   });
 
-
-  // https://bugs.ecmascript.org/show_bug.cgi?id=2993
-
-  // test('Dependency race error check (fix pending)', function(assert) {
-  //   System['import']('loads/main').then(function(m) {
-  //     assert('Module returned despite error');
-  //   }, function(e) {
-  //     assert(!!e, true);
-  //   });
-  //   System['import']('loads/deperror');
-  // });
+  test('Error check 1', function(assert) {
+    System['import']('loads/main').then(function(m) {
+      assert(!!m, true);
+    }, function(e) {
+      assert(false, 'caught');
+    });
+    // System['import']('loads/deperror');
+  });
 
 
   test('Export Syntax', function(assert) {
@@ -478,7 +474,7 @@ function runTests() {
           deps: deps,
           execute: function() {
             if (customModules[load.name])
-              return Module(customModules[load.name]);
+              return System.newModule(customModules[load.name]);
 
             // first ensure all dependencies have been executed
             for (var i = 0; i < resolvedDeps.length; i++)
@@ -487,7 +483,7 @@ function runTests() {
             var module = factory.apply(null, resolvedDeps);
           
             customModules[load.name] = module;
-            return new Module(module);
+            return System.newModule(module);
           }
         };
       });
@@ -519,7 +515,6 @@ function runTests() {
 
   test('Custom loader hook - normalize error', function(assert) {
     customLoader['import']('loader/error1-parent').then(function(m) {
-      console.log('got n');
     })['catch'](function(e) {
       assert(e, 'error1');
     });

@@ -2,14 +2,14 @@
 
 Dynamically loads ES6 modules in NodeJS and current browsers.
 
-* Implemented exactly to the April 27 2014 ES6 specification draft.
+* Implemented exactly to the May 22 2014 ES6 specification draft.
 * Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#basic-use).
 * Uses [Traceur](https://github.com/google/traceur-compiler) for compiling ES6 modules and syntax into ES5 in the browser with source map support.
 * Fully supports [ES6 circular references and bindings](#circular-references--bindings).
 * Polyfills ES6 Promises in the browser with a bundled [es6-promise](https://github.com/jakearchibald/es6-promise) implementation.
 * [Compatible with NodeJS](#nodejs-usage) allowing for server-side module loading and tracing extensions.
 * Supports ES6 module loading in IE9+, and dynamic module formats in IE8+.
-* The complete combined polyfill comes to 7KB minified and gzipped, making it suitable for production use, provided that modules are [built into ES5 making them independent of Traceur](#moving-to-production).
+* The complete combined polyfill comes to 8.7KB minified and gzipped, making it suitable for production use, provided that modules are [built into ES5 making them independent of Traceur](#moving-to-production).
 
 For an overview of build workflows, [see the production guide](#moving-to-production).
 
@@ -17,13 +17,13 @@ See the [demo folder](https://github.com/ModuleLoader/es6-module-loader/blob/mas
 
 For an example of a universal module loader based on this polyfill for loading AMD, CommonJS and globals, see [SystemJS](https://github.com/systemjs/systemjs).
 
-_The current version is tested against **[Traceur 0.0.42](https://github.com/google/traceur-compiler/tree/0.0.42)**._
+_The current version is tested against **[Traceur 0.0.45](https://github.com/google/traceur-compiler/tree/0.0.45)**._
 
 _Note the ES6 module specification is still in draft, and subject to change._
 
 ### Basic Use
 
-Download both [es6-module-loader.js](https://raw.githubusercontent.com/ModuleLoader/es6-module-loader/v0.6.0/dist/es6-module-loader.js) and [traceur.js](https://raw.githubusercontent.com/google/traceur-compiler/traceur@0.0.42/bin/traceur.js) into the same folder.
+Download both [es6-module-loader.js](https://raw.githubusercontent.com/ModuleLoader/es6-module-loader/v0.7.0/dist/es6-module-loader.js) and [traceur.js](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.45/traceur.js) into the same folder.
 
 If using ES6 syntax (optional), include `traceur.js` in the page first then include `es6-module-loader.js`:
 
@@ -181,7 +181,7 @@ A basic example of using this extension with a build would be the following:
     traceur --out app-build.js app/app.js --modules=instantiate
   ```
 
-2. If using additional ES6 features apart from modules syntax, load `traceur-runtime.js` (included in the `bin` folder when installing Traceur through Bower or npm). Then include `es6-module-loader.js` and then apply the register extension before doing the import or loading the bundle as a script:
+2. If using additional ES6 features apart from modules syntax, load [`traceur-runtime.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.45/traceur-runtime.js) (also included in the `bin` folder when installing Traceur through Bower or npm). Then include `es6-module-loader.js` and then apply the register extension before doing the import or loading the bundle as a script:
 
   ```html
     <script src="traceur-runtime.js"></script>
@@ -208,6 +208,9 @@ A basic example of using this extension with a build would be the following:
     </script>
   ```
 
+* Note that `app-build.js` must be at the base-level for this to work.
+* Also, the name we import, `app/app` must be the same name given to Traceur's compiler.
+
 #### Building into separate files
 
 We can also build separate files with:
@@ -224,7 +227,7 @@ With the above, we can load from the separate files identical to loading ES6.
   npm install es6-module-loader
 ```
 
-For use in NodeJS, the `Module`, `LoaderPolyfill` and `System` globals are provided as exports:
+For use in NodeJS, the `Loader` and `System` globals are provided as exports:
 
 index.js:
 ```javascript

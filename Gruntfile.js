@@ -21,8 +21,8 @@ module.exports = function (grunt) {
     concat: {
       dist: {
         src: [
-          'node_modules/es6-promise/dist/promise-1.0.0.js',
-          'lib/module.js',
+          // 'node_modules/rsvp/dist/rsvp.js',
+          'node_modules/when/es6-shim/Promise.js',
           'lib/loader.js',
           'lib/system.js'
         ],
@@ -30,7 +30,6 @@ module.exports = function (grunt) {
       },
       polyfillOnly: {
         src: [
-          'lib/module.js',
           'lib/loader.js',
           'lib/system.js'
         ],

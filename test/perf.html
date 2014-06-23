@@ -1,22 +1,32 @@
 <!doctype html>
+  <script>
+    // delete window.Promise;
+  </script>
   <script src="../dist/es6-module-loader.js"></script>
   <script>
-    System.set('module0', Module({}));
+    System.set('module0', System.newModule({}));
     System.instantiate = function(load) {
       return {
         deps: ['module1'],
         execute: function() {
-          return Module({});
+          return System.newModule({});
         }
       };
     }
 
     function start() {
+      document.body.innerHTML = '';
       var startTime = +Date.now();
       for (var i = 1; i <= 1000; i++)
         System.define('module' + i, "function() {} var p = 5; // non-trivial code");
       System.import('module1000').then(function() {
-        console.log(Date.now() - startTime);
+        document.body.innerHTML = (Date.now() - startTime) + 'ms';
+      }).catch(function(e) {
+        setTimeout(function() {
+          throw e;
+        })
       });
     }
   </script>
+  <body onclick="start()" style="height:100%">
+    <p>Click to start</p>
