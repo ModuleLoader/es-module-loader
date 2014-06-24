@@ -1855,7 +1855,7 @@ function logloads(loads) {
 
         // store all failed load records
         loader.loaderObj.failed = loader.loaderObj.failed || [];
-        if (loader.loaderObj.failed.indexOf(load) == -1)
+        if (indexOf.call(loader.loaderObj.failed, load) == -1)
           loader.loaderObj.failed.push(load);
 
         var linkIndex = indexOf.call(load.linkSets, linkSet);
@@ -1942,7 +1942,7 @@ function logloads(loads) {
 
               // if already in a group, remove from the old group
               if (loadDep.groupIndex) {
-                groups[loadDep.groupIndex].splice(groups[loadDep.groupIndex].indexOf(loadDep), 1);
+                groups[loadDep.groupIndex].splice(indexOf.call(groups[loadDep.groupIndex], loadDep), 1);
 
                 // if the old group is empty, then we have a mixed depndency cycle
                 if (groups[loadDep.groupIndex].length == 0)
