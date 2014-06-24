@@ -2451,8 +2451,9 @@ function logloads(loads) {
     }
   }
   else {
-    var fs = require('fs');
+    var fs;
     fetchTextFromURL = function(url, fulfill, reject) {
+      fs = fs || require('fs');
       return fs.readFile(url, function(err, data) {
         if (err)
           return reject(err);
