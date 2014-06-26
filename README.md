@@ -25,7 +25,7 @@ _Note the ES6 module specification is still in draft, and subject to change._
 
 Download both [es6-module-loader.js](https://raw.githubusercontent.com/ModuleLoader/es6-module-loader/v0.7.1/dist/es6-module-loader.js) and traceur.js into the same folder.
 
-If using ES6 syntax (optional), include `traceur.js` in the page first then include `es6-module-loader.js`:
+If using ES6 syntax (optional), include [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.49/traceur.js) in the page first then include `es6-module-loader.js`:
 
 ```html
   <script src="traceur.js"></script>
@@ -181,7 +181,7 @@ A basic example of using this extension with a build would be the following:
     traceur --out app-build.js app/app.js --modules=instantiate
   ```
 
-2. If using additional ES6 features apart from modules syntax, load `traceur-runtime.js` (included in the `bin` folder when installing Traceur through Bower or npm). Then include `es6-module-loader.js` and then apply the register extension before doing the import or loading the bundle as a script:
+2. If using additional ES6 features apart from modules syntax, load [`traceur-runtime.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.49/traceur-runtime.js) (also included in the `bin` folder when installing Traceur through Bower or npm). Then include `es6-module-loader.js` and then apply the register extension before doing the import or loading the bundle as a script:
 
   ```html
     <script src="traceur-runtime.js"></script>
