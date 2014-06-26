@@ -297,9 +297,9 @@ function runTests() {
 
   test('Error check 1', function(assert) {
     System['import']('loads/main').then(function(m) {
-      assert(!!m, true);
+      assert(false, true);
     }, function(e) {
-      assert(false, 'caught');
+      assert(e, 'dep error\n  in module loads/deperror');
     });
     // System['import']('loads/deperror');
   });
