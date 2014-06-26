@@ -1339,18 +1339,20 @@ function logloads(loads) {
     var traceur;
 
     var defineProperty;
-    try {
-      if (!!Object.defineProperty({}, 'a', {})) {
-        defineProperty = Object.defineProperty;
-      }
-    } catch (e) {
-      defineProperty = function (obj, prop, opt) {
-        try {
-          obj[prop] = opt.value || opt.get.call(obj);
+    (function () {
+      try {
+        if (!!Object.defineProperty({}, 'a', {})) {
+          defineProperty = Object.defineProperty;
         }
-        catch(e) {}
+      } catch (e) {
+        defineProperty = function (obj, prop, opt) {
+          try {
+            obj[prop] = opt.value || opt.get.call(obj);
+          }
+          catch(e) {}
+        }
       }
-    }
+    }());
 
     console.assert = console.assert || function() {};
 
@@ -1419,64 +1421,66 @@ function logloads(loads) {
 
       console.assert(load.source, 'Non-empty source');
 
-      var depsList;
-      try {
-        var parser = new traceur.syntax.Parser(new traceur.syntax.SourceFile(load.address, load.source));
-        var body = parser.parseModule();
+      var depsList, curRegister, curSystem, oldSourceMaps, oldModules;
+      (function () {
+        try {
+          var parser = new traceur.syntax.Parser(new traceur.syntax.SourceFile(load.address, load.source));
+          var body = parser.parseModule();
 
-        load.kind = 'declarative';
-        depsList = getImports(body);
+          load.kind = 'declarative';
+          depsList = getImports(body);
 
-        var oldSourceMaps = traceur.options.sourceMaps;
-        var oldModules = traceur.options.modules;
+          oldSourceMaps = traceur.options.sourceMaps;
+          oldModules = traceur.options.modules;
 
-        traceur.options.sourceMaps = true;
-        traceur.options.modules = 'instantiate';
+          traceur.options.sourceMaps = true;
+          traceur.options.modules = 'instantiate';
 
-        var reporter = new traceur.util.ErrorReporter();
+          var reporter = new traceur.util.ErrorReporter();
 
-        reporter.reportMessageInternal = function(location, kind, format, args) {
-          throw new SyntaxError(kind, location.start && location.start.line_, location.start && location.start.column_);
+          reporter.reportMessageInternal = function(location, kind, format, args) {
+            throw new SyntaxError(kind, location.start && location.start.line_, location.start && location.start.column_);
+          }
+
+          // traceur expects its version of System
+          curSystem = __global.System;
+          __global.System = __global.traceurSystem;
+
+          var tree = (new traceur.codegeneration.module.AttachModuleNameTransformer(load.name)).transformAny(body);
+          tree = (new traceur.codegeneration.FromOptionsTransformer(reporter)).transform(tree);
+
+          var sourceMapGenerator = new traceur.outputgeneration.SourceMapGenerator({ file: load.address });
+          var options = { sourceMapGenerator: sourceMapGenerator };
+
+          var source = traceur.outputgeneration.TreeWriter.write(tree, options);
+
+          if (__global.btoa)
+            source += '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(options.sourceMap))) + '\n';
+
+          // now run System.register
+          curRegister = System.register;
+
+          System.register = function(name, deps, declare) {
+            // store the registered declaration as load.declare
+            load.declare = typeof name == 'string' ? declare : deps;
+          }
+
+          __eval(source, __global, load.name);
         }
-
-        // traceur expects its version of System
-        var curSystem = __global.System;
-        __global.System = __global.traceurSystem;
-
-        var tree = (new traceur.codegeneration.module.AttachModuleNameTransformer(load.name)).transformAny(body);
-        tree = (new traceur.codegeneration.FromOptionsTransformer(reporter)).transform(tree);
-
-        var sourceMapGenerator = new traceur.outputgeneration.SourceMapGenerator({ file: load.address });
-        var options = { sourceMapGenerator: sourceMapGenerator };
-
-        var source = traceur.outputgeneration.TreeWriter.write(tree, options);
-
-        if (__global.btoa)
-          source += '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(options.sourceMap))) + '\n';
-
-        // now run System.register
-        var curRegister = System.register;
-
-        System.register = function(name, deps, declare) {
-          // store the registered declaration as load.declare
-          load.declare = typeof name == 'string' ? declare : deps;
+        catch(e) {
+          if (e.name == 'SyntaxError' || e.name == 'TypeError')
+            e.message = 'Evaluating ' + (load.name || load.address) + '\n\t' + e.message;
+          if (curRegister)
+            System.register = curRegister;
+          if (curSystem)
+            __global.System = curSystem;
+          if (oldSourceMaps)
+            traceur.options.sourceMaps = oldSourceMaps;
+          if (oldModules)
+            traceur.options.modules = oldModules;
+          throw e;
         }
-
-        __eval(source, __global, load.name);
-      }
-      catch(e) {
-        if (e.name == 'SyntaxError' || e.name == 'TypeError')
-          e.message = 'Evaluating ' + (load.name || load.address) + '\n\t' + e.message;
-        if (curRegister)
-          System.register = curRegister;
-        if (curSystem)
-          __global.System = curSystem;
-        if (oldSourceMaps)
-          traceur.options.sourceMaps = oldSourceMaps;
-        if (oldModules)
-          traceur.options.modules = oldModules;
-        throw e;
-      }
+      }());
       System.register = curRegister;
       __global.System = curSystem;
       traceur.options.sourceMaps = oldSourceMaps;
@@ -2098,7 +2102,7 @@ function logloads(loads) {
     function evaluateLoadedModule(loader, load) {
       console.assert(load.status == 'linked', 'is linked ' + load.name);
 
-      ensureEvaluated(load.module, [], loader);
+      doEnsureEvaluated(load.module, [], loader);
       return load.module.module;
     }
 
@@ -2110,20 +2114,22 @@ function logloads(loads) {
      * module.dependencies  list of module objects for dependencies
      *
      */
-
-    // execution errors don't propogate in the pipeline
-    // see https://bugs.ecmascript.org/show_bug.cgi?id=2993
     function doExecute(module) {
       try {
         module.execute.call(__global);
       }
       catch(e) {
-        setTimeout(function() {
-          throw e;
-        });
+        return e;
       }
     }
 
+    // propogate execution errors
+    // see https://bugs.ecmascript.org/show_bug.cgi?id=2993
+    function doEnsureEvaluated(module, seen, loader) {
+      var err = ensureEvaluated(module, seen, loader);
+      if (err)
+        throw err;
+    }
     // 15.2.6.2 EnsureEvaluated adjusted
     function ensureEvaluated(module, seen, loader) {
       if (module.evaluated || !module.dependencies)
@@ -2132,20 +2138,31 @@ function logloads(loads) {
       seen.push(module);
 
       var deps = module.dependencies;
+      var err;
 
       for (var i = 0; i < deps.length; i++) {
         var dep = deps[i];
-        if (indexOf.call(seen, dep) == -1)
-          ensureEvaluated(dep, seen, loader);
+        if (indexOf.call(seen, dep) == -1) {
+          err = ensureEvaluated(dep, seen, loader);
+          // stop on error, see https://bugs.ecmascript.org/show_bug.cgi?id=2996
+          if (err)
+            return err + '\n  in module ' + dep.name;
+        }
       }
+
+      if (module.failed)
+        return new Error('Module failed execution.');
 
       if (module.evaluated)
         return;
 
       module.evaluated = true;
-      doExecute(module);
+      err = doExecute(module);
+      if (err)
+        module.failed = true;
       module.module = _newModule(module.exports);
-      delete module.execute;
+      module.execute = undefined;
+      return err;
     }
 
     // 26.3 Loader
@@ -2223,7 +2240,7 @@ function logloads(loads) {
       get: function(key) {
         if (!this._loader.modules[key])
           return;
-        ensureEvaluated(this._loader.modules[key], [], this);
+        doEnsureEvaluated(this._loader.modules[key], [], this);
         return this._loader.modules[key].module;
       },
       // 26.3.3.7
@@ -2241,7 +2258,7 @@ function logloads(loads) {
           var loader = loaderObj._loader;
 
           if (loader.modules[name]) {
-            ensureEvaluated(loader.modules[name], [], loader._loader);
+            doEnsureEvaluated(loader.modules[name], [], loader._loader);
             return loader.modules[name].module;
           }
 
@@ -2257,7 +2274,7 @@ function logloads(loads) {
       // 26.3.3.10
       load: function(name, options) {
         if (this._loader.modules[name]) {
-          ensureEvaluated(this._loader.modules[name], [], this._loader);
+          doEnsureEvaluated(this._loader.modules[name], [], this._loader);
           return Promise.resolve(this._loader.modules[name].module);
         }
         return importPromises[name] || createImportPromise(name, loadModule(this._loader, name, {}));
