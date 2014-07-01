@@ -41,7 +41,7 @@
     "test": "cd test && node test"
   },
   "dependencies": {
-    "traceur": "0.0.49",
+    "traceur": "0.0.41",
     "when": "^3.2.3"
   }
 }
