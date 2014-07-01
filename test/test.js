@@ -489,7 +489,11 @@ function runTests() {
       });
     }
   });
-
+  test('default export', function(assert) {
+    customLoader['import']('loader/default').then(function(m) {
+      assert(m['default'](), 'test');
+    });
+  });
   test('Custom loader standard load', function(assert) {
     var p = customLoader['import']('loader/test').then(function(m) {
       assert(m.loader, 'custom');
