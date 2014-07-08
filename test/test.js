@@ -84,10 +84,10 @@ else {
 function runTests() {
 
   // Normalize tests - identical to https://github.com/google/traceur-compiler/blob/master/test/unit/runtime/System.js
-  
+
   var oldBaseURL = System.baseURL;
   System.baseURL = 'http://example.org/a/b.html';
-  
+
   test('Normalize - No Referer', System.normalize('d/e/f'), 'd/e/f');
   // test('Normalize - Below baseURL', System.normalize('../e/f'), '../e/f');
 
@@ -193,13 +193,13 @@ function runTests() {
       assert(m.p, 'p');
     }, err);
   });
-  
+
   test('Import ES6 with dep', function(assert, err) {
     System['import']('syntax/es6-withdep').then(function(m) {
       assert(m.p, 'p');
     }, err);
   });
-  
+
   test('Direct import without bindings', function(assert, err) {
     System['import']('syntax/direct').then(function(m) {
       assert(!!m, true);
@@ -268,7 +268,7 @@ function runTests() {
       );
     })
   });
-  
+
   test('Load order test: _e', function(assert) {
     System['import']('loads/_e').then(function(m) {
       assert(
@@ -393,7 +393,7 @@ function runTests() {
       assert(m.path, true);
     });
   });
-  
+
   var customModules = {};
   var customFactories = {};
 
@@ -413,7 +413,7 @@ function runTests() {
             resolve('loader/async-norm');
           }, 500);
         }
-        
+
         if (name == 'error1')
           return setTimeout(function(){ reject('error1'); }, 100);
 
@@ -453,7 +453,7 @@ function runTests() {
       // very bad AMD support
       if (load.source.indexOf('define') == -1)
         return System.instantiate(load);
-      
+
       var factory, deps;
       var define = function(_deps, _factory) {
         deps = _deps;
@@ -481,7 +481,7 @@ function runTests() {
               resolvedDeps[i] = executeModule(resolvedDeps[i]);
 
             var module = factory.apply(null, resolvedDeps);
-          
+
             customModules[load.name] = module;
             return System.newModule(module);
           }
@@ -490,19 +490,30 @@ function runTests() {
     }
   });
 
+  customLoader.parse = function(load) {
+    return System.parse(load);
+  }
+
   test('Custom loader standard load', function(assert) {
     var p = customLoader['import']('loader/test').then(function(m) {
       assert(m.loader, 'custom');
     });
     if (p['catch'])
-      p['catch'](function() {});
+      p['catch'](function(e) {
+        assert(!e, 'standard load failed: ' + e);
+      });
   });
+
   test('Custom loader special rules', function(assert) {
-    customLoader['import']('path/custom').then(function(m) {
+    var p = customLoader['import']('path/custom').then(function(m) {
       assert(m.path, true);
     });
+    if (p['catch'])
+      p['catch'](function(e) {
+        assert(!e, 'special rules failed: ' + e);
+      });
   });
-  
+
   test('Custom loader AMD support', function(assert) {
     customLoader['import']('loader/amd').then(function(m) {
       assert(m.format, 'amd');
@@ -547,4 +558,4 @@ function runTests() {
       assert(m.n, 'n');
     });
   });
-} 
+}
