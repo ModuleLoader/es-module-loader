@@ -49,11 +49,7 @@ We can then load the module with the dynamic loader:
 <script>
   System.import('mymodule').then(function(m) {
     new m.q();
-  }).catch(function(e) {
-    setTimeout(function() {
-      throw e;
-    })
-  })
+  }).catch(console.error.bind(console));
 </script>
 ```
 
