@@ -337,7 +337,7 @@ function runTests() {
   test('Re-export binding', function(assert, err) {
     System['import']('syntax/reexport-binding').then(function(m) {
       System['import']('syntax/rebinding').then(function(m) {
-        assert(m.p, 3);
+        assert(m.p, 4);
       });
     }, err);
   });
