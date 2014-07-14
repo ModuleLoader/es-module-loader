@@ -558,4 +558,8 @@ function runTests() {
       assert(m.n, 'n');
     });
   });
+
+  test('System instanceof Loader', function(assert) {
+    assert(System instanceof Reflect.Loader, true);
+  });
 }
