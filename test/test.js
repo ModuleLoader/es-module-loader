@@ -212,7 +212,8 @@ function runTests() {
         assert(
           [m2.output, 'test circular 1'],
           [m1.output, 'test circular 2'],
-          [m2.output1, 'test circular 2']
+          [m2.output1, 'test circular 2'],
+          [m1.output2, 'test circular 1']
         );
       }, err);
     }, err);
