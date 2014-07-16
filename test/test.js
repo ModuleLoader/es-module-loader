@@ -211,7 +211,8 @@ function runTests() {
       System['import']('syntax/circular2').then(function(m2) {
         assert(
           [m2.output, 'test circular 1'],
-          [m1.output, 'test circular 2']
+          [m1.output, 'test circular 2'],
+          [m2.output1, 'test circular 2']
         );
       }, err);
     }, err);
@@ -221,9 +222,9 @@ function runTests() {
     System['import']('syntax/even').then(function(m) {
       assert(
         [m.even(10), true],
-        [m.counter, 6],
+        [m.counter, 7],
         [m.even(15), false],
-        [m.counter, 14]
+        [m.counter, 15]
       );
     }, err);
   });
