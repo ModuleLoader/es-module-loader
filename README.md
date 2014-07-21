@@ -85,7 +85,7 @@ All modules are loaded relative to the `baseURL`, which by default is set to the
 We can alter this with:
 
 ```javascript
-  System.baseURL = '/js/lib';
+  System.baseURL = '/js/lib/';
   System.import('module'); // now loads "/js/lib/module.js"
 ```
 
