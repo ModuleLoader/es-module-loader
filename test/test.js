@@ -388,7 +388,9 @@ function runTests() {
   });
 
   test('Custom path most specific', function(assert) {
+    delete System.paths['bar/*'];
     System.paths['bar/bar'] = 'loader/specific-path.js';
+    System.paths['bar/*'] = 'loader/custom-folder/*.js';
     System['import']('bar/bar').then(function(m) {
       assert(m.path, true);
     });
