@@ -321,6 +321,12 @@ function runTests() {
     });
   });
 
+  test('Export default 1', function(assert, err) {
+    System['import']('syntax/export-default').then(function(m) {
+      assert(m['default'](), 'test');
+    }, err);
+  });
+
   test('Re-export', function(assert, err) {
     System['import']('syntax/reexport1').then(function(m) {
       assert(m.p, 5);
