@@ -107,8 +107,6 @@ function logloads(loads) {
   (function() {
     var Promise = __global.Promise || require('when/es6-shim/Promise');
 
-    var traceur;
-
     var defineProperty;
     (function () {
       try {
@@ -136,129 +134,6 @@ function logloads(loads) {
       }
       return -1;
     };
-
-    // --- <Specific Traceur Parsing Code> ---
-    // parse function is used to parse a load record
-    // tree traversal, NB should use visitor pattern here
-    function traverse(object, iterator, parent, parentProperty) {
-      var key, child;
-      if (iterator(object, parent, parentProperty) === false)
-        return;
-      for (key in object) {
-        if (!object.hasOwnProperty(key))
-          continue;
-        if (key == 'location' || key == 'type')
-          continue;
-        child = object[key];
-        if (typeof child == 'object' && child !== null)
-          traverse(child, iterator, object, key);
-      }
-    }
-    // given a syntax tree, return the import list
-    function getImports(moduleTree) {
-      var imports = [];
-
-      function addImport(name) {
-        if (indexOf.call(imports, name) == -1)
-          imports.push(name);
-      }
-
-      traverse(moduleTree, function(node) {
-        // import {} from 'foo';
-        // export * from 'foo';
-        // export { ... } from 'foo';
-        // module x from 'foo';
-        if (node.type == 'EXPORT_DECLARATION') {
-          if (node.declaration.moduleSpecifier)
-            addImport(node.declaration.moduleSpecifier.token.processedValue);
-        }
-        else if (node.type == 'IMPORT_DECLARATION')
-          addImport(node.moduleSpecifier.token.processedValue);
-        else if (node.type == 'MODULE_DECLARATION')
-          addImport(node.expression.token.processedValue);
-      });
-      return imports;
-    }
-    // Returns an array of ModuleSpecifiers
-    function parse(load) {
-      if (!traceur) {
-        if (typeof window == 'undefined')
-          traceur = require('traceur');
-        else if (__global.traceur)
-          traceur = __global.traceur;
-        else
-          throw new TypeError('Include Traceur for module syntax support');
-      }
-
-      console.assert(load.source, 'Non-empty source');
-
-      var depsList, curRegister, curSystem, oldSourceMaps, oldModules;
-      (function () {
-        try {
-          var parser = new traceur.syntax.Parser(new traceur.syntax.SourceFile(load.address, load.source));
-          var body = parser.parseModule();
-
-          load.kind = 'declarative';
-          depsList = getImports(body);
-
-          oldSourceMaps = traceur.options.sourceMaps;
-          oldModules = traceur.options.modules;
-
-          traceur.options.sourceMaps = true;
-          traceur.options.modules = 'instantiate';
-
-          var reporter = new traceur.util.ErrorReporter();
-
-          reporter.reportMessageInternal = function(location, kind, format, args) {
-            throw new SyntaxError(kind, location.start && location.start.line_, location.start && location.start.column_);
-          }
-
-          // traceur expects its version of System
-          curSystem = __global.System;
-          __global.System = __global.traceurSystem;
-
-          var tree = (new traceur.codegeneration.module.AttachModuleNameTransformer(load.name)).transformAny(body);
-          tree = (new traceur.codegeneration.FromOptionsTransformer(reporter)).transform(tree);
-
-          var sourceMapGenerator = new traceur.outputgeneration.SourceMapGenerator({ file: load.address });
-          var options = { sourceMapGenerator: sourceMapGenerator };
-
-          var source = traceur.outputgeneration.TreeWriter.write(tree, options);
-
-          if (__global.btoa)
-            source += '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(options.sourceMap))) + '\n';
-
-          // now run System.register
-          curRegister = System.register;
-
-          System.register = function(name, deps, declare) {
-            // store the registered declaration as load.declare
-            load.declare = typeof name == 'string' ? declare : deps;
-          }
-
-          __eval(source, __global, load.name);
-        }
-        catch(e) {
-          if (e.name == 'SyntaxError' || e.name == 'TypeError')
-            e.message = 'Evaluating ' + (load.name || load.address) + '\n\t' + e.message;
-          if (curRegister)
-            System.register = curRegister;
-          if (curSystem)
-            __global.System = curSystem;
-          if (oldSourceMaps)
-            traceur.options.sourceMaps = oldSourceMaps;
-          if (oldModules)
-            traceur.options.modules = oldModules;
-          throw e;
-        }
-      }());
-      System.register = curRegister;
-      __global.System = curSystem;
-      traceur.options.sourceMaps = oldSourceMaps;
-      traceur.options.modules = oldModules;
-      return depsList;
-    }
-    // --- </Specific Traceur Parsing Code> ---
 
     // 15.2.3 - Runtime Semantics: Loader State
 
@@ -387,22 +262,25 @@ function logloads(loads) {
         if (load.status != 'loading')
           return;
 
-        var depsList;
         if (instantiateResult === undefined) {
           load.address = load.address || 'anon' + ++anonCnt;
-          depsList = parse(load);
+
+          // NB instead of load.kind, use load.isDeclarative
+          load.isDeclarative = true;
+          // parse sets load.declare, load.depsList
+          loader.loaderObj.parse(load);
         }
         else if (typeof instantiateResult == 'object') {
-          depsList = instantiateResult.deps || [];
+          load.depsList = instantiateResult.deps || [];
           load.execute = instantiateResult.execute;
-          load.kind = 'dynamic';
+          load.isDeclarative = false;
         }
         else
           throw TypeError('Invalid instantiate return value');
 
         // 15.2.4.6 ProcessLoadDependencies
         load.dependencies = [];
-        load.depsList = depsList;
+        var depsList = load.depsList;
 
         var loadPromises = [];
         for (var i = 0, l = depsList.length; i < l; i++) (function(request, index) {
@@ -595,9 +473,9 @@ function logloads(loads) {
       /***/
       if (linkSet.loader.loaderObj.execute === false) {
         var loads = [].concat(linkSet.loads);
-        for (var i = 0; i < loads.length; i++) {
+        for (var i = 0, l = loads.length; i < l; i++) {
           var load = loads[i];
-          load.module = load.kind == 'dynamic' ? {
+          load.module = !load.isDeclarative ? {
             module: _newModule({})
           } : {
             name: load.name,
@@ -662,7 +540,7 @@ function logloads(loads) {
           address: load.address,
           metadata: load.metadata,
           source: load.source,
-          kind: load.kind
+          kind: load.isDeclarative ? 'declarative' : 'dynamic'
         };
       }
       // if not anonymous, add to the module table
@@ -699,7 +577,7 @@ function logloads(loads) {
       // now add it to the group to indicate its been seen
       groups[load.groupIndex].push(load);
 
-      for (var i = 0; i < loads.length; i++) {
+      for (var i = 0, l = loads.length; i < l; i++) {
         var loadDep = loads[i];
 
         // dependencies not found are already linked
@@ -710,7 +588,7 @@ function logloads(loads) {
 
             // if it is a group transition, the index of the dependency has gone up
             // otherwise it is the same as the parent
-            var loadDepGroupIndex = load.groupIndex + (loadDep.kind != load.kind);
+            var loadDepGroupIndex = load.groupIndex + (loadDep.isDeclarative != load.isDeclarative);
 
             // the group index of an entry is always the maximum
             if (loadDep.groupIndex === undefined || loadDep.groupIndex < loadDepGroupIndex) {
@@ -755,7 +633,7 @@ function logloads(loads) {
       buildLinkageGroups(startingLoad, linkSet.loads, groups, loader);
 
       // determine the kind of the bottom group
-      var curGroupDeclarative = (startingLoad.kind == 'declarative') == groups.length % 2;
+      var curGroupDeclarative = startingLoad.isDeclarative == groups.length % 2;
 
       // run through the groups from bottom to top
       for (var i = groups.length - 1; i >= 0; i--) {
@@ -785,77 +663,85 @@ function logloads(loads) {
       }
     }
 
+
+    // custom module records for binding graph
+    // store linking module records in a separate table
+    var moduleRecords = {};
+    function getOrCreateModuleRecord(name) {
+      return moduleRecords[name] || (moduleRecords[name] = {
+        name: name,
+        dependencies: [],
+        module: new Module(), // start from an empty module and extend
+        importers: []
+      });
+    }
+
     // custom declarative linking function
     function linkDeclarativeModule(load, loads, loader) {
       if (load.module)
         return;
 
-      // declare the module with an empty depMap
-      var depMap = [];
+      var module = load.module = getOrCreateModuleRecord(load.name);
+      var moduleObj = load.module.module;
 
-      var registryEntry = load.declare.call(__global, depMap);
+      var registryEntry = load.declare.call(__global, function(name, value) {
+        // NB This should be an Object.defineProperty, but that is very slow.
+        //    By disaling this module write-protection we gain performance.
+        //    It could be useful to allow an option to enable or disable this.
+        module.locked = true;
+        moduleObj[name] = value;
 
-      var moduleDependencies = [];
+        for (var i = 0, l = module.importers.length; i < l; i++) {
+          var importerModule = module.importers[i];
+          if (!importerModule.locked) {
+            var importerIndex = importerModule.dependencies.indexOf(module);
+            importerModule.setters[importerIndex](moduleObj);
+          }
+        }
 
-      // module is just a plain object, until we evaluate it
-      var module = registryEntry.exports;
+        module.locked = false;
+        return value;
+      });
 
-      console.assert(!load.module, 'Load module already declared!');
-
-      load.module = {
-        name: load.name,
-        dependencies: moduleDependencies,
-        execute: registryEntry.execute,
-        exports: module,
-        evaluated: false
-      };
+      // setup our setters and execution function
+      module.setters = registryEntry.setters;
+      module.execute = registryEntry.execute;
 
       // now link all the module dependencies
       // amending the depMap as we go
-      for (var i = 0; i < load.dependencies.length; i++) {
+      for (var i = 0, l = load.dependencies.length; i < l; i++) {
         var depName = load.dependencies[i].value;
-        var depModule;
-        // if dependency already a module, use that
-        if (loader.modules[depName]) {
-          depModule = loader.modules[depName];
-        }
-        else {
+        var depModule = loader.modules[depName];
+
+        // if dependency not already in the module registry
+        // then try and link it now
+        if (!depModule) {
+          // get the dependency load record
           for (var j = 0; j < loads.length; j++) {
             if (loads[j].name != depName)
               continue;
 
             // only link if already not already started linking (stops at circular / dynamic)
-            if (!loads[j].module)
+            if (!loads[j].module) {
               linkDeclarativeModule(loads[j], loads, loader);
-
-            depModule = loads[j].module;
+              depModule = loads[j].module;
+            }
+            // if circular, create the module record
+            else {
+              depModule = getOrCreateModuleRecord(depName);
+            }
           }
         }
 
-        var depModuleModule = depModule.exports || depModule.module;
-
-        console.assert(depModule, 'Dependency module not found!');
-
-        if (registryEntry.exportStar && indexOf.call(registryEntry.exportStar, load.dependencies[i].key) != -1) {
-          // we are exporting * from this dependency
-          (function(depModuleModule) {
-            for (var p in depModuleModule) (function(p) {
-              // if the property is already defined throw?
-              defineProperty(module, p, {
-                enumerable: true,
-                get: function() {
-                  return depModuleModule[p];
-                },
-                set: function(value) {
-                  depModuleModule[p] = value;
-                }
-              });
-            })(p);
-          })(depModuleModule);
+        // only declarative modules have dynamic bindings
+        if (depModule.importers) {
+          depModule.importers.push(module);
+          module.dependencies.push(depModule);
         }
 
-        moduleDependencies.push(depModule);
-        depMap[i] = depModuleModule;
+        // run the setter for this dependency
+        if (module.setters[i])
+          module.setters[i](depModule.module);
       }
 
       load.status = 'linked';
@@ -883,6 +769,7 @@ function logloads(loads) {
      * module.module        bound module object
      * module.execute       execution function for module
      * module.dependencies  list of module objects for dependencies
+     * See getOrCreateModuleRecord for all properties
      *
      */
     function doExecute(module) {
@@ -911,7 +798,7 @@ function logloads(loads) {
       var deps = module.dependencies;
       var err;
 
-      for (var i = 0; i < deps.length; i++) {
+      for (var i = 0, l = deps.length; i < l; i++) {
         var dep = deps[i];
         if (indexOf.call(seen, dep) == -1) {
           err = ensureEvaluated(dep, seen, loader);
@@ -931,7 +818,13 @@ function logloads(loads) {
       err = doExecute(module);
       if (err)
         module.failed = true;
-      module.module = _newModule(module.exports);
+      
+      // spec variation
+      // we don't create a new module here because it was created and ammended
+      // we just disable further extensions instead
+      if (Object.preventExtensions)
+        Object.preventExtensions(module.module);
+
       module.execute = undefined;
       return err;
     }
@@ -1033,7 +926,7 @@ function logloads(loads) {
             return loader.modules[name].module;
           }
 
-          return importPromises[name] || createImportPromise(name, 
+          return importPromises[name] || createImportPromise(name,
             loadModule(loader, name, options || {})
             .then(function(load) {
               delete importPromises[name];
@@ -1092,7 +985,7 @@ function logloads(loads) {
       // 26.3.3.14
       set: function(name, module) {
         if (!(module instanceof Module))
-          throw new TypeError('Set must be a module');
+          throw new TypeError('Loader.set(' + name + ', module) must be a module');
         this._loader.modules[name] = {
           module: module
         };
@@ -1117,6 +1010,9 @@ function logloads(loads) {
       translate: function(load) {
         return load.source;
       },
+      parse: function(load) {
+        throw new TypeError('Loader.parse is not implemented');
+      },
       // 26.3.3.18.5
       instantiate: function(load) {
       }
@@ -1124,17 +1020,95 @@ function logloads(loads) {
 
     var _newModule = Loader.prototype.newModule;
 
+
+    /*
+     * Traceur-specific Parsing Code for Loader
+     */
+    (function() {
+      function checkForErrors(output, load) {
+        if (output.errors.length) {
+          for (var i = 0, l = output.errors.length; i < l; i++)
+            console.error(output.errors[i]);
+          throw new Error('Parse of ' + load.name + ', ' + load.address + ' failed, ' + output.errors.length);
+        }
+      }
+
+      // parse function is used to parse a load record
+      // Returns an array of ModuleSpecifiers
+      var traceur;
+      Loader.prototype.parse = function(load) {
+        if (!traceur) {
+          if (typeof window == 'undefined')
+            traceur = require('traceur');
+          else if (__global.traceur)
+            traceur = __global.traceur;
+          else
+            throw new TypeError('Include Traceur for module syntax support');
+        }
+
+        console.assert(load.source, 'Non-empty source');
+
+        var depsList;
+
+        load.isDeclarative = true;
+
+        var compiler = new traceur.Compiler();
+        var options = System.traceurOptions || {};
+        options.modules = 'instantiate';
+        var output = compiler.stringToTree({content: load.source, options: options});
+        checkForErrors(output);
+
+        output = compiler.treeToTree(output);
+        checkForErrors(output);
+
+        output = compiler.treeToString(output);
+        checkForErrors(output);
+        var source = output.js;
+        var sourceMap = output.generatedSourceMap;
+
+        if (__global.btoa && sourceMap)
+          source += '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(sourceMap))) + '\n';
+
+        __eval(source, __global, load);
+      }
+    })();
+
     if (typeof exports === 'object')
       module.exports = Loader;
 
     __global.Reflect = __global.Reflect || {};
     __global.Reflect.Loader = __global.Reflect.Loader || Loader;
+    __global.Reflect.global = __global.Reflect.global || __global;
     __global.LoaderPolyfill = Loader;
 
   })();
 
-  function __eval(__source, __global, __moduleName) {
-    eval('var __moduleName = "' + (__moduleName || '').replace('"', '\"') + '"; (function() { ' + __source + ' \n }).call(__global);');
+  // Define our eval outside of the scope of any other reference defined in this
+  // file to avoid adding those references to the evaluation scope.
+  var __curRegister;
+  function __eval(__source, __global, load) {
+    // Hijack System.register to set declare function
+    __curRegister = System.register;
+    System.register = function(name, deps, declare) {
+      if (typeof name != 'string') {
+        declare = deps;
+        deps = name;
+      }
+      // store the registered declaration as load.declare
+      // store the deps as load.deps
+      load.declare = declare;
+      load.depsList = deps;
+    }
+    try {
+      eval('(function() { var __moduleName = "' + (load.name || '').replace('"', '\"') + '"; ' + __source + ' \n }).call(__global);');
+    }
+    catch(e) {
+      if (e.name == 'SyntaxError' || e.name == 'TypeError')
+        e.message = 'Evaluating ' + (load.name || load.address) + '\n\t' + e.message;
+      throw e;
+    }
+
+    System.register = __curRegister;
   }
 
 })(typeof global !== 'undefined' ? global : this);
@@ -1152,9 +1126,10 @@ function logloads(loads) {
 */
 
 (function (global) {
+
   var isBrowser = typeof window != 'undefined';
   var Loader = global.Reflect && global.Reflect.Loader || require('./loader');
-  var Promise = global.Promise || require('es6-promise').Promise;
+  var Promise = global.Promise || require('when/es6-shim/Promise');
 
   // Helpers
   // Absolute URL parsing, from https://gist.github.com/Yaffle/1088850
@@ -1321,8 +1296,10 @@ function logloads(loads) {
 
         // exact path match
         if (pathParts.length == 1) {
-          if (name == p && p.length > pathMatch.length)
+          if (name == p && p.length > pathMatch.length) {
             pathMatch = p;
+            break;
+          }
         }
 
         // wildcard path match
@@ -1341,12 +1318,13 @@ function logloads(loads) {
       return toAbsoluteURL(this.baseURL, outPath);
     },
     fetch: function(load) {
+      var self = this;
       return new Promise(function(resolve, reject) {
-        fetchTextFromURL(toAbsoluteURL(this.baseURL, load.address), function(source) {
+        fetchTextFromURL(toAbsoluteURL(self.baseURL, load.address), function(source) {
           resolve(source);
         }, reject);
       });
-    }
+    },
   });
 
   if (isBrowser) {
@@ -1354,15 +1332,9 @@ function logloads(loads) {
     System.baseURL = href.substring(0, href.lastIndexOf('/') + 1);
   }
   else {
-    System.baseURL = './';
+    System.baseURL = process.cwd() + '/';
   }
   System.paths = { '*': '*.js' };
-
-  if (global.System && global.traceur)
-    global.traceurSystem = global.System;
-
-  if (isBrowser)
-    global.System = System;
 
   // <script type="module"> support
   // allow a data-init function callback once loaded
@@ -1404,5 +1376,7 @@ function logloads(loads) {
 
   if (typeof exports === 'object')
     module.exports = System;
+
+  global.System = System;
 
 })(typeof global !== 'undefined' ? global : this);
