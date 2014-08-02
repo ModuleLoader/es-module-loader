@@ -3,7 +3,7 @@
 
   Loader Polyfill
 
-    - Implemented exactly to the 2014-05-22 Specification Draft.
+    - Implemented exactly to the 2014-07-18 Specification Draft.
 
     - Functions are commented with their spec numbers, with spec differences commented.
 
@@ -170,7 +170,8 @@ function logloads(loads) {
         step: options.address ? 'fetch' : 'locate',
         loader: loader,
         moduleName: name,
-        moduleMetadata: {},
+        // allow metadata for import https://bugs.ecmascript.org/show_bug.cgi?id=3091
+        moduleMetadata: options && options.metadata || {},
         moduleSource: options.source,
         moduleAddress: options.address
       }));
@@ -694,7 +695,7 @@ function logloads(loads) {
         for (var i = 0, l = module.importers.length; i < l; i++) {
           var importerModule = module.importers[i];
           if (!importerModule.locked) {
-            var importerIndex = importerModule.dependencies.indexOf(module);
+            var importerIndex = indexOf.call(importerModule.dependencies, module);
             importerModule.setters[importerIndex](moduleObj);
           }
         }
@@ -816,14 +817,14 @@ function logloads(loads) {
 
       module.evaluated = true;
       err = doExecute(module);
-      if (err)
+      if (err) {
         module.failed = true;
-      
-      // spec variation
-      // we don't create a new module here because it was created and ammended
-      // we just disable further extensions instead
-      if (Object.preventExtensions)
+      } else if (Object.preventExtensions) {
+        // spec variation
+        // we don't create a new module here because it was created and ammended
+        // we just disable further extensions instead
         Object.preventExtensions(module.module);
+      }
 
       module.execute = undefined;
       return err;

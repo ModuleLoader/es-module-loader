@@ -1,11 +1,11 @@
 {
   "name": "es6-module-loader",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "An ES6 Module Loader polyfill based on the latest spec.",
   "homepage": "https://github.com/ModuleLoader/es6-module-loader",
   "main": "dist/es6-module-loader-sans-promises.js",
   "dependencies": {
-    "traceur": "0.0.49"
+    "traceur": "0.0.52"
   },
   "keywords": [
     "es6",
