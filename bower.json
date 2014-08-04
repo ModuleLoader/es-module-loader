@@ -5,7 +5,7 @@
   "homepage": "https://github.com/ModuleLoader/es6-module-loader",
   "main": "dist/es6-module-loader-sans-promises.js",
   "dependencies": {
-    "traceur": "0.0.52"
+    "traceur": "0.0.51"
   },
   "keywords": [
     "es6",
