@@ -34,6 +34,13 @@
       }
     }
   </script>
+  <module>
+    window.anon2 = class {
+      constructor() {
+
+      }
+    }
+  </module>
 
 
   <script>
@@ -41,5 +48,8 @@
       test('Anonymous &lt;script type="module"> tag', function(assert) {
         assert(typeof window.anon, 'function');
       });
-    }, 500);
+     test('Anonymous &lt;module> tag', function(assert) {
+        assert(typeof window.anon2, 'function');
+      });
+     }, 500);
   </script>
