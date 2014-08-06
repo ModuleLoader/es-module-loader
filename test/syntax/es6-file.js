@@ -11,4 +11,4 @@ export default 4;
 
 var p = 5;
 
-module Q from './test-file';
+import * as Q from './test-file';
