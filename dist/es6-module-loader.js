@@ -2499,6 +2499,15 @@ function logloads(loads) {
       if (wildcard)
         outPath = outPath.replace('*', wildcard);
 
+      // percent encode each path part
+      if (isBrowser) {
+        var outParts = outPath.split('/');
+        for (var i = 0, l = outParts.length; i < l; i++) {
+          outParts[i] = encodeURIComponent(outParts[i]);
+        }
+        outPath = outParts.join('/');
+      }
+
       return toAbsoluteURL(this.baseURL, outPath);
     },
     fetch: function(load) {
