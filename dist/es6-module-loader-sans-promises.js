@@ -652,6 +652,7 @@ function logloads(loads) {
             if (!module || !(module instanceof Module))
               throw new TypeError('Execution must define a Module instance');
             load.module = {
+              name: load.name,
               module: module
             };
             load.status = 'linked';
@@ -736,8 +737,12 @@ function logloads(loads) {
 
         // only declarative modules have dynamic bindings
         if (depModule.importers) {
-          depModule.importers.push(module);
           module.dependencies.push(depModule);
+          depModule.importers.push(module);
+        }
+        else {
+          // track dynamic records as null module records as already linked
+          module.dependencies.push(null);
         }
 
         // run the setter for this dependency
@@ -801,6 +806,10 @@ function logloads(loads) {
 
       for (var i = 0, l = deps.length; i < l; i++) {
         var dep = deps[i];
+        // dynamic dependencies are empty in module.dependencies
+        // as they are already linked
+        if (!dep)
+          continue;
         if (indexOf.call(seen, dep) == -1) {
           err = ensureEvaluated(dep, seen, loader);
           // stop on error, see https://bugs.ecmascript.org/show_bug.cgi?id=2996
@@ -1337,6 +1346,12 @@ function logloads(loads) {
   }
   System.paths = { '*': '*.js' };
 
+  // note we have to export before runing "init" below
+  if (typeof exports === 'object')
+    module.exports = System;
+
+  global.System = System;
+
   // <script type="module"> support
   // allow a data-init function callback once loaded
   if (isBrowser) {
@@ -1374,10 +1389,5 @@ function logloads(loads) {
     if (curScript.getAttribute('data-init'))
       window[curScript.getAttribute('data-init')]();
   }
-
-  if (typeof exports === 'object')
-    module.exports = System;
-
-  global.System = System;
 
 })(typeof global !== 'undefined' ? global : this);
