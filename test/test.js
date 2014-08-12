@@ -144,10 +144,7 @@ function runTests() {
 
   System.baseURL = 'http://example.org/a/';
 
-  if (typeof window != 'undefined')
-    test('Locate', System.locate({ name: '@abc/def' }), 'http://example.org/a/%40abc/def.js');
-  else
-    test('Locate', System.locate({ name: '@abc/def' }), 'http://example.org/a/@abc/def.js');
+  test('Locate', System.locate({ name: '@abc/def' }), 'http://example.org/a/@abc/def.js');
   test('Locate', System.locate({ name: 'abc/def' }), 'http://example.org/a/abc/def.js');
 
   // paths
