@@ -566,4 +566,12 @@ function runTests() {
   test('System instanceof Loader', function(assert) {
     assert(System instanceof Reflect.Loader, true);
   });
+
+  test('Loading inside of a Web Worker', function(assert) {
+    var worker = new Worker('worker/worker.js');
+
+    worker.onmessage = function(e) {
+      assert(e.data, 'p');
+    };
+  });
 }
