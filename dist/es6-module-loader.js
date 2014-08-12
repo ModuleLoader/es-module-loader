@@ -2211,7 +2211,8 @@ function logloads(loads) {
       var traceur;
       Loader.prototype.parse = function(load) {
         if (!traceur) {
-          if (typeof window == 'undefined')
+          if (typeof window == 'undefined' &&
+             typeof WorkerGlobalScope == 'undefined')
             traceur = require('traceur');
           else if (__global.traceur)
             traceur = __global.traceur;
@@ -2303,7 +2304,8 @@ function logloads(loads) {
 
 (function (global) {
 
-  var isBrowser = typeof window != 'undefined';
+  var isWorker = typeof self !== 'undefined' && typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope;
+  var isBrowser = typeof window != 'undefined' && !isWorker;
   var Loader = global.Reflect && global.Reflect.Loader || require('./loader');
   var Promise = global.Promise || require('when/es6-shim/Promise');
 
@@ -2350,7 +2352,7 @@ function logloads(loads) {
   }
 
   var fetchTextFromURL;
-  if (isBrowser) {
+  if (isBrowser || isWorker) {
     fetchTextFromURL = function(url, fulfill, reject) {
       var xhr = new XMLHttpRequest();
       var sameDomain = true;
@@ -2403,7 +2405,7 @@ function logloads(loads) {
   }
 
   var System = new Loader({
-    global: isBrowser ? window : global,
+    global: isBrowser ? window : (isWorker ? self : global),
     strict: true,
     normalize: function(name, parentName, parentAddress) {
       if (typeof name != 'string')
@@ -2491,14 +2493,12 @@ function logloads(loads) {
       if (wildcard)
         outPath = outPath.replace('*', wildcard);
 
-      // percent encode each path part
-      if (isBrowser) {
-        var outParts = outPath.split('/');
-        for (var i = 0, l = outParts.length; i < l; i++) {
-          outParts[i] = encodeURIComponent(outParts[i]);
-        }
-        outPath = outParts.join('/');
-      }
+      // percent encode just '#' in module names
+      // according to https://github.com/jorendorff/js-loaders/blob/master/browser-loader.js#L238
+      // we should encode everything, but it breaks for servers that don't expect it 
+      // like in (https://github.com/systemjs/systemjs/issues/168)
+      if (isBrowser)
+        outPath = outPath.replace(/#/g, '%23');
 
       return toAbsoluteURL(this.baseURL, outPath);
     },
@@ -2512,8 +2512,8 @@ function logloads(loads) {
     },
   });
 
-  if (isBrowser) {
-    var href = window.location.href.split('#')[0].split('?')[0];
+  if (isBrowser || isWorker) {
+    var href = global.location.href.split('#')[0].split('?')[0];
     System.baseURL = href.substring(0, href.lastIndexOf('/') + 1);
   }
   else {
