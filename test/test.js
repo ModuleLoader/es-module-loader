@@ -566,4 +566,39 @@ function runTests() {
   test('System instanceof Loader', function(assert) {
     assert(System instanceof Reflect.Loader, true);
   });
+
+  var dynamicLoads = [];
+  var dynamicLoader = new Reflect.Loader({
+    normalize: function(name, parentName, parentAddress) {
+      return System.normalize(name, parentName, parentAddress);
+    },
+    locate: function(load) {
+      return System.locate(load);
+    },
+    fetch: function(load) {
+      return System.fetch.apply(this, arguments);
+    },
+    translate: function(load) {
+      return System.translate.apply(this, arguments);
+    },
+    instantiate: function(load) {
+      // parse sets load.declare, load.depsList
+      this.parse(load);
+      return {
+        deps: load.depsList,
+        execute: function() {
+          dynamicLoads.push(load.name);
+          return System.newModule({});
+        }
+      };
+    }
+  });
+  
+  test('instantiate order', function(assert) {
+    dynamicLoader.import('dynamic/a').then(function(m) {
+      assert('dynamic/c,dynamic/b,dynamic/a', dynamicLoads.join(','));
+    }).catch(function(ex) {
+      console.error('instantiate order fails ', ex.stack || ex);
+    });
+  });
 }
