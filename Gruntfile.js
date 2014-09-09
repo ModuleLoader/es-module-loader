@@ -18,15 +18,22 @@ module.exports = function (grunt) {
         'lib/system.js'
       ]
     },
-    concat: {
+    esnext: {
       dist: {
         src: [
-          // 'node_modules/rsvp/dist/rsvp.js',
           'node_modules/when/es6-shim/Promise.js',
           'lib/loader.js',
           'lib/system.js'
         ],
         dest: 'dist/<%= pkg.name %>.js'
+      },
+      loader: {
+        src: [ 'lib/loader.js' ],
+        dest: 'dist/loader.js'
+      },
+      system: {
+        src: [ 'lib/system.js' ],
+        dest: 'dist/system.js'
       },
       polyfillOnly: {
         src: [
@@ -57,10 +64,10 @@ module.exports = function (grunt) {
     }
   });
 
-  grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-esnext');
 
   grunt.registerTask('lint', ['jshint']);
-  grunt.registerTask('default', [/*'jshint', */'concat', 'uglify']);
+  grunt.registerTask('default', [/*'jshint', */'esnext', 'uglify']);
 };
