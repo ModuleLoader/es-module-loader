@@ -1,4 +1,5 @@
 'use strict';
+
 module.exports = function (grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
@@ -22,25 +23,33 @@ module.exports = function (grunt) {
       dist: {
         src: [
           'node_modules/when/es6-shim/Promise.js',
-          'lib/loader.js',
-          'lib/system.js'
+          'src/loader.js',
+          'src/system.js'
         ],
         dest: 'dist/<%= pkg.name %>.js'
       },
-      loader: {
-        src: [ 'lib/loader.js' ],
-        dest: 'dist/loader.js'
-      },
-      system: {
-        src: [ 'lib/system.js' ],
-        dest: 'dist/system.js'
-      },
       polyfillOnly: {
         src: [
-          'lib/loader.js',
-          'lib/system.js'
+          'src/loader.js',
+          'src/system.js'
         ],
         dest: 'dist/<%= pkg.name %>-sans-promises.js'
+      }
+    },
+    'string-replace': {
+      dist: {
+        files: {
+          'dist/<%= pkg.name %>.js': 'dist/<%= pkg.name %>.js'
+        },
+        options: {
+          replacements:[{
+            pattern: 'var $__Object$getPrototypeOf = Object.getPrototypeOf;\n' +
+              'var $__Object$defineProperty = Object.defineProperty;\n' +
+              'var $__Object$create = Object.create;',
+            replacement: "<%= grunt.file.read('src/object_polyfills.js') %>"
+          }]
+
+        }
       }
     },
     uglify: {
@@ -67,7 +76,8 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-esnext');
+  grunt.loadNpmTasks('grunt-string-replace');
 
   grunt.registerTask('lint', ['jshint']);
-  grunt.registerTask('default', [/*'jshint', */'esnext', 'uglify']);
+  grunt.registerTask('default', [/*'jshint', */'esnext', 'string-replace', 'uglify']);
 };

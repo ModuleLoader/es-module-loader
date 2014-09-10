@@ -10,11 +10,8 @@
 *********************************************************************************************
 */
 
-var $__Object$getPrototypeOf = Object.getPrototypeOf;
-var $__Object$defineProperty = Object.defineProperty;
-var $__Object$create = Object.create;
-
 (function (global) {
+
   var isWorker = typeof self !== 'undefined' && typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope;
   var isBrowser = typeof window != 'undefined' && !isWorker;
   var Loader = global.Reflect && global.Reflect.Loader || require('./loader');
@@ -37,7 +34,6 @@ var $__Object$create = Object.create;
       hash     : m[8] || ''
     } : null);
   }
-
   function removeDotSegments(input) {
     var output = [];
     input.replace(/^(\.\.?(\/|$))+/, '')
@@ -51,7 +47,6 @@ var $__Object$create = Object.create;
     });
     return output.join('').replace(/^\//, input.charAt(0) === '/' ? '/' : '');
   }
-
   function toAbsoluteURL(base, href) {
 
     href = parseURI(href || '');
@@ -65,7 +60,6 @@ var $__Object$create = Object.create;
   }
 
   var fetchTextFromURL;
-
   if (isBrowser || isWorker) {
     fetchTextFromURL = function(url, fulfill, reject) {
       var xhr = new XMLHttpRequest();
@@ -118,9 +112,10 @@ var $__Object$create = Object.create;
     }
   }
 
-  var SystemLoader = function($__super) {
-    function SystemLoader() {
-      $__Object$getPrototypeOf(SystemLoader.prototype).constructor.call(this, this);
+  class SystemLoader extends Loader {
+
+    constructor(options) {
+      super(options || {});
 
       // Set default baseURL and paths
       if (isBrowser || isWorker) {
@@ -133,152 +128,121 @@ var $__Object$create = Object.create;
       this.paths = { '*': '*.js' };
     }
 
-    SystemLoader.__proto__ = ($__super !== null ? $__super : Function.prototype);
-    SystemLoader.prototype = $__Object$create(($__super !== null ? $__super.prototype : null));
+    get global() {
+      return isBrowser ? window : (isWorker ? self : global);
+    }
+   
+    get strict() { return true; }
 
-    $__Object$defineProperty(SystemLoader.prototype, "constructor", {
-      value: SystemLoader
-    });
+    normalize(name, parentName, parentAddress) {
+      if (typeof name != 'string')
+        throw new TypeError('Module name must be a string');
 
-    $__Object$defineProperty(SystemLoader.prototype, "global", {
-      get: function() {
-        return isBrowser ? window : (isWorker ? self : global);
-      },
+      var segments = name.split('/');
 
-      enumerable: false
-    });
+      if (segments.length == 0)
+        throw new TypeError('No module name provided');
 
-    $__Object$defineProperty(SystemLoader.prototype, "strict", {
-      get: function() { return true; },
-      enumerable: false
-    });
-
-    $__Object$defineProperty(SystemLoader.prototype, "normalize", {
-      value: function(name, parentName, parentAddress) {
-        if (typeof name != 'string')
-          throw new TypeError('Module name must be a string');
-
-        var segments = name.split('/');
-
-        if (segments.length == 0)
-          throw new TypeError('No module name provided');
-
-        // current segment
-        var i = 0;
-        // is the module name relative
-        var rel = false;
-        // number of backtracking segments
-        var dotdots = 0;
-        if (segments[0] == '.') {
+      // current segment
+      var i = 0;
+      // is the module name relative
+      var rel = false;
+      // number of backtracking segments
+      var dotdots = 0;
+      if (segments[0] == '.') {
+        i++;
+        if (i == segments.length)
+          throw new TypeError('Illegal module name "' + name + '"');
+        rel = true;
+      }
+      else {
+        while (segments[i] == '..') {
           i++;
           if (i == segments.length)
             throw new TypeError('Illegal module name "' + name + '"');
+        }
+        if (i)
           rel = true;
+        dotdots = i;
+      }
+
+      for (var j = i; j < segments.length; j++) {
+        var segment = segments[j];
+        if (segment == '' || segment == '.' || segment == '..')
+          throw new TypeError('Illegal module name "' + name + '"');
+      }
+
+      if (!rel)
+        return name;
+
+      // build the full module name
+      var normalizedParts = [];
+      var parentParts = (parentName || '').split('/');
+      var normalizedLen = parentParts.length - 1 - dotdots;
+
+      normalizedParts = normalizedParts.concat(parentParts.splice(0, parentParts.length - 1 - dotdots));
+      normalizedParts = normalizedParts.concat(segments.splice(i, segments.length - i));
+
+      return normalizedParts.join('/');
+    }
+
+    locate(load) {
+      var name = load.name;
+
+      // NB no specification provided for System.paths, used ideas discussed in https://github.com/jorendorff/js-loaders/issues/25
+
+      // most specific (longest) match wins
+      var pathMatch = '', wildcard;
+
+      // check to see if we have a paths entry
+      for (var p in this.paths) {
+        var pathParts = p.split('*');
+        if (pathParts.length > 2)
+          throw new TypeError('Only one wildcard in a path is permitted');
+
+        // exact path match
+        if (pathParts.length == 1) {
+          if (name == p && p.length > pathMatch.length) {
+            pathMatch = p;
+            break;
+          }
         }
+
+        // wildcard path match
         else {
-          while (segments[i] == '..') {
-            i++;
-            if (i == segments.length)
-              throw new TypeError('Illegal module name "' + name + '"');
-          }
-          if (i)
-            rel = true;
-          dotdots = i;
-        }
-
-        for (var j = i; j < segments.length; j++) {
-          var segment = segments[j];
-          if (segment == '' || segment == '.' || segment == '..')
-            throw new TypeError('Illegal module name "' + name + '"');
-        }
-
-        if (!rel)
-          return name;
-
-        // build the full module name
-        var normalizedParts = [];
-        var parentParts = (parentName || '').split('/');
-        var normalizedLen = parentParts.length - 1 - dotdots;
-
-        normalizedParts = normalizedParts.concat(parentParts.splice(0, parentParts.length - 1 - dotdots));
-        normalizedParts = normalizedParts.concat(segments.splice(i, segments.length - i));
-
-        return normalizedParts.join('/');
-      },
-
-      enumerable: false,
-      writable: true
-    });
-
-    $__Object$defineProperty(SystemLoader.prototype, "locate", {
-      value: function(load) {
-        var name = load.name;
-
-        // NB no specification provided for System.paths, used ideas discussed in https://github.com/jorendorff/js-loaders/issues/25
-
-        // most specific (longest) match wins
-        var pathMatch = '', wildcard;
-
-        // check to see if we have a paths entry
-        for (var p in this.paths) {
-          var pathParts = p.split('*');
-          if (pathParts.length > 2)
-            throw new TypeError('Only one wildcard in a path is permitted');
-
-          // exact path match
-          if (pathParts.length == 1) {
-            if (name == p && p.length > pathMatch.length) {
-              pathMatch = p;
-              break;
-            }
-          }
-
-          // wildcard path match
-          else {
-            if (name.substr(0, pathParts[0].length) == pathParts[0] && name.substr(name.length - pathParts[1].length) == pathParts[1]) {
-              pathMatch = p;
-              wildcard = name.substr(pathParts[0].length, name.length - pathParts[1].length - pathParts[0].length);
-            }
+          if (name.substr(0, pathParts[0].length) == pathParts[0] && name.substr(name.length - pathParts[1].length) == pathParts[1]) {
+            pathMatch = p;
+            wildcard = name.substr(pathParts[0].length, name.length - pathParts[1].length - pathParts[0].length);
           }
         }
+      }
 
-        var outPath = this.paths[pathMatch];
-        if (wildcard)
-          outPath = outPath.replace('*', wildcard);
+      var outPath = this.paths[pathMatch];
+      if (wildcard)
+        outPath = outPath.replace('*', wildcard);
 
-        // percent encode just '#' in module names
-        // according to https://github.com/jorendorff/js-loaders/blob/master/browser-loader.js#L238
-        // we should encode everything, but it breaks for servers that don't expect it 
-        // like in (https://github.com/systemjs/systemjs/issues/168)
-        if (isBrowser)
-          outPath = outPath.replace(/#/g, '%23');
+      // percent encode just '#' in module names
+      // according to https://github.com/jorendorff/js-loaders/blob/master/browser-loader.js#L238
+      // we should encode everything, but it breaks for servers that don't expect it 
+      // like in (https://github.com/systemjs/systemjs/issues/168)
+      if (isBrowser)
+        outPath = outPath.replace(/#/g, '%23');
 
-        return toAbsoluteURL(this.baseURL, outPath);
-      },
+      return toAbsoluteURL(this.baseURL, outPath);
+    }
 
-      enumerable: false,
-      writable: true
-    });
+    fetch(load) {
+      var self = this;
+      return new Promise(function(resolve, reject) {
+        fetchTextFromURL(toAbsoluteURL(self.baseURL, load.address), function(source) {
+          resolve(source);
+        }, reject);
+      });
+    }
 
-    $__Object$defineProperty(SystemLoader.prototype, "fetch", {
-      value: function(load) {
-        var self = this;
-        return new Promise(function(resolve, reject) {
-          fetchTextFromURL(toAbsoluteURL(self.baseURL, load.address), function(source) {
-            resolve(source);
-          }, reject);
-        });
-      },
-
-      enumerable: false,
-      writable: true
-    });
-
-    return SystemLoader;
-  }(Loader);
+  }
 
   var System = new SystemLoader();
-  System.constructor = SystemLoader;
 
   // note we have to export before runing "init" below
   if (typeof exports === 'object')
@@ -323,4 +287,5 @@ var $__Object$create = Object.create;
     if (curScript.getAttribute('data-init'))
       window[curScript.getAttribute('data-init')]();
   }
+
 })(typeof global !== 'undefined' ? global : this);
