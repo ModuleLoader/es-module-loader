@@ -567,6 +567,7 @@ function runTests() {
     assert(System instanceof Reflect.Loader, true);
   });
 
+  if (Worker)
   test('Loading inside of a Web Worker', function(assert) {
     var worker = new Worker('worker/worker.js');
 
