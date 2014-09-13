@@ -26,4 +26,4 @@ function __eval(__source, __global, load) {
   System.register = __curRegister;
 }
 
-})(typeof global !== 'undefined' ? global : this);
+})(typeof window == 'undefined' ? global : this);
