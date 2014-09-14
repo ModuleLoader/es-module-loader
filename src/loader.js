@@ -843,7 +843,8 @@ function logloads(loads) {
     this._loader = {
       loaderObj: this,
       loads: [],
-      modules: {}
+      modules: {},
+      importPromises: {}
     };
 
     // 26.3.3.6
@@ -859,8 +860,8 @@ function logloads(loads) {
   function Module() {}
 
   // importPromises adds ability to import a module twice without error - https://bugs.ecmascript.org/show_bug.cgi?id=2601
-  var importPromises = {};
-  function createImportPromise(name, promise) {
+  function createImportPromise(loader, name, promise) {
+    var importPromises = loader._loader.importPromises;
     importPromises[name] = promise;
     promise.then(function() {
       importPromises[name] = undefined;
@@ -877,9 +878,9 @@ function logloads(loads) {
     // 26.3.3.2
     define: function(name, source, options) {
       // check if already defined
-      if (importPromises[name])
+      if (this._loader.importPromises[name])
         throw new TypeError('Module is already loading.');
-      return createImportPromise(name, new Promise(asyncStartLoadPartwayThrough({
+      return createImportPromise(this, name, new Promise(asyncStartLoadPartwayThrough({
         step: 'translate',
         loader: this._loader,
         moduleName: name,
@@ -919,10 +920,10 @@ function logloads(loads) {
           return loader.modules[name].module;
         }
 
-        return importPromises[name] || createImportPromise(name,
+        return loader.importPromises[name] || createImportPromise(loaderObj, name,
           loadModule(loader, name, options || {})
           .then(function(load) {
-            delete importPromises[name];
+            delete loader.importPromises[name];
             return evaluateLoadedModule(loader, load);
           }));
       });
@@ -934,7 +935,7 @@ function logloads(loads) {
         doEnsureEvaluated(this._loader.modules[name], [], this._loader);
         return Promise.resolve(this._loader.modules[name].module);
       }
-      return importPromises[name] || createImportPromise(name, loadModule(this._loader, name, {}));
+      return this._loader.importPromises[name] || createImportPromise(this, name, loadModule(this._loader, name, {}));
     },
     // 26.3.3.11
     module: function(source, options) {
