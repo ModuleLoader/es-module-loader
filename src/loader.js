@@ -1019,14 +1019,6 @@ function logloads(loads) {
    * Traceur-specific Parsing Code for Loader
    */
   (function() {
-    function checkForErrors(output, load) {
-      if (output.errors.length) {
-        for (var i = 0, l = output.errors.length; i < l; i++)
-          console.error(output.errors[i]);
-        throw new Error('Parse of ' + load.name + ', ' + load.address + ' failed, ' + output.errors.length);
-      }
-    }
-
     // parse function is used to parse a load record
     // Returns an array of ModuleSpecifiers
     var traceur;
