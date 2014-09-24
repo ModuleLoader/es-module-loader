@@ -43,7 +43,7 @@
     "test": "cd test && node test"
   },
   "dependencies": {
-    "traceur": "0.0.58",
-    "when": "^3.4.2"
+    "traceur": "0.0.66",
+    "when": "^3.4.6"
   }
 }
