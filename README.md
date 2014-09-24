@@ -23,7 +23,7 @@ _Note the ES6 module specification is still in draft, and subject to change._
 
 ### Basic Use
 
-Download both [es6-module-loader.js](https://raw.githubusercontent.com/ModuleLoader/es6-module-loader/v0.9.0/dist/es6-module-loader.js) and traceur.js into the same folder.
+Download both [es6-module-loader.js](https://raw.githubusercontent.com/ModuleLoader/es6-module-loader/v0.9.1/dist/es6-module-loader.js) and traceur.js into the same folder.
 
 If using ES6 syntax (optional), include [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.66/traceur.js) in the page first then include `es6-module-loader.js`:
 
