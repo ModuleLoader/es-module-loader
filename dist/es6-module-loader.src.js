@@ -2387,6 +2387,10 @@ function logloads(loads) {
         xhr.onload = load;
         xhr.onerror = error;
         xhr.ontimeout = error;
+        // IE8/IE9 bug may hang requests unless all properties are defined. 
+        // See: http://stackoverflow.com/a/9928073/3949247
+        xhr.onprogress = function() {};
+        xhr.timeout = 0;
       }
       function load() {
         fulfill(xhr.responseText);
@@ -2433,7 +2437,7 @@ function logloads(loads) {
       else {
         this.baseURL = process.cwd() + '/';
       }
-      this.paths = { '*': '*.js' };
+      this.paths = { '*': '*' };
     }
 
     SystemLoader.__proto__ = ($__super !== null ? $__super : Function.prototype);
@@ -2461,52 +2465,53 @@ function logloads(loads) {
         if (typeof name != 'string')
           throw new TypeError('Module name must be a string');
 
-        var segments = name.split('/');
+        // if all names are normalized, then we only ever need to
+        // normalize relative to the parent
+        // the top-level parent is then just the baseURL
+        parentName = parentName || this.baseURL;
 
-        if (segments.length == 0)
-          throw new TypeError('No module name provided');
+        // if the name does not start with a ./, ../, / or scheme:
+        // then we first apply paths configuration with wildcard
+        // used ideas discussed in https://github.com/jorendorff/js-loaders/issues/25
+        // most specific (longest) match wins
+        if (name.substr(0, 2) != './' && name.substr(0, 3) != '../' && name.substr(0, 1) != '/' && name.indexOf(':') == -1) {
+          var pathMatch = '', wildcard;
 
-        // current segment
-        var i = 0;
-        // is the module name relative
-        var rel = false;
-        // number of backtracking segments
-        var dotdots = 0;
-        if (segments[0] == '.') {
-          i++;
-          if (i == segments.length)
-            throw new TypeError('Illegal module name "' + name + '"');
-          rel = true;
-        }
-        else {
-          while (segments[i] == '..') {
-            i++;
-            if (i == segments.length)
-              throw new TypeError('Illegal module name "' + name + '"');
+          // check to see if we have a paths entry
+          for (var p in this.paths) {
+            var pathParts = p.split('*');
+            if (pathParts.length > 2)
+              throw new TypeError('Only one wildcard in a path is permitted');
+
+            // exact path match
+            if (pathParts.length == 1) {
+              if (name == p && p.length > pathMatch.length) {
+                pathMatch = p;
+                break;
+              }
+            }
+
+            // wildcard path match
+            else {
+              if (name.substr(0, pathParts[0].length) == pathParts[0] && name.substr(name.length - pathParts[1].length) == pathParts[1]) {
+                pathMatch = p;
+                wildcard = name.substr(pathParts[0].length, name.length - pathParts[1].length - pathParts[0].length);
+              }
+            }
           }
-          if (i)
-            rel = true;
-          dotdots = i;
+          name = this.paths[pathMatch];
+          if (wildcard)
+            name = name.replace('*', wildcard);
         }
 
-        for (var j = i; j < segments.length; j++) {
-          var segment = segments[j];
-          if (segment == '' || segment == '.' || segment == '..')
-            throw new TypeError('Illegal module name "' + name + '"');
-        }
+        // percent encode just '#' in module names
+        // according to https://github.com/jorendorff/js-loaders/blob/master/browser-loader.js#L238
+        // we should encode everything, but it breaks for servers that don't expect it 
+        // like in (https://github.com/systemjs/systemjs/issues/168)
+        if (isBrowser)
+          name = name.replace(/#/g, '%23');
 
-        if (!rel)
-          return name;
-
-        // build the full module name
-        var normalizedParts = [];
-        var parentParts = (parentName || '').split('/');
-        var normalizedLen = parentParts.length - 1 - dotdots;
-
-        normalizedParts = normalizedParts.concat(parentParts.splice(0, parentParts.length - 1 - dotdots));
-        normalizedParts = normalizedParts.concat(segments.splice(i, segments.length - i));
-
-        return normalizedParts.join('/');
+        return toAbsoluteURL(parentName, name);
       },
 
       enumerable: false,
@@ -2515,48 +2520,10 @@ function logloads(loads) {
 
     $__Object$defineProperty(SystemLoader.prototype, "locate", {
       value: function(load) {
-        var name = load.name;
-
-        // NB no specification provided for System.paths, used ideas discussed in https://github.com/jorendorff/js-loaders/issues/25
-
-        // most specific (longest) match wins
-        var pathMatch = '', wildcard;
-
-        // check to see if we have a paths entry
-        for (var p in this.paths) {
-          var pathParts = p.split('*');
-          if (pathParts.length > 2)
-            throw new TypeError('Only one wildcard in a path is permitted');
-
-          // exact path match
-          if (pathParts.length == 1) {
-            if (name == p && p.length > pathMatch.length) {
-              pathMatch = p;
-              break;
-            }
-          }
-
-          // wildcard path match
-          else {
-            if (name.substr(0, pathParts[0].length) == pathParts[0] && name.substr(name.length - pathParts[1].length) == pathParts[1]) {
-              pathMatch = p;
-              wildcard = name.substr(pathParts[0].length, name.length - pathParts[1].length - pathParts[0].length);
-            }
-          }
-        }
-
-        var outPath = this.paths[pathMatch];
-        if (wildcard)
-          outPath = outPath.replace('*', wildcard);
-
-        // percent encode just '#' in module names
-        // according to https://github.com/jorendorff/js-loaders/blob/master/browser-loader.js#L238
-        // we should encode everything, but it breaks for servers that don't expect it 
-        // like in (https://github.com/systemjs/systemjs/issues/168)
-        if (isBrowser)
-          outPath = outPath.replace(/#/g, '%23');
-
-        return toAbsoluteURL(this.baseURL, outPath);
+        // it is possible for locate to not to be a fully normalized URL
+        // if name was forced into not being of an absolute URL by normalize
+        // so we run toAbsoluteURL again just in case
+        return toAbsoluteURL(this.baseURL, load.name);
       },
 
       enumerable: false,
@@ -2626,6 +2593,7 @@ function logloads(loads) {
       window[curScript.getAttribute('data-init')]();
   }
 })();
+
 
 // Define our eval outside of the scope of any other reference defined in this
 // file to avoid adding those references to the evaluation scope.
