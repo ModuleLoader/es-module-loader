@@ -4,8 +4,6 @@ import d from './export';
 
 import { s as p } from './reexport1';
 
-import r from './reexport2';
-
 import { z, q as r } from './reexport2';
 
 import * as q from './reexport1';

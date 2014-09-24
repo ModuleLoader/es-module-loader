@@ -91,6 +91,7 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-string-replace');
 
   grunt.registerTask('lint', ['jshint']);
+  grunt.registerTask('compile', ['esnext', 'string-replace', 'concat']);
   grunt.registerTask('default', [/*'jshint', */'esnext', 'string-replace', 
                      'concat', 'uglify']);
 };

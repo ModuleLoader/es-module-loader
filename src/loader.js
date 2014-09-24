@@ -1047,22 +1047,14 @@ function logloads(loads) {
 
       load.isDeclarative = true;
 
-      var compiler = new traceur.Compiler();
-      var options = System.traceurOptions || {};
+      var options = traceur.options || {};
       options.modules = 'instantiate';
       options.sourceMaps = true;
       options.filename = load.address;
-      var output = compiler.stringToTree({content: load.source, options: options});
-      checkForErrors(output);
 
-      output = compiler.treeToTree(output);
-      checkForErrors(output);
-
-      output = compiler.treeToString(output);
-      checkForErrors(output);
-
-      var source = output.js;
-      var sourceMap = output.generatedSourceMap;
+      var compiler = new traceur.Compiler(options);
+      var source = compiler.compile(load.source, options.filename);
+      var sourceMap = compiler.getSourceMap();
 
       if (__global.btoa && sourceMap)
         source += '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(sourceMap))) + '\n';
