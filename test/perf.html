@@ -14,11 +14,11 @@
                            MODULE NUM_MODULES
                                    |
                                    |
-      -------------------------------------  ...
+      -------------------------------------  ... -----
       |                            |                 |
-    MODULE 1              MODULE TREE_DEPTH         ...
+    MODULE 0              MODULE TREE_DEPTH         ...
       |                            |
-    MODULE 2              MODULE TREE_DEPTH + 2
+    MODULE 1              MODULE TREE_DEPTH + 1
      ...                         ...
  MODULE TREE_DEPTH - 1   MODULE TREE_DEPTH * 2 - 1
 
@@ -28,10 +28,27 @@ THAT IS -
 
     */
 
+    /*
+      
+      PERF RESULTS
+      ------------
+
+      WITH 1000 modules,
+
+      TREE_DEPTH    FULL LOAD TIME PER MODULE (including evaluation and defining)
+          1          0.25ms
+          10         0.27ms
+          50         0.30ms
+         100         0.35ms
+         500         0.90ms
+        1000         1.90ms
+
+    */
+
 
     System.set('module0', System.newModule({}));
     System.instantiate = function(load) {
-      var num = load.name.substr(6);
+      var num = parseInt(load.name.substr(6));
 
       var deps = [];
 
@@ -40,8 +57,8 @@ THAT IS -
         for (var i = 0; i < NUM_MODULES; i += TREE_DEPTH)
           deps.push('module' + i);
       }
-      else if (num % TREE_DEPTH > 0)
-        deps = ['module' + (num - 1)];
+      else if (num % TREE_DEPTH != TREE_DEPTH - 1)
+        deps = ['module' + (num + 1)];
 
       return {
         deps: deps,
