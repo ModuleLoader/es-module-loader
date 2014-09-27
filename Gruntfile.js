@@ -68,7 +68,8 @@ module.exports = function (grunt) {
         banner: '<%= meta.banner %>\n',
         compress: {
           drop_console: true
-        }
+        },
+        sourceMap: true
       },
       dist: {
         options: {

@@ -2101,14 +2101,13 @@ function logloads(loads) {
   // importPromises adds ability to import a module twice without error - https://bugs.ecmascript.org/show_bug.cgi?id=2601
   function createImportPromise(loader, name, promise) {
     var importPromises = loader._loader.importPromises;
-    importPromises[name] = promise;
-    promise.then(function() {
+    return importPromises[name] = promise.then(function(m) {
       importPromises[name] = undefined;
-    });
-    promise['catch'](function() {
+      return m;
+    }, function(e) {
       importPromises[name] = undefined;
+      throw e;
     });
-    return promise;
   }
 
   Loader.prototype = {
