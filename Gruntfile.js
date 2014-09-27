@@ -27,15 +27,15 @@ module.exports = function (grunt) {
           'dist/<%= pkg.name %>.js',
           'src/polyfill-wrapper-end.js'
         ],
-        dest: 'dist/<%= pkg.name %>.js'
+        dest: 'dist/<%= pkg.name %>.src.js'
       },
       polyfillOnly: {
         src: [
           'src/polyfill-wrapper-start.js',
-          'dist/<%= pkg.name %>.js',
+          'dist/<%= pkg.name %>.src.js',
           'src/polyfill-wrapper-end.js'
         ],
-        dest: 'dist/<%= pkg.name %>-sans-promises.js'
+        dest: 'dist/<%= pkg.name %>-sans-promises.src.js'
       }
     },
     esnext: {
@@ -75,12 +75,12 @@ module.exports = function (grunt) {
         options: {
           banner: '<%= meta.banner %>\n'
         },
-        src: 'dist/<%= pkg.name %>.js',
-        dest: 'dist/<%= pkg.name %>.min.js'
+        src: 'dist/<%= pkg.name %>.src.js',
+        dest: 'dist/<%= pkg.name %>.js'
       },
       polyfillOnly: {
-        src: 'dist/<%= pkg.name %>-sans-promises.js',
-        dest: 'dist/<%= pkg.name %>-sans-promises.min.js'
+        src: 'dist/<%= pkg.name %>-sans-promises.src.js',
+        dest: 'dist/<%= pkg.name %>-sans-promises.js'
       }
     }
   });
