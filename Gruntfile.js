@@ -21,21 +21,19 @@ module.exports = function (grunt) {
     },
     concat: {
       dist: {
-        src: [
-          'node_modules/when/es6-shim/Promise.js',
-          'src/polyfill-wrapper-start.js',
-          'dist/<%= pkg.name %>.js',
-          'src/polyfill-wrapper-end.js'
-        ],
-        dest: 'dist/<%= pkg.name %>.src.js'
-      },
-      polyfillOnly: {
-        src: [
-          'src/polyfill-wrapper-start.js',
-          'dist/<%= pkg.name %>.src.js',
-          'src/polyfill-wrapper-end.js'
-        ],
-        dest: 'dist/<%= pkg.name %>-sans-promises.src.js'
+        files: {
+          'dist/<%= pkg.name %>.src.js': [
+            'node_modules/when/es6-shim/Promise.js',
+            'src/polyfill-wrapper-start.js',
+            'dist/<%= pkg.name %>.js',
+            'src/polyfill-wrapper-end.js'
+          ],
+          'dist/<%= pkg.name %>-sans-promises.src.js': [
+            'src/polyfill-wrapper-start.js',
+            'dist/<%= pkg.name %>.js',
+            'src/polyfill-wrapper-end.js'
+          ]
+        }
       }
     },
     esnext: {
@@ -59,7 +57,6 @@ module.exports = function (grunt) {
               'var $__Object$create = Object.create;',
             replacement: ''
           }]
-
         }
       }
     },
