@@ -651,8 +651,8 @@ function logloads(loads) {
 
   // custom module records for binding graph
   // store linking module records in a separate table
-  var moduleRecords = {};
-  function getOrCreateModuleRecord(name) {
+  function getOrCreateModuleRecord(name, loader) {
+    var moduleRecords = loader.moduleRecords;
     return moduleRecords[name] || (moduleRecords[name] = {
       name: name,
       dependencies: [],
@@ -666,7 +666,7 @@ function logloads(loads) {
     if (load.module)
       return;
 
-    var module = load.module = getOrCreateModuleRecord(load.name);
+    var module = load.module = getOrCreateModuleRecord(load.name, loader);
     var moduleObj = load.module.module;
 
     var registryEntry = load.declare.call(__global, function(name, value) {
@@ -713,7 +713,7 @@ function logloads(loads) {
           }
           // if circular, create the module record
           else {
-            depModule = getOrCreateModuleRecord(depName);
+            depModule = getOrCreateModuleRecord(depName, loader);
           }
         }
       }
@@ -844,7 +844,8 @@ function logloads(loads) {
       loaderObj: this,
       loads: [],
       modules: {},
-      importPromises: {}
+      importPromises: {},
+      moduleRecords: {}
     };
 
     // 26.3.3.6
