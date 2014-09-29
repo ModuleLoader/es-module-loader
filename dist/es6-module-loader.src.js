@@ -233,20 +233,10 @@ define(function(require) {
 
 	} else {
 		nextTick = (function(cjsRequire) {
-			var vertx;
 			try {
 				// vert.x 1.x || 2.x
-				vertx = cjsRequire('vertx');
+				return cjsRequire('vertx').runOnLoop || cjsRequire('vertx').runOnContext;
 			} catch (ignore) {}
-
-			if (vertx) {
-				if (typeof vertx.runOnLoop === 'function') {
-					return vertx.runOnLoop;
-				}
-				if (typeof vertx.runOnContext === 'function') {
-					return vertx.runOnContext;
-				}
-			}
 
 			// capture setTimeout to avoid being caught by fake timers
 			// used in time based tests
@@ -496,12 +486,10 @@ define(function() {
 		 */
 		Promise.prototype.then = function(onFulfilled, onRejected) {
 			var parent = this._handler;
-			var state = parent.join().state();
 
-			if ((typeof onFulfilled !== 'function' && state > 0) ||
-				(typeof onRejected !== 'function' && state < 0)) {
+			if (typeof onFulfilled !== 'function' && parent.join().state() > 0) {
 				// Short circuit: value will not change, simply share handler
-				return new this.constructor(Handler, parent);
+				return new Promise(Handler, parent);
 			}
 
 			var p = this._beget();
@@ -562,7 +550,9 @@ define(function() {
 				}
 
 				if (maybeThenable(x)) {
-					h = getHandlerMaybeThenable(x);
+					h = isPromise(x)
+						? x._handler.join()
+						: getHandlerUntrusted(x);
 
 					s = h.state();
 					if (s === 0) {
@@ -571,7 +561,6 @@ define(function() {
 						results[i] = h.value;
 						--pending;
 					} else {
-						unreportRemaining(promises, i+1, h);
 						resolver.become(h);
 						break;
 					}
@@ -593,20 +582,6 @@ define(function() {
 				this[i] = x;
 				if(--pending === 0) {
 					resolver.become(new Fulfilled(this));
-				}
-			}
-		}
-
-		function unreportRemaining(promises, start, rejectedHandler) {
-			var i, h, x;
-			for(i=start; i<promises.length; ++i) {
-				x = promises[i];
-				if(maybeThenable(x)) {
-					h = getHandlerMaybeThenable(x);
-
-					if(h !== rejectedHandler) {
-						h.visit(h, void 0, h._unreport);
-					}
 				}
 			}
 		}
@@ -656,16 +631,6 @@ define(function() {
 				return x._handler.join();
 			}
 			return maybeThenable(x) ? getHandlerUntrusted(x) : new Fulfilled(x);
-		}
-
-		/**
-		 * Get a handler for thenable x.
-		 * NOTE: You must only call this if maybeThenable(x) == true
-		 * @param {object|function|Promise} x
-		 * @returns {object} handler
-		 */
-		function getHandlerMaybeThenable(x) {
-			return isPromise(x) ? x._handler.join() : getHandlerUntrusted(x);
 		}
 
 		/**
@@ -1177,15 +1142,10 @@ define(function(require) {
 
 	try {
 		vertx = cjsRequire('vertx');
-	} catch (e) { }
-
-	if (vertx && typeof vertx.setTimer === 'function') {
 		setTimer = function (f, ms) { return vertx.setTimer(ms, f); };
 		clearTimer = vertx.cancelTimer;
-	} else {
-		// NOTE: Truncate decimals to workaround node 0.10.30 bug:
-		// https://github.com/joyent/node/issues/8167
-		setTimer = function(f, ms) { return setTimeout(f, ms|0); };
+	} catch (e) {
+		setTimer = function(f, ms) { return setTimeout(f, ms); };
 		clearTimer = function(t) { return clearTimeout(t); };
 	}
 
@@ -1890,8 +1850,8 @@ function logloads(loads) {
 
   // custom module records for binding graph
   // store linking module records in a separate table
-  var moduleRecords = {};
-  function getOrCreateModuleRecord(name) {
+  function getOrCreateModuleRecord(name, loader) {
+    var moduleRecords = loader.moduleRecords;
     return moduleRecords[name] || (moduleRecords[name] = {
       name: name,
       dependencies: [],
@@ -1905,7 +1865,7 @@ function logloads(loads) {
     if (load.module)
       return;
 
-    var module = load.module = getOrCreateModuleRecord(load.name);
+    var module = load.module = getOrCreateModuleRecord(load.name, loader);
     var moduleObj = load.module.module;
 
     var registryEntry = load.declare.call(__global, function(name, value) {
@@ -1952,7 +1912,7 @@ function logloads(loads) {
           }
           // if circular, create the module record
           else {
-            depModule = getOrCreateModuleRecord(depName);
+            depModule = getOrCreateModuleRecord(depName, loader);
           }
         }
       }
@@ -2083,7 +2043,8 @@ function logloads(loads) {
       loaderObj: this,
       loads: [],
       modules: {},
-      importPromises: {}
+      importPromises: {},
+      moduleRecords: {}
     };
 
     // 26.3.3.6
