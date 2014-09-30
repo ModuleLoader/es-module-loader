@@ -9,7 +9,7 @@ Dynamically loads ES6 modules in NodeJS and current browsers.
 * Polyfills ES6 Promises in the browser with an optionally bundled ES6 promise implementation.
 * [Compatible with NodeJS](#nodejs-usage) allowing for server-side module loading and tracing extensions.
 * Supports ES6 module loading in IE8+. Other ES6 features only supported by Traceur in IE9+.
-* The complete combined polyfill comes to 8.4KB minified and gzipped, making it suitable for production use, provided that modules are [built into ES5 making them independent of Traceur](#moving-to-production).
+* The complete combined polyfill, including ES6 promises, comes to 8.7KB minified and gzipped, making it suitable for production use, provided that modules are [built into ES5 making them independent of Traceur](#moving-to-production).
 
 For an overview of build workflows, [see the production guide](#moving-to-production).
 
@@ -23,7 +23,7 @@ _Note the ES6 module specification is still in draft, and subject to change._
 
 ### Basic Use
 
-Download both [es6-module-loader.js](https://raw.githubusercontent.com/ModuleLoader/es6-module-loader/v0.9.1/dist/es6-module-loader.js) and traceur.js into the same folder.
+Download both [es6-module-loader.js](https://raw.githubusercontent.com/ModuleLoader/es6-module-loader/v0.9.2/dist/es6-module-loader.js) and traceur.js into the same folder.
 
 If using ES6 syntax (optional), include [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.66/traceur.js) in the page first then include `es6-module-loader.js`:
 
