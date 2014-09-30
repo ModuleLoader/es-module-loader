@@ -206,6 +206,12 @@ function runTests() {
     }, err);
   });
 
+  test('Reflect.isModule', function(assert, err) {
+    System['import']('syntax/es6').then(function(m) {
+      assert(Reflect.isModule(m), true);
+    }, err);
+  });
+
   test('Direct import without bindings', function(assert, err) {
     System['import']('syntax/direct').then(function(m) {
       assert(!!m, true);
