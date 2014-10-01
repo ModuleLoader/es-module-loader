@@ -88,7 +88,7 @@ function runTests() {
   var oldBaseURL = System.baseURL;
   System.baseURL = 'http://example.org/a/b.html';
 
-  test('Normalize - No Referer', System.normalize('d/e/f'), 'd/e/f');
+  test('Normalize - No Referer', System.normalize('d/e/f'), 'http://example.org/a/d/e/f');
   // test('Normalize - Below baseURL', System.normalize('../e/f'), '../e/f');
 
   var refererName = 'dir/file';
@@ -105,51 +105,34 @@ function runTests() {
   });
 
   test('Normalize - embedded ..', function(assert) {
-    try {
-      System.normalize('a/b/../c');
-    }
-    catch(e) {
-      assert(e.message, 'Illegal module name "a/b/../c"');
-    }
+    assert(System.normalize('a/b/../c'), 'http://example.org/a/a/c');
   });
   test('Normalize - embedded ..', function(assert) {
-    try {
-      System.normalize('a/../b', refererName);
-    }
-    catch(e) {
-      assert(e.message, 'Illegal module name "a/../b"');
-    }
+    assert(System.normalize('a/../b', refererName), 'dir/b');
   });
   test('Normalize - embedded ..', function(assert) {
-    try {
-      System.normalize('a/b/../c', refererName);
-    }
-    catch(e) {
-      assert(e.message, 'Illegal module name "a/b/../c"');
-    }
+    assert(System.normalize('a/b/../c', refererName), 'dir/a/c');
+  });
+  test('Normalize - embedded ..', function(assert) {
+    assert(System.normalize('../a/b/../../c', 'test/asdf/'), 'test/c');
   });
 
-  // test('Normalize - below referer', System.normalize('../../e/f', refererName), '../e/f');
+  // NB this should throw?
+  test('Normalize - below referer', System.normalize('../../e/f', refererName), 'e/f');
 
-  test('Normalize - backwards compat', System.normalize('./a.js'), 'a.js');
+  test('Normalize - backwards compat', System.normalize('./a.js'), 'http://example.org/a/a.js');
 
   test('Normalize - URL', function(assert) {
-    try {
-      System.normalize('http://example.org/a/b.html');
-    }
-    catch(e) {
-      assert();
-    }
+    assert(System.normalize('http://example.org/a/b.html'), 'http://example.org/a/b.html');
   });
 
   System.baseURL = 'http://example.org/a/';
 
-  test('Locate', System.locate({ name: '@abc/def' }), 'http://example.org/a/@abc/def.js');
-  test('Locate', System.locate({ name: 'abc/def' }), 'http://example.org/a/abc/def.js');
+  test('Locate', System.locate({ name: 'http://example.org/a/abc/def.js' }), 'http://example.org/a/abc/def.js');
 
   // paths
-  System.paths['path/*'] = '/test/*.js';
-  test('Locate paths', System.locate({ name: 'path/test' }), 'http://example.org/test/test.js');
+  System.paths['path/*'] = '/test/*';
+  test('Locate paths', System.normalize('path/test.js'), 'http://example.org/test/test.js');
 
 
   System.baseURL = oldBaseURL;
@@ -159,62 +142,53 @@ function runTests() {
   // More Normalize tests
 
   test('Normalize test 1', function(assert) {
-    assert(System.normalize('./a/b', 'c'), 'a/b');
+    assert(System.normalize('./a/b.js', 'scheme:c.js'), 'scheme:a/b.js');
   });
   test('Normalize test 2', function(assert) {
-    assert(System.normalize('./a/b', 'c/d'), 'c/a/b');
-  });
-  test('Normalize test 3', function(assert) {
-    assert(System.normalize('./a/b', '../c/d'), '../c/a/b');
-  });
-  test('Normalize test 4', function(assert) {
-    assert(System.normalize('./a/b', '../c/d'), '../c/a/b');
-  });
-  test('Normalize test 5', function(assert) {
-    assert(System.normalize('../a/b', '../../c/d'), '../../a/b');
+    assert(System.normalize('./a/b.js', 'c/d.js'), 'c/a/b.js');
   });
 
   test('Import a script', function(assert, err) {
-    System['import']('syntax/script').then(function(m) {
+    System['import']('syntax/script.js').then(function(m) {
       assert(!!m, true);
     }, err);
   });
 
   test('Import a script once loaded', function(assert, err) {
-    System['import']('syntax/script').then(function(m) {
-      System['import']('syntax/script').then(function(m) {
+    System['import']('syntax/script.js').then(function(m) {
+      System['import']('syntax/script.js').then(function(m) {
         assert(!!m, true);
       }, err);
     });
   });
 
   test('Import ES6', function(assert, err) {
-    System['import']('syntax/es6').then(function(m) {
+    System['import']('syntax/es6.js').then(function(m) {
       assert(m.p, 'p');
     }, err);
   });
 
   test('Import ES6 with dep', function(assert, err) {
-    System['import']('syntax/es6-withdep').then(function(m) {
+    System['import']('syntax/es6-withdep.js').then(function(m) {
       assert(m.p, 'p');
     }, err);
   });
 
   test('Import ES6 Generator', function(assert, err) {
-    System['import']('syntax/es6-generator').then(function(m) {
+    System['import']('syntax/es6-generator.js').then(function(m) {
       assert(!!m.generator, true);
     }, err);
   });
 
   test('Direct import without bindings', function(assert, err) {
-    System['import']('syntax/direct').then(function(m) {
+    System['import']('syntax/direct.js').then(function(m) {
       assert(!!m, true);
     }, err);
   });
 
   test('Circular Dependencies', function(assert, err) {
-    System['import']('syntax/circular1').then(function(m1) {
-      System['import']('syntax/circular2').then(function(m2) {
+    System['import']('syntax/circular1.js').then(function(m1) {
+      System['import']('syntax/circular2.js').then(function(m2) {
         assert(
           [m2.output, 'test circular 1'],
           [m1.output, 'test circular 2'],
@@ -226,7 +200,7 @@ function runTests() {
   });
 
   test('Circular Test', function(assert, err) {
-    System['import']('syntax/even').then(function(m) {
+    System['import']('syntax/even.js').then(function(m) {
       assert(
         [m.even(10), true],
         [m.counter, 7],
@@ -237,7 +211,7 @@ function runTests() {
   });
 
   test('Load order test: A', function(assert, err) {
-    System['import']('loads/a').then(function(m) {
+    System['import']('loads/a.js').then(function(m) {
       assert(
         [m.a, 'a'],
         [m.b, 'b']
@@ -246,7 +220,7 @@ function runTests() {
   });
 
   test('Load order test: C', function(assert, err) {
-    System['import']('loads/c').then(function(m) {
+    System['import']('loads/c.js').then(function(m) {
       assert(
         [m.c, 'c'],
         [m.a, 'a'],
@@ -256,7 +230,7 @@ function runTests() {
   });
 
   test('Load order test: S', function(assert, err) {
-    System['import']('loads/s').then(function(m) {
+    System['import']('loads/s.js').then(function(m) {
       assert(
         [m.s, 's'],
         [m.c, 'c'],
@@ -267,7 +241,7 @@ function runTests() {
   });
 
   test('Load order test: _a', function(assert) {
-    System['import']('loads/_a').then(function(m) {
+    System['import']('loads/_a.js').then(function(m) {
       assert(
         [m.b, 'b'],
         [m.d, 'd'],
@@ -278,7 +252,7 @@ function runTests() {
   });
 
   test('Load order test: _e', function(assert) {
-    System['import']('loads/_e').then(function(m) {
+    System['import']('loads/_e.js').then(function(m) {
       assert(
         [m.c, 'c'],
         [m.e, 'e']
@@ -286,7 +260,7 @@ function runTests() {
     })
   });
   test('Load order test: _f', function(assert) {
-    System['import']('loads/_f').then(function(m) {
+    System['import']('loads/_f.js').then(function(m) {
       assert(
         [m.g, 'g'],
         [m.f, 'f']
@@ -294,7 +268,7 @@ function runTests() {
     })
   });
   test('Load order test: _h', function(assert) {
-    System['import']('loads/_h').then(function(m) {
+    System['import']('loads/_h.js').then(function(m) {
       assert(
         [m.i, 'i'],
         [m.a, 'a'],
@@ -304,17 +278,17 @@ function runTests() {
   });
 
   test('Error check 1', function(assert) {
-    System['import']('loads/main').then(function(m) {
+    System['import']('loads/main.js').then(function(m) {
       assert(false, true);
     }, function(e) {
-      assert(e, 'dep error\n  in module loads/deperror');
+      assert(e, 'dep error\n  in module ' + System.baseURL + 'loads/deperror.js');
     });
     // System['import']('loads/deperror');
   });
 
 
   test('Export Syntax', function(assert) {
-    System['import']('syntax/export').then(function(m) {
+    System['import']('syntax/export.js').then(function(m) {
       assert(
         [m.p, 5],
         [typeof m.foo, 'function'],
@@ -328,19 +302,19 @@ function runTests() {
   });
 
   test('Export default 1', function(assert, err) {
-    System['import']('syntax/export-default').then(function(m) {
+    System['import']('syntax/export-default.js').then(function(m) {
       assert(m['default'](), 'test');
     }, err);
   });
 
   test('Re-export', function(assert, err) {
-    System['import']('syntax/reexport1').then(function(m) {
+    System['import']('syntax/reexport1.js').then(function(m) {
       assert(m.p, 5);
     }, err);
   });
 
   test('Re-export with new name', function(assert, err) {
-    System['import']('syntax/reexport2').then(function(m) {
+    System['import']('syntax/reexport2.js').then(function(m) {
       assert(
         [m.q, 4],
         [m.z, 5]
@@ -349,15 +323,15 @@ function runTests() {
   });
 
   test('Re-export binding', function(assert, err) {
-    System['import']('syntax/reexport-binding').then(function(m) {
-      System['import']('syntax/rebinding').then(function(m) {
+    System['import']('syntax/reexport-binding.js').then(function(m) {
+      System['import']('syntax/rebinding.js').then(function(m) {
         assert(m.p, 4);
       });
     }, err);
   });
 
   test('Import Syntax', function(assert, err) {
-    System['import']('syntax/import').then(function(m) {
+    System['import']('syntax/import.js').then(function(m) {
       assert(
         [typeof m.a, 'function'],
         [m.b, 4],
@@ -369,7 +343,7 @@ function runTests() {
   });
 
   test('ES6 Syntax', function(assert, err) {
-    System['import']('syntax/es6-file').then(function(m) {
+    System['import']('syntax/es6-file.js').then(function(m) {
       setTimeout(function() {
         (new m.q()).foo();
       });
@@ -380,9 +354,9 @@ function runTests() {
   });
 
   test('Module Name meta', function(assert) {
-    System['import']('loader/moduleName').then(function(m) {
+    System['import']('loader/moduleName.js').then(function(m) {
       assert(
-        [m.name, 'loader/moduleName']
+        [m.name, System.baseURL + 'loader/moduleName.js']
       );
     })
   });
@@ -395,17 +369,17 @@ function runTests() {
   });
 
   test('Custom path wildcard', function(assert) {
-    System.paths['bar/*'] = 'loader/custom-folder/*.js';
-    System['import']('bar/path').then(function(m) {
+    System.paths['bar/*'] = 'loader/custom-folder/*';
+    System['import']('bar/path.js').then(function(m) {
       assert(m.bar, 'baa');
     });
   });
 
   test('Custom path most specific', function(assert) {
     delete System.paths['bar/*'];
-    System.paths['bar/bar'] = 'loader/specific-path.js';
-    System.paths['bar/*'] = 'loader/custom-folder/*.js';
-    System['import']('bar/bar').then(function(m) {
+    System.paths['bar/bar.js'] = 'loader/specific-path.js';
+    System.paths['bar/*'] = 'loader/custom-folder/*';
+    System['import']('bar/bar.js').then(function(m) {
       assert(m.path, true);
     });
   });
@@ -426,7 +400,7 @@ function runTests() {
       return new Promise(function(resolve, reject) {
         if (name == 'asdfasdf') {
           return setTimeout(function() {
-            resolve('loader/async-norm');
+            resolve('loader/async-norm.js');
           }, 500);
         }
 
@@ -438,31 +412,31 @@ function runTests() {
       });
     },
     locate: function(load) {
-        if (load.name == 'error2')
-          return new Promise(function(resolve, reject) {
-            setTimeout(function(){ reject('error2'); }, 100);
-          });
+      if (load.name == 'custom:error2')
+        return new Promise(function(resolve, reject) {
+          setTimeout(function(){ reject('error2'); }, 100);
+        });
 
-      if (load.name.substr(0, 5) == 'path/')
-        load.name = 'loader/' + load.name.substr(5);
+      if (load.name.substr(0, 12) == 'scheme:path/')
+        load.name = System.baseURL + 'loader/' + load.name.substr(12);
       return System.locate(load);
     },
     fetch: function(load) {
-      if (load.name == 'error3')
+      if (load.name == 'custom:error3')
         throw 'error3';
-      if (load.name == 'error4' || load.name == 'error5')
+      if (load.name == 'custom:error4' || load.name == 'custom:error5')
         return 'asdf';
       return System.fetch.apply(this, arguments);
     },
     translate: function(load) {
-      if (load.name == 'error4')
+      if (load.name == 'custom:error4')
         return new Promise(function(resolve, reject) {
           setTimeout(function(){ reject('error4'); }, 100);
         });
       return System.translate.apply(this, arguments);
     },
     instantiate: function(load) {
-      if (load.name == 'error5')
+      if (load.name == 'custom:error5')
         return new Promise(function(resolve, reject) {
           setTimeout(function(){ reject('error5'); }, 100);
         });
@@ -511,7 +485,7 @@ function runTests() {
   }
 
   test('Custom loader standard load', function(assert) {
-    var p = customLoader['import']('loader/test').then(function(m) {
+    var p = customLoader['import']('loader/test.js').then(function(m) {
       assert(m.loader, 'custom');
     });
     if (p['catch'])
@@ -521,7 +495,7 @@ function runTests() {
   });
 
   test('Custom loader special rules', function(assert) {
-    var p = customLoader['import']('path/custom').then(function(m) {
+    var p = customLoader['import']('scheme:path/custom.js').then(function(m) {
       assert(m.path, true);
     });
     if (p['catch'])
@@ -531,7 +505,7 @@ function runTests() {
   });
 
   test('Custom loader AMD support', function(assert) {
-    customLoader['import']('loader/amd').then(function(m) {
+    customLoader['import']('loader/amd.js').then(function(m) {
       assert(m.format, 'amd');
     })['catch'](function(e) {
       setTimeout(function() {
@@ -541,28 +515,28 @@ function runTests() {
   });
 
   test('Custom loader hook - normalize error', function(assert) {
-    customLoader['import']('loader/error1-parent').then(function(m) {
+    customLoader['import']('loader/error1-parent.js').then(function(m) {
     })['catch'](function(e) {
       assert(e, 'error1');
     });
   });
   test('Custom loader hook - locate error', function(assert) {
-    customLoader['import']('error2').then(function(m) {}, function(e) {
+    customLoader['import']('custom:error2').then(function(m) {}, function(e) {
       assert(e, 'error2');
     });
   });
   test('Custom loader hook - fetch error', function(assert) {
-    customLoader['import']('error3').then(function(m) {}, function(e) {
+    customLoader['import']('custom:error3').then(function(m) {}, function(e) {
       assert(e, 'error3');
     });
   });
   test('Custom loader hook - translate error', function(assert) {
-    customLoader['import']('error4').then(function(m) {}, function(e) {
+    customLoader['import']('custom:error4').then(function(m) {}, function(e) {
       assert(e, 'error4');
     });
   });
   test('Custom loader hook - instantiate error', function(assert) {
-    customLoader['import']('error5').then(function(m) {}, function(e) {
+    customLoader['import']('custom:error5').then(function(m) {}, function(e) {
       assert(e, 'error5');
     });
   });

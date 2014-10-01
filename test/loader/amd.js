@@ -1,4 +1,4 @@
-define(['./amd-dep'], function(dep) {
+define(['./amd-dep.js'], function(dep) {
   return {
     format: dep.name
   };
