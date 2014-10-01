@@ -128,8 +128,7 @@ function runTests() {
 
   System.baseURL = 'http://example.org/a/';
 
-  test('Locate', System.locate({ name: '@abc/def.js' }), 'http://example.org/a/@abc/def.js');
-  test('Locate', System.locate({ name: 'abc/def.js' }), 'http://example.org/a/abc/def.js');
+  test('Locate', System.locate({ name: 'http://example.org/a/abc/def.js' }), 'http://example.org/a/abc/def.js');
 
   // paths
   System.paths['path/*'] = '/test/*';
@@ -419,7 +418,7 @@ function runTests() {
         });
 
       if (load.name.substr(0, 12) == 'scheme:path/')
-        load.name = 'loader/' + load.name.substr(12);
+        load.name = System.baseURL + 'loader/' + load.name.substr(12);
       return System.locate(load);
     },
     fetch: function(load) {

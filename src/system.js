@@ -105,8 +105,10 @@
   else {
     var fs;
     fetchTextFromURL = function(url, fulfill, reject) {
+      if (url.substr(0, 5) != 'file:')
+        throw new TypeError('Cannot fetch ' + url + ' from the filesystem');
       fs = fs || require('fs');
-      return fs.readFile(url, function(err, data) {
+      return fs.readFile(url.substr(5), function(err, data) {
         if (err)
           return reject(err);
         else
@@ -126,7 +128,7 @@
         this.baseURL = href.substring(0, href.lastIndexOf('/') + 1);
       }
       else {
-        this.baseURL = process.cwd() + '/';
+        this.baseURL = 'file:' + process.cwd() + '/';
       }
       this.paths = { '*': '*' };
     }
@@ -191,10 +193,9 @@
     }
 
     locate(load) {
-      // it is possible for locate to not to be a fully normalized URL
-      // if name was forced into not being of an absolute URL by normalize
-      // so we run toAbsoluteURL again just in case
-      return toAbsoluteURL(this.baseURL, load.name);
+      if (load.name.indexOf(':') == -1)
+        throw new TypeError('Invalid normalized module name "' + load.name + '".');
+      return load.name;
     }
 
     fetch(load) {
