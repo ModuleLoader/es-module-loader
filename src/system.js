@@ -59,7 +59,7 @@
   }
 
   var fetchTextFromURL;
-  if (isBrowser || isWorker) {
+  if (typeof XMLHttpRequest != 'undefined') {
     fetchTextFromURL = function(url, fulfill, reject) {
       var xhr = new XMLHttpRequest();
       var sameDomain = true;
@@ -72,7 +72,7 @@
             sameDomain &= domainCheck[1] === window.location.protocol;
         }
       }
-      if (!sameDomain) {
+      if (!sameDomain && typeof XDomainRequest != 'undefined') {
         xhr = new XDomainRequest();
         xhr.onload = load;
         xhr.onerror = error;
@@ -102,7 +102,7 @@
       xhr.send(null);
     }
   }
-  else {
+  else if (typeof request != 'undefined') {
     var fs;
     fetchTextFromURL = function(url, fulfill, reject) {
       fs = fs || require('fs');
@@ -113,6 +113,9 @@
           fulfill(data + '');
       });
     }
+  }
+  else {
+    throw new TypeError('No API available to load external resources');
   }
 
   class SystemLoader extends __global.LoaderPolyfill {
