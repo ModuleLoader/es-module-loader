@@ -5,7 +5,7 @@ function __eval(__source, __global, load) {
   // Hijack System.register to set declare function
   var __curRegister = System.register;
   System.register = function(name, deps, declare) {
-    if (typeof name != 'string') {
+    if (typeof name != 'string' && typeof name != 'void') {
       declare = deps;
       deps = name;
     }
