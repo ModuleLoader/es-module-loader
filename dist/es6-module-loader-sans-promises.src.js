@@ -1077,6 +1077,7 @@ function logloads(loads) {
 
       var options = traceur.options || {};
       options.modules = 'instantiate';
+      options.script = false;
       options.sourceMaps = true;
       options.filename = load.address;
 
@@ -1184,6 +1185,10 @@ function logloads(loads) {
         xhr.onload = load;
         xhr.onerror = error;
         xhr.ontimeout = error;
+        // IE8/IE9 bug may hang requests unless all properties are defined. 
+        // See: http://stackoverflow.com/a/9928073/3949247
+        xhr.onprogress = function() {};
+        xhr.timeout = 0;
       }
       function load() {
         fulfill(xhr.responseText);
@@ -1423,6 +1428,7 @@ function logloads(loads) {
       window[curScript.getAttribute('data-init')]();
   }
 })();
+
 
 // Define our eval outside of the scope of any other reference defined in this
 // file to avoid adding those references to the evaluation scope.
