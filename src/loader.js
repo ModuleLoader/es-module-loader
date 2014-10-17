@@ -1041,6 +1041,7 @@ function logloads(loads) {
 
       var options = traceur.options || {};
       options.modules = 'instantiate';
+      options.script = false;
       options.sourceMaps = true;
       options.filename = load.address;
 
