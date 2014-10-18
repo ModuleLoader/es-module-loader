@@ -76,7 +76,7 @@ Ideally this should be based on polyfilling the `<module>` tag, as `<script type
 
 As such this approach is not really suitable for anything more than experimentation.
 
-See an overview of the specification module tag features here - https://github.com/dherman/web-modules/blob/master/module-tag/explainer.md.
+See an overview of the specification module tag features here - https://github.com/dherman/web-modules/blob/master/explainer.md.
 
 ### baseURL
 
