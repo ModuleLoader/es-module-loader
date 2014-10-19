@@ -59,7 +59,7 @@
   }
 
   var fetchTextFromURL;
-  if (isBrowser || isWorker) {
+  if (typeof XMLHttpRequest != 'undefined') {
     fetchTextFromURL = function(url, fulfill, reject) {
       var xhr = new XMLHttpRequest();
       var sameDomain = true;
@@ -72,7 +72,7 @@
             sameDomain &= domainCheck[1] === window.location.protocol;
         }
       }
-      if (!sameDomain) {
+      if (!sameDomain && typeof XDomainRequest != 'undefined') {
         xhr = new XDomainRequest();
         xhr.onload = load;
         xhr.onerror = error;
@@ -102,7 +102,7 @@
       xhr.send(null);
     }
   }
-  else {
+  else if (typeof request != 'undefined') {
     var fs;
     fetchTextFromURL = function(url, fulfill, reject) {
       fs = fs || require('fs');
@@ -114,6 +114,9 @@
       });
     }
   }
+  else {
+    throw new TypeError('No API available to load external resources');
+  }
 
   class SystemLoader extends __global.LoaderPolyfill {
 
@@ -121,12 +124,15 @@
       super(options || {});
 
       // Set default baseURL and paths
-      if (isBrowser || isWorker) {
+      if (typeof __global.location != 'undefined' && typeof __global.location.href != 'undefined') {
         var href = __global.location.href.split('#')[0].split('?')[0];
         this.baseURL = href.substring(0, href.lastIndexOf('/') + 1);
       }
-      else {
+      else if (typeof process != 'undefined' && typeof process.cwd != 'undefined') {
         this.baseURL = process.cwd() + '/';
+      }
+      else {
+        this.baseURL = '.';
       }
       this.paths = { '*': '*.js' };
     }
@@ -255,7 +261,7 @@
 
   // <script type="module"> support
   // allow a data-init function callback once loaded
-  if (isBrowser) {
+  if (isBrowser && typeof document.getElementsByTagName != 'undefined') {
     var curScript = document.getElementsByTagName('script');
     curScript = curScript[curScript.length - 1];
 

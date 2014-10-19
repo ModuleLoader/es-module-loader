@@ -1023,6 +1023,14 @@ function logloads(loads) {
     // Returns an array of ModuleSpecifiers
     var traceur;
     Loader.prototype.parse = function(load) {
+      // module already transpiled to es5?
+      if (load.source.startsWith('System.register')) {
+        load.isDeclarative = true;
+        var source = load.source;
+        __eval(source, __global, load);
+        return;
+      }
+
       if (!traceur) {
         if (typeof window == 'undefined' &&
            typeof WorkerGlobalScope == 'undefined')
