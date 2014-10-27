@@ -312,6 +312,11 @@ function runTests() {
     // System['import']('loads/deperror');
   });
 
+  test('Unhandled rejection test', function(assert) {
+    System['import']('non-existent');
+    assert();
+  });
+
 
   test('Export Syntax', function(assert) {
     System['import']('syntax/export').then(function(m) {
