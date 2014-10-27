@@ -332,6 +332,24 @@ function runTests() {
     });
   });
 
+  test('Export Star 2', function(assert) {
+    System['import']('syntax/export-star2').then(function(m) {
+      assert(
+        [typeof m.foo, 'function'],
+        [m.bar, 'bar']
+      );
+    });
+  });
+
+  test('Export Star', function(assert) {
+    System['import']('syntax/export-star').then(function(m) {
+      assert(
+        [m.foo, 'foo'],
+        [m.bar, 'bar']
+      );
+    });
+  });
+
   test('Export default 1', function(assert, err) {
     System['import']('syntax/export-default').then(function(m) {
       assert(m['default'](), 'test');
