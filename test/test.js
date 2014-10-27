@@ -327,6 +327,15 @@ function runTests() {
     });
   });
 
+  test('Export Star', function(assert) {
+    System['import']('syntax/export-star').then(function(m) {
+      assert(
+        [m.foo, 'foo'],
+        [m.bar, 'bar']
+      );
+    });
+  });
+
   test('Export default 1', function(assert, err) {
     System['import']('syntax/export-default').then(function(m) {
       assert(m['default'](), 'test');
