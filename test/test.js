@@ -330,7 +330,7 @@ function runTests() {
   test('Export Star 2', function(assert) {
     System['import']('syntax/export-star2').then(function(m) {
       assert(
-        [m.foo, 'foo'],
+        [typeof m.foo, 'function'],
         [m.bar, 'bar']
       );
     });
