@@ -273,11 +273,10 @@
 
     function ready() {
       var scripts = document.getElementsByTagName('script');
-
       for (var i = 0; i < scripts.length; i++) {
         var script = scripts[i];
         if (script.type == 'module') {
-          var source = script.innerHTML;
+          var source = script.innerHTML.substr(1);
           System.module(source)['catch'](function(err) { setTimeout(function() { throw err; }); });
         }
       }

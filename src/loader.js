@@ -247,7 +247,7 @@ function logloads(loads) {
         return;
 
       if (instantiateResult === undefined) {
-        load.address = load.address || 'anon' + ++anonCnt;
+        load.address = load.address || '<Anonymous Module ' + ++anonCnt + '>';
 
         // NB instead of load.kind, use load.isDeclarative
         load.isDeclarative = true;
@@ -1022,6 +1022,16 @@ function logloads(loads) {
     // parse function is used to parse a load record
     // Returns an array of ModuleSpecifiers
     var traceur;
+
+    function doCompile(source, compiler, filename) {
+      try {
+        return compiler.compile(source, filename);
+      }
+      catch(e) {
+        // traceur throws an error array
+        throw e[0];
+      }
+    }
     Loader.prototype.parse = function(load) {
       if (!traceur) {
         if (typeof window == 'undefined' &&
@@ -1039,14 +1049,19 @@ function logloads(loads) {
 
       load.isDeclarative = true;
 
-      var options = traceur.options || {};
+      var options = this.traceurOptions || {};
       options.modules = 'instantiate';
       options.script = false;
       options.sourceMaps = true;
       options.filename = load.address;
 
       var compiler = new traceur.Compiler(options);
-      var source = compiler.compile(load.source, options.filename);
+
+      var source = doCompile(load.source, compiler, options.filename);
+
+      if (!source)
+        throw 'Error evaluating module ' + load.address;
+
       var sourceMap = compiler.getSourceMap();
 
       if (__global.btoa && sourceMap)
