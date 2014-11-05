@@ -186,7 +186,7 @@
 
       // build the full module name
       var normalizedParts = [];
-      var parentParts = (parentName || '').split('/');
+      var parentParts = (parentName || '').replace(/\\/g, '/').split('/');
       var normalizedLen = parentParts.length - 1 - dotdots;
 
       normalizedParts = normalizedParts.concat(parentParts.splice(0, parentParts.length - 1 - dotdots));
