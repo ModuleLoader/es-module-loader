@@ -14,6 +14,7 @@
 
   var isWorker = typeof self !== 'undefined' && typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope;
   var isBrowser = typeof window != 'undefined' && !isWorker;
+  var isWindows = typeof process != 'undefined' && !!process.platform.match(/^win/);
   var Promise = __global.Promise || require('when/es6-shim/Promise');
 
   // Helpers
@@ -105,7 +106,12 @@
   else if (typeof require != 'undefined') {
     var fs;
     fetchTextFromURL = function(url, fulfill, reject) {
+      if (url.substr(0, 5) != 'file:')
+        throw 'Only file URLs of the form file: allowed running in Node.';
       fs = fs || require('fs');
+      url = url.substr(5);
+      if (isWindows)
+        url = url.replace(/\//g, '\\');
       return fs.readFile(url, function(err, data) {
         if (err)
           return reject(err);
@@ -129,7 +135,9 @@
         this.baseURL = href.substring(0, href.lastIndexOf('/') + 1);
       }
       else if (typeof process != 'undefined' && process.cwd) {
-        this.baseURL = process.cwd() + '/';
+        this.baseURL = 'file:' + process.cwd() + '/';
+        if (isWindows)
+          this.baseURL = this.baseURL.replace(/\\/g, '/');
       }
       else {
         throw new TypeError('No environment baseURL');
