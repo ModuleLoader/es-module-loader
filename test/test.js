@@ -307,13 +307,13 @@ function runTests() {
     System['import']('loads/main').then(function(m) {
       assert(false, true);
     }, function(e) {
-      assert(e, 'dep error\n  in module loads/deperror');
+      assert(e, 'Error evaluating loads/deperror\ndep error');
     });
     // System['import']('loads/deperror');
   });
 
   test('Unhandled rejection test', function(assert) {
-    System['import']('non-existent');
+    System['import']('loads/load-non-existent')
     assert();
   });
 
