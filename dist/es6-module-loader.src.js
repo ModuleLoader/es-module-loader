@@ -1,4 +1,4 @@
-!function(e){"object"==typeof exports?module.exports=e():"function"==typeof define&&define.amd?define(e):"undefined"!=typeof window?window.Promise=e():"undefined"!=typeof global?global.Promise=e():"undefined"!=typeof self&&(self.Promise=e())}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+!function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.Promise=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -6,33 +6,33 @@
 /**
  * ES6 global Promise shim
  */
-var unhandledRejections = require('../lib/decorators/unhandledRejection');
-var PromiseConstructor = unhandledRejections(require('../lib/Promise'));
+var unhandledRejections = _dereq_('../lib/decorators/unhandledRejection');
+var PromiseConstructor = unhandledRejections(_dereq_('../lib/Promise'));
 
 module.exports = typeof global != 'undefined' ? (global.Promise = PromiseConstructor)
 	           : typeof self   != 'undefined' ? (self.Promise   = PromiseConstructor)
 	           : PromiseConstructor;
 
-},{"../lib/Promise":2,"../lib/decorators/unhandledRejection":6}],2:[function(require,module,exports){
+},{"../lib/Promise":2,"../lib/decorators/unhandledRejection":5}],2:[function(_dereq_,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
 
 (function(define) { 'use strict';
-define(function (require) {
+define(function (_dereq_) {
 
-	var makePromise = require('./makePromise');
-	var Scheduler = require('./Scheduler');
-	var async = require('./async');
+	var makePromise = _dereq_('./makePromise');
+	var Scheduler = _dereq_('./Scheduler');
+	var async = _dereq_('./env').asap;
 
 	return makePromise({
 		scheduler: new Scheduler(async)
 	});
 
 });
-})(typeof define === 'function' && define.amd ? define : function (factory) { module.exports = factory(require); });
+})(typeof define === 'function' && define.amd ? define : function (factory) { module.exports = factory(_dereq_); });
 
-},{"./Scheduler":4,"./async":5,"./makePromise":7}],3:[function(require,module,exports){
+},{"./Scheduler":4,"./env":6,"./makePromise":7}],3:[function(_dereq_,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -104,15 +104,15 @@ define(function() {
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(); }));
 
-},{}],4:[function(require,module,exports){
+},{}],4:[function(_dereq_,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
 
 (function(define) { 'use strict';
-define(function(require) {
+define(function(_dereq_) {
 
-	var Queue = require('./Queue');
+	var Queue = _dereq_('./Queue');
 
 	// Credit to Twisol (https://github.com/Twisol) for suggesting
 	// this type of extensible queue + trampoline approach for next-tick conflation.
@@ -186,103 +186,35 @@ define(function(require) {
 	return Scheduler;
 
 });
-}(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));
+}(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(_dereq_); }));
 
-},{"./Queue":3}],5:[function(require,module,exports){
+},{"./Queue":3}],5:[function(_dereq_,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
 
 (function(define) { 'use strict';
-define(function(require) {
+define(function(_dereq_) {
 
-	// Sniff "best" async scheduling option
-	// Prefer process.nextTick or MutationObserver, then check for
-	// vertx and finally fall back to setTimeout
-
-	/*jshint maxcomplexity:6*/
-	/*global process,document,setTimeout,MutationObserver,WebKitMutationObserver*/
-	var nextTick, MutationObs;
-
-	if (typeof process !== 'undefined' && process !== null &&
-		typeof process.nextTick === 'function') {
-		nextTick = function(f) {
-			process.nextTick(f);
-		};
-
-	} else if (MutationObs =
-		(typeof MutationObserver === 'function' && MutationObserver) ||
-		(typeof WebKitMutationObserver === 'function' && WebKitMutationObserver)) {
-		nextTick = (function (document, MutationObserver) {
-			var scheduled;
-			var el = document.createElement('div');
-			var o = new MutationObserver(run);
-			o.observe(el, { attributes: true });
-
-			function run() {
-				var f = scheduled;
-				scheduled = void 0;
-				f();
-			}
-
-			return function (f) {
-				scheduled = f;
-				el.setAttribute('class', 'x');
-			};
-		}(document, MutationObs));
-
-	} else {
-		nextTick = (function(cjsRequire) {
-			var vertx;
-			try {
-				// vert.x 1.x || 2.x
-				vertx = cjsRequire('vertx');
-			} catch (ignore) {}
-
-			if (vertx) {
-				if (typeof vertx.runOnLoop === 'function') {
-					return vertx.runOnLoop;
-				}
-				if (typeof vertx.runOnContext === 'function') {
-					return vertx.runOnContext;
-				}
-			}
-
-			// capture setTimeout to avoid being caught by fake timers
-			// used in time based tests
-			var capturedSetTimeout = setTimeout;
-			return function (t) {
-				capturedSetTimeout(t, 0);
-			};
-		}(require));
-	}
-
-	return nextTick;
-});
-}(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));
-
-},{}],6:[function(require,module,exports){
-/** @license MIT License (c) copyright 2010-2014 original author or authors */
-/** @author Brian Cavalier */
-/** @author John Hann */
-
-(function(define) { 'use strict';
-define(function(require) {
-
-	var timer = require('../timer');
+	var setTimer = _dereq_('../env').setTimer;
 
 	return function unhandledRejection(Promise) {
 		var logError = noop;
 		var logInfo = noop;
+		var localConsole;
 
 		if(typeof console !== 'undefined') {
-			logError = typeof console.error !== 'undefined'
-				? function (e) { console.error(e); }
-				: function (e) { console.log(e); };
+			// Alias console to prevent things like uglify's drop_console option from
+			// removing console.log/error. Unhandled rejections fall into the same
+			// category as uncaught exceptions, and build tools shouldn't silence them.
+			localConsole = console;
+			logError = typeof localConsole.error !== 'undefined'
+				? function (e) { localConsole.error(e); }
+				: function (e) { localConsole.log(e); };
 
-			logInfo = typeof console.info !== 'undefined'
-				? function (e) { console.info(e); }
-				: function (e) { console.log(e); };
+			logInfo = typeof localConsole.info !== 'undefined'
+				? function (e) { localConsole.info(e); }
+				: function (e) { localConsole.log(e); };
 		}
 
 		Promise.onPotentiallyUnhandledRejection = function(rejection) {
@@ -320,7 +252,7 @@ define(function(require) {
 			tasks.push(f, x);
 			if(!running) {
 				running = true;
-				running = timer.set(flush, 0);
+				running = setTimer(flush, 0);
 			}
 		}
 
@@ -363,9 +295,84 @@ define(function(require) {
 	function noop() {}
 
 });
-}(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));
+}(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(_dereq_); }));
 
-},{"../timer":8}],7:[function(require,module,exports){
+},{"../env":6}],6:[function(_dereq_,module,exports){
+/** @license MIT License (c) copyright 2010-2014 original author or authors */
+/** @author Brian Cavalier */
+/** @author John Hann */
+
+/*global process,document,setTimeout,clearTimeout,MutationObserver,WebKitMutationObserver*/
+(function(define) { 'use strict';
+define(function(_dereq_) {
+	/*jshint maxcomplexity:6*/
+
+	// Sniff "best" async scheduling option
+	// Prefer process.nextTick or MutationObserver, then check for
+	// setTimeout, and finally vertx, since its the only env that doesn't
+	// have setTimeout
+
+	var MutationObs;
+	var capturedSetTimeout = typeof setTimeout !== 'undefined' && setTimeout;
+
+	// Default env
+	var setTimer = function(f, ms) { return setTimeout(f, ms); };
+	var clearTimer = function(t) { return clearTimeout(t); };
+	var asap = function (f) { return capturedSetTimeout(f, 0); };
+
+	// Detect specific env
+	if (isNode()) { // Node
+		asap = function (f) { return process.nextTick(f); };
+
+	} else if (MutationObs = hasMutationObserver()) { // Modern browser
+		asap = initMutationObserver(MutationObs);
+
+	} else if (!capturedSetTimeout) { // vert.x
+		var vertxRequire = _dereq_;
+		var vertx = vertxRequire('vertx');
+		setTimer = function (f, ms) { return vertx.setTimer(ms, f); };
+		clearTimer = vertx.cancelTimer;
+		asap = vertx.runOnLoop || vertx.runOnContext;
+	}
+
+	return {
+		setTimer: setTimer,
+		clearTimer: clearTimer,
+		asap: asap
+	};
+
+	function isNode () {
+		return typeof process !== 'undefined' && process !== null &&
+			typeof process.nextTick === 'function';
+	}
+
+	function hasMutationObserver () {
+		return (typeof MutationObserver === 'function' && MutationObserver) ||
+			(typeof WebKitMutationObserver === 'function' && WebKitMutationObserver);
+	}
+
+	function initMutationObserver(MutationObserver) {
+		var scheduled;
+		var node = document.createTextNode('');
+		var o = new MutationObserver(run);
+		o.observe(node, { characterData: true });
+
+		function run() {
+			var f = scheduled;
+			scheduled = void 0;
+			f();
+		}
+
+		var i = 0;
+		return function (f) {
+			scheduled = f;
+			node.data = (i ^= 1);
+		};
+	}
+});
+}(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(_dereq_); }));
+
+},{}],7:[function(_dereq_,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -627,12 +634,18 @@ define(function() {
 		 * is empty, returns a promise that will never settle.
 		 */
 		function race(promises) {
-			// Sigh, race([]) is untestable unless we return *something*
-			// that is recognizable without calling .then() on it.
-			if(Object(promises) === promises && promises.length === 0) {
-				return never();
+			if(typeof promises !== 'object' || promises === null) {
+				return reject(new TypeError('non-iterable passed to race()'));
 			}
 
+			// Sigh, race([]) is untestable unless we return *something*
+			// that is recognizable without calling .then() on it.
+			return promises.length === 0 ? never()
+				 : promises.length === 1 ? resolve(promises[0])
+				 : runRace(promises);
+		}
+
+		function runRace(promises) {
 			var resolver = new Pending();
 			var i, x, h;
 			for(i=0; i<promises.length; ++i) {
@@ -1179,49 +1192,9 @@ define(function() {
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(); }));
 
-},{}],8:[function(require,module,exports){
-/** @license MIT License (c) copyright 2010-2014 original author or authors */
-/** @author Brian Cavalier */
-/** @author John Hann */
-
-(function(define) { 'use strict';
-define(function(require) {
-	/*global setTimeout,clearTimeout*/
-	var cjsRequire, vertx, setTimer, clearTimer;
-
-	// Check for vertx environment by attempting to load vertx module.
-	// Doing the check in two steps ensures compatibility with RaveJS,
-	// which will return an empty module when browser: { vertx: false }
-	// is set in package.json
-	cjsRequire = require;
-
-	try {
-		vertx = cjsRequire('vertx');
-	} catch (ignored) {}
-
-	// If vertx loaded and has the timer features we expect, try to support it
-	if (vertx && typeof vertx.setTimer === 'function') {
-		setTimer = function (f, ms) { return vertx.setTimer(ms, f); };
-		clearTimer = vertx.cancelTimer;
-	} else {
-		// NOTE: Truncate decimals to workaround node 0.10.30 bug:
-		// https://github.com/joyent/node/issues/8167
-		setTimer = function(f, ms) { return setTimeout(f, ms|0); };
-		clearTimer = function(t) { return clearTimeout(t); };
-	}
-
-	return {
-		set: setTimer,
-		clear: clearTimer
-	};
-
-});
-}(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));
-
 },{}]},{},[1])
 (1)
 });
-;
 (function(__global) {
   
 $__Object$getPrototypeOf = Object.getPrototypeOf || function(obj) {
@@ -1507,7 +1480,7 @@ function logloads(loads) {
         return;
 
       if (instantiateResult === undefined) {
-        load.address = load.address || 'anon' + ++anonCnt;
+        load.address = load.address || '<Anonymous Module ' + ++anonCnt + '>';
 
         // NB instead of load.kind, use load.isDeclarative
         load.isDeclarative = true;
@@ -1581,8 +1554,9 @@ function logloads(loads) {
       load.exception = exc;
 
       var linkSets = load.linkSets.concat([]);
-      for (var i = 0, l = linkSets.length; i < l; i++)
-        linkSetFailed(linkSets[i], exc);
+      for (var i = 0, l = linkSets.length; i < l; i++) {
+        linkSetFailed(linkSets[i], load, exc);
+      }
 
       console.assert(load.linkSets.length == 0, 'linkSets not removed');
     });
@@ -1687,14 +1661,21 @@ function logloads(loads) {
     // snapshot(linkSet.loader);
   }
 
+  // linking errors can be generic or load-specific
+  // this is necessary for debugging info
   function doLink(linkSet) {
+    var error = false;
     try {
-      link(linkSet);
+      link(linkSet, function(load, exc) {
+        linkSetFailed(linkSet, load, exc);
+        error = true;
+      });
     }
-    catch(exc) {
-      linkSetFailed(linkSet, exc);
-      return true;
+    catch(e) {
+      linkSetFailed(linkSet, null, e);
+      error = true;
     }
+    return error;
   }
 
   // 15.2.5.2.3
@@ -1744,8 +1725,14 @@ function logloads(loads) {
   }
 
   // 15.2.5.2.4
-  function linkSetFailed(linkSet, exc) {
+  function linkSetFailed(linkSet, load, exc) {
     var loader = linkSet.loader;
+
+    if (linkSet.loads[0].name != load.name)
+      exc = addToError(exc, 'Error loading "' + load.name + '" from "' + linkSet.loads[0].name + '" at ' + (linkSet.loads[0].address || '<unknown>') + '\n');
+
+    exc = addToError(exc, 'Error loading "' + load.name + '" at ' + (load.address || '<unknown>') + '\n');
+
     var loads = linkSet.loads.concat([]);
     for (var i = 0, l = loads.length; i < l; i++) {
       var load = loads[i];
@@ -1855,8 +1842,22 @@ function logloads(loads) {
     }
   }
 
+  function doDynamicExecute(linkSet, load, linkError) {
+    try {
+      var module = load.execute();
+    }
+    catch(e) {
+      linkError(load, e);
+      return;
+    }
+    if (!module || !(module instanceof Module))
+      linkError(load, new TypeError('Execution must define a Module instance'));
+    else
+      return module;
+  }
+
   // 15.2.5.4
-  function link(linkSet) {
+  function link(linkSet, linkError) {
 
     var loader = linkSet.loader;
 
@@ -1891,9 +1892,9 @@ function logloads(loads) {
         }
         // 15.2.5.6 LinkDynamicModules adjusted
         else {
-          var module = load.execute();
-          if (!module || !(module instanceof Module))
-            throw new TypeError('Execution must define a Module instance');
+          var module = doDynamicExecute(linkSet, load, linkError);
+          if (!module)
+            return;
           load.module = {
             name: load.name,
             module: module
@@ -2056,8 +2057,10 @@ function logloads(loads) {
       if (indexOf.call(seen, dep) == -1) {
         err = ensureEvaluated(dep, seen, loader);
         // stop on error, see https://bugs.ecmascript.org/show_bug.cgi?id=2996
-        if (err)
-          return err + '\n  in module ' + dep.name;
+        if (err) {
+          err = addToError(err, 'Error evaluating ' + dep.name + '\n');
+          return err;
+        }
       }
     }
 
@@ -2071,7 +2074,8 @@ function logloads(loads) {
     err = doExecute(module);
     if (err) {
       module.failed = true;
-    } else if (Object.preventExtensions) {
+    }
+    else if (Object.preventExtensions) {
       // spec variation
       // we don't create a new module here because it was created and ammended
       // we just disable further extensions instead
@@ -2079,6 +2083,14 @@ function logloads(loads) {
     }
 
     module.execute = undefined;
+    return err;
+  }
+
+  function addToError(err, msg) {
+    if (err instanceof Error)
+      err.message = msg + err.message;
+    else
+      err = msg + err;
     return err;
   }
 
@@ -2282,6 +2294,16 @@ function logloads(loads) {
     // parse function is used to parse a load record
     // Returns an array of ModuleSpecifiers
     var traceur;
+
+    function doCompile(source, compiler, filename) {
+      try {
+        return compiler.compile(source, filename);
+      }
+      catch(e) {
+        // traceur throws an error array
+        throw e[0];
+      }
+    }
     Loader.prototype.parse = function(load) {
       if (!traceur) {
         if (typeof window == 'undefined' &&
@@ -2299,18 +2321,25 @@ function logloads(loads) {
 
       load.isDeclarative = true;
 
-      var options = traceur.options || {};
+      var options = this.traceurOptions || {};
       options.modules = 'instantiate';
       options.script = false;
       options.sourceMaps = true;
       options.filename = load.address;
 
       var compiler = new traceur.Compiler(options);
-      var source = compiler.compile(load.source, options.filename);
+
+      var source = doCompile(load.source, compiler, options.filename);
+
+      if (!source)
+        throw new Error('Error evaluating module ' + load.address);
+
       var sourceMap = compiler.getSourceMap();
 
       if (__global.btoa && sourceMap)
         source += '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(sourceMap))) + '\n';
+
+      source = 'var __moduleAddress = "' + load.address + '";' + source;
 
       __eval(source, __global, load);
     }
@@ -2343,12 +2372,13 @@ function logloads(loads) {
 (function() {
   var isWorker = typeof self !== 'undefined' && typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope;
   var isBrowser = typeof window != 'undefined' && !isWorker;
+  var isWindows = typeof process != 'undefined' && !!process.platform.match(/^win/);
   var Promise = __global.Promise || require('when/es6-shim/Promise');
 
   // Helpers
   // Absolute URL parsing, from https://gist.github.com/Yaffle/1088850
   function parseURI(url) {
-    var m = String(url).replace(/^\s+|\s+$/g, '').match(/^([^:\/?#]+:)?(\/\/(?:[^:@]*(?::[^:@]*)?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
+    var m = String(url).replace(/^\s+|\s+$/g, '').match(/^([^:\/?#]+:)?(\/\/(?:[^:@\/?#]*(?::[^:@\/?#]*)?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
     // authority = '//' + user + ':' + pass '@' + hostname + ':' port
     return (m ? {
       href     : m[0] || '',
@@ -2437,7 +2467,12 @@ function logloads(loads) {
   else if (typeof require != 'undefined') {
     var fs;
     fetchTextFromURL = function(url, fulfill, reject) {
+      if (url.substr(0, 5) != 'file:')
+        throw 'Only file URLs of the form file: allowed running in Node.';
       fs = fs || require('fs');
+      url = url.substr(5);
+      if (isWindows)
+        url = url.replace(/\//g, '\\');
       return fs.readFile(url, function(err, data) {
         if (err)
           return reject(err);
@@ -2452,7 +2487,7 @@ function logloads(loads) {
 
   var SystemLoader = function($__super) {
     function SystemLoader(options) {
-      $__Object$getPrototypeOf(SystemLoader.prototype).constructor.call(this, options || {});
+      $__super.call(this, options || {});
 
       // Set default baseURL and paths
       if (typeof location != 'undefined' && location.href) {
@@ -2460,7 +2495,9 @@ function logloads(loads) {
         this.baseURL = href.substring(0, href.lastIndexOf('/') + 1);
       }
       else if (typeof process != 'undefined' && process.cwd) {
-        this.baseURL = process.cwd() + '/';
+        this.baseURL = 'file:' + process.cwd() + '/';
+        if (isWindows)
+          this.baseURL = this.baseURL.replace(/\\/g, '/');
       }
       else {
         throw new TypeError('No environment baseURL');
@@ -2634,11 +2671,10 @@ function logloads(loads) {
 
     function ready() {
       var scripts = document.getElementsByTagName('script');
-
       for (var i = 0; i < scripts.length; i++) {
         var script = scripts[i];
         if (script.type == 'module') {
-          var source = script.innerHTML;
+          var source = script.innerHTML.substr(1);
           System.module(source)['catch'](function(err) { setTimeout(function() { throw err; }); });
         }
       }

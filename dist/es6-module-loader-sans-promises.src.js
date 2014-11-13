@@ -283,7 +283,7 @@ function logloads(loads) {
         return;
 
       if (instantiateResult === undefined) {
-        load.address = load.address || 'anon' + ++anonCnt;
+        load.address = load.address || '<Anonymous Module ' + ++anonCnt + '>';
 
         // NB instead of load.kind, use load.isDeclarative
         load.isDeclarative = true;
@@ -357,8 +357,9 @@ function logloads(loads) {
       load.exception = exc;
 
       var linkSets = load.linkSets.concat([]);
-      for (var i = 0, l = linkSets.length; i < l; i++)
-        linkSetFailed(linkSets[i], exc);
+      for (var i = 0, l = linkSets.length; i < l; i++) {
+        linkSetFailed(linkSets[i], load, exc);
+      }
 
       console.assert(load.linkSets.length == 0, 'linkSets not removed');
     });
@@ -463,14 +464,21 @@ function logloads(loads) {
     // snapshot(linkSet.loader);
   }
 
+  // linking errors can be generic or load-specific
+  // this is necessary for debugging info
   function doLink(linkSet) {
+    var error = false;
     try {
-      link(linkSet);
+      link(linkSet, function(load, exc) {
+        linkSetFailed(linkSet, load, exc);
+        error = true;
+      });
     }
-    catch(exc) {
-      linkSetFailed(linkSet, exc);
-      return true;
+    catch(e) {
+      linkSetFailed(linkSet, null, e);
+      error = true;
     }
+    return error;
   }
 
   // 15.2.5.2.3
@@ -520,8 +528,14 @@ function logloads(loads) {
   }
 
   // 15.2.5.2.4
-  function linkSetFailed(linkSet, exc) {
+  function linkSetFailed(linkSet, load, exc) {
     var loader = linkSet.loader;
+
+    if (linkSet.loads[0].name != load.name)
+      exc = addToError(exc, 'Error loading "' + load.name + '" from "' + linkSet.loads[0].name + '" at ' + (linkSet.loads[0].address || '<unknown>') + '\n');
+
+    exc = addToError(exc, 'Error loading "' + load.name + '" at ' + (load.address || '<unknown>') + '\n');
+
     var loads = linkSet.loads.concat([]);
     for (var i = 0, l = loads.length; i < l; i++) {
       var load = loads[i];
@@ -631,8 +645,22 @@ function logloads(loads) {
     }
   }
 
+  function doDynamicExecute(linkSet, load, linkError) {
+    try {
+      var module = load.execute();
+    }
+    catch(e) {
+      linkError(load, e);
+      return;
+    }
+    if (!module || !(module instanceof Module))
+      linkError(load, new TypeError('Execution must define a Module instance'));
+    else
+      return module;
+  }
+
   // 15.2.5.4
-  function link(linkSet) {
+  function link(linkSet, linkError) {
 
     var loader = linkSet.loader;
 
@@ -667,9 +695,9 @@ function logloads(loads) {
         }
         // 15.2.5.6 LinkDynamicModules adjusted
         else {
-          var module = load.execute();
-          if (!module || !(module instanceof Module))
-            throw new TypeError('Execution must define a Module instance');
+          var module = doDynamicExecute(linkSet, load, linkError);
+          if (!module)
+            return;
           load.module = {
             name: load.name,
             module: module
@@ -832,8 +860,10 @@ function logloads(loads) {
       if (indexOf.call(seen, dep) == -1) {
         err = ensureEvaluated(dep, seen, loader);
         // stop on error, see https://bugs.ecmascript.org/show_bug.cgi?id=2996
-        if (err)
-          return err + '\n  in module ' + dep.name;
+        if (err) {
+          err = addToError(err, 'Error evaluating ' + dep.name + '\n');
+          return err;
+        }
       }
     }
 
@@ -847,7 +877,8 @@ function logloads(loads) {
     err = doExecute(module);
     if (err) {
       module.failed = true;
-    } else if (Object.preventExtensions) {
+    }
+    else if (Object.preventExtensions) {
       // spec variation
       // we don't create a new module here because it was created and ammended
       // we just disable further extensions instead
@@ -855,6 +886,14 @@ function logloads(loads) {
     }
 
     module.execute = undefined;
+    return err;
+  }
+
+  function addToError(err, msg) {
+    if (err instanceof Error)
+      err.message = msg + err.message;
+    else
+      err = msg + err;
     return err;
   }
 
@@ -1058,6 +1097,16 @@ function logloads(loads) {
     // parse function is used to parse a load record
     // Returns an array of ModuleSpecifiers
     var traceur;
+
+    function doCompile(source, compiler, filename) {
+      try {
+        return compiler.compile(source, filename);
+      }
+      catch(e) {
+        // traceur throws an error array
+        throw e[0];
+      }
+    }
     Loader.prototype.parse = function(load) {
       if (!traceur) {
         if (typeof window == 'undefined' &&
@@ -1075,18 +1124,25 @@ function logloads(loads) {
 
       load.isDeclarative = true;
 
-      var options = traceur.options || {};
+      var options = this.traceurOptions || {};
       options.modules = 'instantiate';
       options.script = false;
       options.sourceMaps = true;
       options.filename = load.address;
 
       var compiler = new traceur.Compiler(options);
-      var source = compiler.compile(load.source, options.filename);
+
+      var source = doCompile(load.source, compiler, options.filename);
+
+      if (!source)
+        throw new Error('Error evaluating module ' + load.address);
+
       var sourceMap = compiler.getSourceMap();
 
       if (__global.btoa && sourceMap)
         source += '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(sourceMap))) + '\n';
+
+      source = 'var __moduleAddress = "' + load.address + '";' + source;
 
       __eval(source, __global, load);
     }
@@ -1119,12 +1175,13 @@ function logloads(loads) {
 (function() {
   var isWorker = typeof self !== 'undefined' && typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope;
   var isBrowser = typeof window != 'undefined' && !isWorker;
+  var isWindows = typeof process != 'undefined' && !!process.platform.match(/^win/);
   var Promise = __global.Promise || require('when/es6-shim/Promise');
 
   // Helpers
   // Absolute URL parsing, from https://gist.github.com/Yaffle/1088850
   function parseURI(url) {
-    var m = String(url).replace(/^\s+|\s+$/g, '').match(/^([^:\/?#]+:)?(\/\/(?:[^:@]*(?::[^:@]*)?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
+    var m = String(url).replace(/^\s+|\s+$/g, '').match(/^([^:\/?#]+:)?(\/\/(?:[^:@\/?#]*(?::[^:@\/?#]*)?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
     // authority = '//' + user + ':' + pass '@' + hostname + ':' port
     return (m ? {
       href     : m[0] || '',
@@ -1213,7 +1270,12 @@ function logloads(loads) {
   else if (typeof require != 'undefined') {
     var fs;
     fetchTextFromURL = function(url, fulfill, reject) {
+      if (url.substr(0, 5) != 'file:')
+        throw 'Only file URLs of the form file: allowed running in Node.';
       fs = fs || require('fs');
+      url = url.substr(5);
+      if (isWindows)
+        url = url.replace(/\//g, '\\');
       return fs.readFile(url, function(err, data) {
         if (err)
           return reject(err);
@@ -1228,7 +1290,7 @@ function logloads(loads) {
 
   var SystemLoader = function($__super) {
     function SystemLoader(options) {
-      $__Object$getPrototypeOf(SystemLoader.prototype).constructor.call(this, options || {});
+      $__super.call(this, options || {});
 
       // Set default baseURL and paths
       if (typeof location != 'undefined' && location.href) {
@@ -1236,7 +1298,9 @@ function logloads(loads) {
         this.baseURL = href.substring(0, href.lastIndexOf('/') + 1);
       }
       else if (typeof process != 'undefined' && process.cwd) {
-        this.baseURL = process.cwd() + '/';
+        this.baseURL = 'file:' + process.cwd() + '/';
+        if (isWindows)
+          this.baseURL = this.baseURL.replace(/\\/g, '/');
       }
       else {
         throw new TypeError('No environment baseURL');
@@ -1410,11 +1474,10 @@ function logloads(loads) {
 
     function ready() {
       var scripts = document.getElementsByTagName('script');
-
       for (var i = 0; i < scripts.length; i++) {
         var script = scripts[i];
         if (script.type == 'module') {
-          var source = script.innerHTML;
+          var source = script.innerHTML.substr(1);
           System.module(source)['catch'](function(err) { setTimeout(function() { throw err; }); });
         }
       }
