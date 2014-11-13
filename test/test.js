@@ -307,13 +307,13 @@ function runTests() {
     System['import']('loads/main').then(function(m) {
       assert(false, true);
     }, function(e) {
-      assert(e, 'dep error\n  in module loads/deperror');
+      assert(e, 'Error evaluating loads/deperror\ndep error');
     });
     // System['import']('loads/deperror');
   });
 
   test('Unhandled rejection test', function(assert) {
-    System['import']('non-existent');
+    System['import']('loads/load-non-existent')
     assert();
   });
 
@@ -567,27 +567,27 @@ function runTests() {
   test('Custom loader hook - normalize error', function(assert) {
     customLoader['import']('loader/error1-parent').then(function(m) {
     })['catch'](function(e) {
-      assert(e, 'error1');
+      assert(e.toString(), 'Error loading "loader/error1-parent" at ' + System.baseURL + 'loader/error1-parent.js\nerror1');
     });
   });
   test('Custom loader hook - locate error', function(assert) {
     customLoader['import']('error2').then(function(m) {}, function(e) {
-      assert(e, 'error2');
+      assert(e.toString(), 'Error loading "error2" at <unknown>\nerror2');
     });
   });
   test('Custom loader hook - fetch error', function(assert) {
     customLoader['import']('error3').then(function(m) {}, function(e) {
-      assert(e, 'error3');
+      assert(e.toString(), 'Error loading "error3" at ' + System.baseURL + 'error3.js\nerror3');
     });
   });
   test('Custom loader hook - translate error', function(assert) {
     customLoader['import']('error4').then(function(m) {}, function(e) {
-      assert(e, 'error4');
+      assert(e.toString(), 'Error loading "error4" at ' + System.baseURL + 'error4.js\nerror4');
     });
   });
   test('Custom loader hook - instantiate error', function(assert) {
     customLoader['import']('error5').then(function(m) {}, function(e) {
-      assert(e, 'error5');
+      assert(e.toString(), 'Error loading "error5" at ' + System.baseURL + 'error5.js\nerror5');
     });
   });
 

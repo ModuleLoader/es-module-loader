@@ -321,8 +321,9 @@ function logloads(loads) {
       load.exception = exc;
 
       var linkSets = load.linkSets.concat([]);
-      for (var i = 0, l = linkSets.length; i < l; i++)
-        linkSetFailed(linkSets[i], exc);
+      for (var i = 0, l = linkSets.length; i < l; i++) {
+        linkSetFailed(linkSets[i], load, exc);
+      }
 
       console.assert(load.linkSets.length == 0, 'linkSets not removed');
     });
@@ -427,14 +428,21 @@ function logloads(loads) {
     // snapshot(linkSet.loader);
   }
 
+  // linking errors can be generic or load-specific
+  // this is necessary for debugging info
   function doLink(linkSet) {
+    var error = false;
     try {
-      link(linkSet);
+      link(linkSet, function(load, exc) {
+        linkSetFailed(linkSet, load, exc);
+        error = true;
+      });
     }
-    catch(exc) {
-      linkSetFailed(linkSet, exc);
-      return true;
+    catch(e) {
+      linkSetFailed(linkSet, null, e);
+      error = true;
     }
+    return error;
   }
 
   // 15.2.5.2.3
@@ -484,8 +492,14 @@ function logloads(loads) {
   }
 
   // 15.2.5.2.4
-  function linkSetFailed(linkSet, exc) {
+  function linkSetFailed(linkSet, load, exc) {
     var loader = linkSet.loader;
+
+    if (linkSet.loads[0].name != load.name)
+      exc = addToError(exc, 'Error loading "' + linkSet.loads[0].name + '" at ' + (linkSet.loads[0].address || '<unknown>') + '\n');
+
+    exc = addToError(exc, 'Error loading "' + load.name + '" at ' + (load.address || '<unknown>') + '\n');
+
     var loads = linkSet.loads.concat([]);
     for (var i = 0, l = loads.length; i < l; i++) {
       var load = loads[i];
@@ -595,8 +609,22 @@ function logloads(loads) {
     }
   }
 
+  function doDynamicExecute(linkSet, load, linkError) {
+    try {
+      var module = load.execute();
+    }
+    catch(e) {
+      linkError(load, e);
+      return;
+    }
+    if (!module || !(module instanceof Module))
+      linkError(load, new TypeError('Execution must define a Module instance'));
+    else
+      return module;
+  }
+
   // 15.2.5.4
-  function link(linkSet) {
+  function link(linkSet, linkError) {
 
     var loader = linkSet.loader;
 
@@ -631,9 +659,9 @@ function logloads(loads) {
         }
         // 15.2.5.6 LinkDynamicModules adjusted
         else {
-          var module = load.execute();
-          if (!module || !(module instanceof Module))
-            throw new TypeError('Execution must define a Module instance');
+          var module = doDynamicExecute(linkSet, load, linkError);
+          if (!module)
+            return;
           load.module = {
             name: load.name,
             module: module
@@ -796,8 +824,10 @@ function logloads(loads) {
       if (indexOf.call(seen, dep) == -1) {
         err = ensureEvaluated(dep, seen, loader);
         // stop on error, see https://bugs.ecmascript.org/show_bug.cgi?id=2996
-        if (err)
-          return err + '\n  in module ' + dep.name;
+        if (err) {
+          err = addToError(err, 'Error evaluating ' + dep.name + '\n');
+          return err;
+        }
       }
     }
 
@@ -811,7 +841,8 @@ function logloads(loads) {
     err = doExecute(module);
     if (err) {
       module.failed = true;
-    } else if (Object.preventExtensions) {
+    }
+    else if (Object.preventExtensions) {
       // spec variation
       // we don't create a new module here because it was created and ammended
       // we just disable further extensions instead
@@ -819,6 +850,14 @@ function logloads(loads) {
     }
 
     module.execute = undefined;
+    return err;
+  }
+
+  function addToError(err, msg) {
+    if (err instanceof Error)
+      err.message = msg + err.message;
+    else
+      err = msg + err;
     return err;
   }
 
@@ -1060,7 +1099,7 @@ function logloads(loads) {
       var source = doCompile(load.source, compiler, options.filename);
 
       if (!source)
-        throw 'Error evaluating module ' + load.address;
+        throw new Error('Error evaluating module ' + load.address);
 
       var sourceMap = compiler.getSourceMap();
 
