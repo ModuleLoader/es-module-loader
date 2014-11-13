@@ -1067,6 +1067,8 @@ function logloads(loads) {
       if (__global.btoa && sourceMap)
         source += '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(sourceMap))) + '\n';
 
+      source = 'var __moduleAddress = "' + load.address + '";' + source;
+
       __eval(source, __global, load);
     }
   })();

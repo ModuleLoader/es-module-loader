@@ -405,9 +405,10 @@ function runTests() {
   test('Module Name meta', function(assert) {
     System['import']('loader/moduleName').then(function(m) {
       assert(
-        [m.name, 'loader/moduleName']
+        [m.name, 'loader/moduleName'],
+        [m.address, System.baseURL + 'loader/moduleName.js']
       );
-    })
+    });
   });
 
   test('Custom path', function(assert) {
