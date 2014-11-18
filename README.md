@@ -49,15 +49,21 @@ We can then load the module with the dynamic loader:
 <script>
   System.import('mymodule').then(function(m) {
     new m.q();
-  }).catch(console.error.bind(console));
+  });
 </script>
 ```
 
 The dynamic loader returns a `Module` object, which contains getters for the named exports (in this case, `q`).
 
-_Because the loader is promise-based we need to add a catch handler in order to detect loading errors._
-
 [Read the wiki on overview of ES6 modules and syntax](https://github.com/ModuleLoader/es6-module-loader/wiki/A-Brief-ES6-Modules-Overview).
+
+### Custom Compilation Options
+
+Custom [Traceur compilation options](https://github.com/google/traceur-compiler/blob/master/src/Options.js#L25) can be set through `System.traceurOptions`, eg:
+
+```javascript
+System.traceurOptions.annotations = true;
+```
 
 ### Module Tag
 
