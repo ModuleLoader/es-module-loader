@@ -56,6 +56,9 @@ module.exports = function (grunt) {
               'var $__Object$defineProperty = Object.defineProperty;\n' +
               'var $__Object$create = Object.create;',
             replacement: ''
+          }, {
+            pattern: '$__Object$getPrototypeOf(SystemLoader.prototype).constructor',
+            replacement: '$__super'
           }]
         }
       }
