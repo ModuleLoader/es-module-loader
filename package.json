@@ -22,12 +22,14 @@
     }
   ],
   "devDependencies": {
+    "chai": "^1.10.0",
     "grunt": "~0.4.1",
     "grunt-contrib-concat": "^0.5.0",
     "grunt-contrib-jshint": "~0.6.0",
     "grunt-contrib-uglify": "~0.6.0",
     "grunt-esnext": "0.0.3",
-    "grunt-string-replace": "^0.2.7"
+    "grunt-string-replace": "^0.2.7",
+    "mocha": "^2.0.1"
   },
   "keywords": [
     "script",
@@ -40,7 +42,7 @@
   },
   "main": "lib/index",
   "scripts": {
-    "test": "cd test && node test"
+    "test": "mocha test/system.spec.js"
   },
   "dependencies": {
     "grunt-contrib-uglify": "0.6.0",
