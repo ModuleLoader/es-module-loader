@@ -73,7 +73,7 @@ else {
   tests = {
     addTest: function(id, name) {},
     completeTest: function(id, name, failure, summary) {
-      console.log(name + ': ' + (!failure ? 'Passed' : 'Failed: ' + result.failedAssertion));
+      console.log(name + ': ' + (!failure ? 'Passed' : 'Failed: ' + failure));
       console.log(summary.passed + '/' + summary.total + ' passed. ');
     },
   };
