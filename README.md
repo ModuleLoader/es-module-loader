@@ -1,4 +1,4 @@
-# ES6 Module Loader Polyfill
+# ES6 Module Loader Polyfill [![Build Status][travis-image]][travis-url]
 
 Dynamically loads ES6 modules in NodeJS and current browsers.
 
@@ -312,3 +312,6 @@ Copyright (c) 2014 Luke Hoban, Addy Osmani, Guy Bedford
 
 ## License
 Licensed under the MIT license.
+
+[travis-url]: https://travis-ci.org/ModuleLoader/es6-module-loader
+[travis-image]: https://travis-ci.org/ModuleLoader/es6-module-loader.svg?branch=master
