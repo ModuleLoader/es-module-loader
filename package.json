@@ -42,7 +42,7 @@
   },
   "main": "lib/index",
   "scripts": {
-    "test": "mocha test/system.spec.js"
+    "test": "mocha test/*.spec.js"
   },
   "dependencies": {
     "grunt-contrib-uglify": "0.6.0",
