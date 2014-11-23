@@ -1228,6 +1228,7 @@ function logloads(loads) {
     fetchTextFromURL = function(url, fulfill, reject) {
       var xhr = new XMLHttpRequest();
       var sameDomain = true;
+      var doTimeout = false;
       if (!('withCredentials' in xhr)) {
         // check if same domain
         var domainCheck = /^(\w+:)?\/\/([^\/]+)/.exec(url);
@@ -1242,10 +1243,9 @@ function logloads(loads) {
         xhr.onload = load;
         xhr.onerror = error;
         xhr.ontimeout = error;
-        // IE8/IE9 bug may hang requests unless all properties are defined. 
-        // See: http://stackoverflow.com/a/9928073/3949247
         xhr.onprogress = function() {};
         xhr.timeout = 0;
+        doTimeout = true;
       }
       function load() {
         fulfill(xhr.responseText);
@@ -1264,6 +1264,12 @@ function logloads(loads) {
         }
       };
       xhr.open("GET", url, true);
+
+      if (doTimeout)
+        setTimeout(function() {
+          xhr.send();
+        }, 0);
+
       xhr.send(null);
     }
   }
