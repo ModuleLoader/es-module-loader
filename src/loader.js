@@ -1103,8 +1103,10 @@ function logloads(loads) {
 
       var sourceMap = compiler.getSourceMap();
 
-      if (__global.btoa && sourceMap)
+      if (__global.btoa && sourceMap) {
+        source += '\n//# sourceURL=' + load.address + '!eval';
         source += '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(sourceMap))) + '\n';
+      }
 
       source = 'var __moduleAddress = "' + load.address + '";' + source;
 
