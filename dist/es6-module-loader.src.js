@@ -2672,7 +2672,10 @@ function logloads(loads) {
         var script = scripts[i];
         if (script.type == 'module') {
           var source = script.innerHTML.substr(1);
-          System.module(source)['catch'](function(err) { setTimeout(function() { throw err; }); });
+          // It is important to reference the global System, rather than the one
+          // in our closure. We want to ensure that downstream users/libraries
+          // can override System w/ custom behavior.
+          __global.System.module(source)['catch'](function(err) { setTimeout(function() { throw err; }); });
         }
       }
     }
