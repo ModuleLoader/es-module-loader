@@ -1084,8 +1084,6 @@ function logloads(loads) {
 
       console.assert(load.source, 'Non-empty source');
 
-      var depsList;
-
       load.isDeclarative = true;
 
       var options = this.traceurOptions || {};
