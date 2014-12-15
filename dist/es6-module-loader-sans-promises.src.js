@@ -141,7 +141,8 @@ function logloads(loads) {
 
 (function() {
   var Promise = __global.Promise || require('when/es6-shim/Promise');
-  console.assert = console.assert || function() {};
+  if (__global.console)
+    console.assert = console.assert || function() {};
 
   // IE8 support
   var indexOf = Array.prototype.indexOf || function(item) {
@@ -209,7 +210,7 @@ function logloads(loads) {
         load = createLoad(name);
         load.status = 'linked';
         // https://bugs.ecmascript.org/show_bug.cgi?id=2795
-        // load.module = loader.modules[name];
+        load.module = loader.modules[name];
         return load;
       }
 
@@ -285,7 +286,7 @@ function logloads(loads) {
       if (instantiateResult === undefined) {
         load.address = load.address || '<Anonymous Module ' + ++anonCnt + '>';
 
-        // NB instead of load.kind, use load.isDeclarative
+        // instead of load.kind, use load.isDeclarative
         load.isDeclarative = true;
         // parse sets load.declare, load.depsList
         loader.loaderObj.parse(load);
@@ -377,12 +378,10 @@ function logloads(loads) {
       if (loader.modules[name])
         throw new TypeError('"' + name + '" already exists in the module table');
 
-      // NB this still seems wrong for LoadModule as we may load a dependency
-      // of another module directly before it has finished loading.
-      // see https://bugs.ecmascript.org/show_bug.cgi?id=2994
+      // adjusted to pick up existing loads
       for (var i = 0, l = loader.loads.length; i < l; i++)
         if (loader.loads[i].name == name)
-          throw new TypeError('"' + name + '" already loading');
+          return resolve(loader.loads[i].linkSets[0].done);
 
       var load = createLoad(name);
 
@@ -1120,8 +1119,6 @@ function logloads(loads) {
 
       console.assert(load.source, 'Non-empty source');
 
-      var depsList;
-
       load.isDeclarative = true;
 
       var options = this.traceurOptions || {};
@@ -1139,8 +1136,10 @@ function logloads(loads) {
 
       var sourceMap = compiler.getSourceMap();
 
-      if (__global.btoa && sourceMap)
+      if (__global.btoa && sourceMap) {
+        source += '\n//# sourceURL=' + load.address + '!eval';
         source += '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(sourceMap))) + '\n';
+      }
 
       source = 'var __moduleAddress = "' + load.address + '";' + source;
 
