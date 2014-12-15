@@ -105,7 +105,8 @@ function logloads(loads) {
 
 (function() {
   var Promise = __global.Promise || require('when/es6-shim/Promise');
-  console.assert = console.assert || function() {};
+  if (__global.console)
+    console.assert = console.assert || function() {};
 
   // IE8 support
   var indexOf = Array.prototype.indexOf || function(item) {
