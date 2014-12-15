@@ -1119,6 +1119,9 @@ function logloads(loads) {
   __global.Reflect.Loader = __global.Reflect.Loader || Loader;
   __global.Reflect.global = __global.Reflect.global || __global;
   __global.LoaderPolyfill = Loader;
+  __global.Reflect.isModule = function(m) {
+    return m instanceof Module;
+  }
 
 })();
 
