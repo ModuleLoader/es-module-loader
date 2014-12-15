@@ -123,6 +123,8 @@ It is also possible to define wildcard paths rules. The most specific rule will 
 
 ### Circular References & Bindings
 
+All [AMD](http://requirejs.org/docs/api.html#circular), [CommonJS](http://nodejs.org/api/modules.html#modules_cycles), and [ES6](https://github.com/ModuleLoader/es6-module-loader#circular-references--bindings) treat circular dependencies differently.
+
 Circular references and live bindings are fully supported identically to ES6 in this polyfill.
 
 That is:
@@ -159,6 +161,8 @@ odd.js
     m.counter;
   });
 ```
+
+When using [SystemJS](https://github.com/systemjs/systemjs) loader, AMD and CommonJS preserve their own circular reference behavior.
 
 ### Moving to Production
 
