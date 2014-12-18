@@ -1089,7 +1089,7 @@ function logloads(loads) {
       var options = this.traceurOptions || {};
       options.modules = 'instantiate';
       options.script = false;
-      options.sourceMaps = true;
+      options.sourceMaps = 'inline';
       options.filename = load.address;
 
       var compiler = new traceur.Compiler(options);
@@ -1105,7 +1105,6 @@ function logloads(loads) {
         // add "!eval" to end of Traceur sourceURL
         // I believe this does something?
         source += '!eval';
-        source += '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(sourceMap))) + '\n';
       }
 
       source = 'var __moduleAddress = "' + load.address + '";' + source;
