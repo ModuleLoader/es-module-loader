@@ -930,6 +930,7 @@ function logloads(loads) {
     });
 
     // 26.3.3.13 realm not implemented
+    this.traceurOptions = {};
   }
 
   function Module() {}
@@ -1124,7 +1125,7 @@ function logloads(loads) {
       var options = this.traceurOptions || {};
       options.modules = 'instantiate';
       options.script = false;
-      options.sourceMaps = true;
+      options.sourceMaps = 'inline';
       options.filename = load.address;
 
       var compiler = new traceur.Compiler(options);
@@ -1137,8 +1138,9 @@ function logloads(loads) {
       var sourceMap = compiler.getSourceMap();
 
       if (__global.btoa && sourceMap) {
-        source += '\n//# sourceURL=' + load.address + '!eval';
-        source += '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(sourceMap))) + '\n';
+        // add "!eval" to end of Traceur sourceURL
+        // I believe this does something?
+        source += '!eval';
       }
 
       source = 'var __moduleAddress = "' + load.address + '";' + source;
