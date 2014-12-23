@@ -1,10 +1,12 @@
 # ES6 Module Loader Polyfill [![Build Status][travis-image]][travis-url]
 
-Dynamically loads ES6 modules in browsers and [NodeJS](#nodejs-usage) supporting custom module resolution and the loading of existing module formats from ES6 modules via a hookable pipeline.
+Dynamically loads ES6 modules in browsers and [NodeJS](#nodejs-usage) with support for loading existing and custom module formats through loader hooks.
+
+This project implements dynamic module loading through `System` exactly to the previous ES6-specified loader API at [2014-08-24 ES6 Specification Draft Rev 27, Section 15](http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts#august_24_2014_draft_rev_27) and will continue to track this API as it is re-drafted as a browser specification (currently most likely to be at https://github.com/whatwg/loader).
 
 * Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#basic-use).
 * Uses [Traceur](https://github.com/google/traceur-compiler) for compiling ES6 modules and syntax into ES5 in the browser with source map support.
-* Fully supports [ES6 circular references and bindings](#circular-references--bindings).
+* Fully supports [ES6 circular references and live bindings](#circular-references--bindings).
 * Polyfills ES6 Promises in the browser with an optionally bundled ES6 promise implementation.
 * Supports ES6 module loading in IE8+. Other ES6 features only supported by Traceur in IE9+.
 * The complete combined polyfill, including ES6 promises, comes to 9KB minified and gzipped, making it suitable for production use, provided that modules are [built into ES5 making them independent of Traceur](#moving-to-production).
@@ -16,14 +18,6 @@ See the [demo folder](https://github.com/ModuleLoader/es6-module-loader/blob/mas
 For an example of a universal module loader based on this polyfill for loading AMD, CommonJS and globals, see [SystemJS](https://github.com/systemjs/systemjs).
 
 _The current version is tested against **[Traceur 0.0.79](https://github.com/google/traceur-compiler/tree/0.0.79)**._
-
-### Background
-
-The ES6 specification defines a module system in JavaScript using `import` and `export` syntax. This syntax will be supported within the `<script type="module">` tag in the browser. For dynamically loading modules, a dynamic browser module loader was initially proposed for the ES6 module specification, and is now being developed as a browser specification.
-
-The proposed dynamic loader API uses a global loader at `window.System` for importing modules dynamically and allows customisation of the ES6 lookup process including loading from other module formats.
-
-This project implements the dynamic module loading through `System` exactly to the previous ES6-specified API at [2014-08-24 ES6 Specification Draft Rev 27](http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts#august_24_2014_draft_rev_27), Section 15, and will continue to track changes as it is re-drafted as a browser specification (currently most likely to be at https://github.com/whatwg/loader).
 
 ### Basic Use
 
@@ -59,7 +53,7 @@ We can then load the module with the dynamic loader:
 
 The dynamic loader returns a `Module` object, which contains getters for the named exports (in this case, `q`).
 
-[Read the wiki on overview of ES6 modules and syntax](https://github.com/ModuleLoader/es6-module-loader/wiki/A-Brief-ES6-Modules-Overview).
+[Read an overview of ES6 modules and syntax](https://github.com/ModuleLoader/es6-module-loader/wiki/A-Brief-ES6-Modules-Overview).
 
 ### Custom Compilation Options
 
@@ -71,7 +65,7 @@ System.traceurOptions.annotations = true;
 
 ### Module Tag
 
-A simple analog to the module tag is provided with:
+As well as defining `window.System`, this polyfill provides support for the `<script type="module">` tag:
 
 ```html
 <script type="module">
@@ -82,11 +76,7 @@ A simple analog to the module tag is provided with:
 </script>
 ```
 
-Ideally this should be based on polyfilling the `<module>` tag, as `<script type="module">` is not in the spec.
-
-As such this approach is not really suitable for anything more than experimentation.
-
-See an overview of the specification module tag features here - https://github.com/dherman/web-modules/blob/master/explainer.md.
+Because it is only possible to load ES6 modules with this tag, it is not suitable for production use in this way.
 
 ### baseURL
 
@@ -127,14 +117,22 @@ It is also possible to define wildcard paths rules. The most specific rule will 
 
 ### Circular References & Bindings
 
-All [AMD](http://requirejs.org/docs/api.html#circular), [CommonJS](http://nodejs.org/api/modules.html#modules_cycles), and [ES6](https://github.com/ModuleLoader/es6-module-loader#circular-references--bindings) treat circular dependencies differently.
+#### Zebra Striping
 
-Circular references and live bindings are fully supported identically to ES6 in this polyfill.
+All [AMD](http://requirejs.org/docs/api.html#circular), [CommonJS](http://nodejs.org/api/modules.html#modules_cycles), and [ES6](https://github.com/ModuleLoader/es6-module-loader#circular-references--bindings) treat circular dependencies differently. 
+Handling this problem is one of the major innovations in the loader spec, using a technique called **zebra striping**. This involves analyzing the dependency tree and forming alternate layers of ES6 / non-ES6 modules with circular references in each layer for linking.
+The layers are then individually linked, with the appropriate circular reference handling being done within each layer. This allows CommonJS circular references to interact with ES6 circular references. Inter-format circular references are not supported as they
+would be across layers.
 
-That is:
+This loader implementation handles zebra-striping automatically, allowing a loader like [SystemJS](https://github.com/systemjs/systemjs) to support all module formats with exact circular reference support.
+
+#### ES6 Circular References &amp; Bindings
+
+ES6 circular references and bindings behave in the following way:
+
 * Bindings are set up before module execution.
 * Execution is run from depth-first left to right on the module tree stopping at circular references.
-* Bindings are live - an adjustment to an export of one module affects all modules importing it.
+* Bindings are live - an adjustment to an export of one module affects all modules importing it, but it can only be modified in the defining module.
 
 even.js
 ```javascript
@@ -166,11 +164,11 @@ odd.js
   });
 ```
 
-When using [SystemJS](https://github.com/systemjs/systemjs) loader, AMD and CommonJS preserve their own circular reference behavior.
-
 ### Moving to Production
 
 When in production, it is not suitable to load ES6 modules and syntax in the browser.
+
+#### System.register Output
 
 There is a `modules=instantiate` build output in Traceur that can be used with the ES6 Module Loader, provided it has the [System.register extension](https://github.com/systemjs/systemjs/blob/master/lib/extension-register.js)
 from [SystemJS](https://github.com/systemjs/systemjs).
@@ -179,11 +177,7 @@ The benefit of this output is that it provides full support for circular referen
 
 This output format is explained here - https://github.com/ModuleLoader/es6-module-loader/wiki/System.register-Explained.
 
-Alternatively, Traceur can also output `amd` or `cjs` as well.
-
 A basic example of using this extension with a build would be the following:
-
-#### Building all files into one bundle
 
 1. Build all ES6 modules into ES5 System.register form:
 
@@ -231,6 +225,12 @@ We can also build separate files with:
 
 With the above, we can load from the separate files identical to loading ES6.
 
+#### Building across module formats
+
+If using a loader like [SystemJS](https://github.com/systemjs/systemjs) to load different module formats, then a build can also be performed across module formats as well.
+
+See [SystemJS builder](https://github.com/systemjs/builder) for this combined approach.
+
 ### NodeJS Usage
 
 ```
@@ -259,56 +259,10 @@ Running the application:
 NodeJS test
 ```
 
-### Tracing API
+### Further Documentation
 
-This is not in the specification, but is provided since it is such a natural extension of loading and not much code at all.
-
-Enable tracing and start importing modules:
-
-```javascript
-  loader.trace = true;
-  loader.execute = true; // optional, disables execution of module bodies
-
-  loader.import('some/module').then(function() {
-    /*
-      Now we have:
-      
-        loader.loads['some/module'] == {
-          name: 'some/module',
-          deps: ['./unnormalized', 'deps'],
-          depMap: {
-            './unnormalized': 'normalized',
-            'deps': 'deps'
-          },
-          address: '/resolvedURL',
-          metadata: { metadata object from load },
-          source: 'translated source code string',
-          kind: 'dynamic' (instantiated) or 'declarative' (ES6 module pipeline)
-        }
-
-      With the dependency load records
-        loader.loads['normalized']
-        loader.loads['deps']
-      also set.
-    */
-  });
-```
-
-Then start importing modules
-
-### Extending the Loader
-
-The loader in its default state provides only ES6 loading.
-
-We can extend it to load AMD, CommonJS and global scripts as well as various other custom functionality through the loader hooks.
-
-[Read the wiki on extending the loader here](https://github.com/ModuleLoader/es6-module-loader/wiki/Extending-the-ES6-Loader).
-
-### Specification Notes
-
-See the source of https://github.com/ModuleLoader/es6-module-loader/blob/master/lib/es6-module-loader.js, which contains comments detailing the exact specification notes and design decisions.
-
-To follow the current the specification changes, see the marked issues https://github.com/ModuleLoader/es6-module-loader/issues?labels=specification&page=1&state=open.
+* [Extending the loader through loader hooks](https://github.com/ModuleLoader/es6-module-loader/wiki/Extending-the-ES6-Loader)
+* [Tracing API](https://github.com/ModuleLoader/es6-module-loader/wiki/Tracing-API)
 
 ## Contributing
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [grunt](https://github.com/cowboy/grunt).
