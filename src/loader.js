@@ -1,9 +1,10 @@
 /*
 *********************************************************************************************
 
-  Loader Polyfill
+  Dynamic Module Loader Polyfill
 
-    - Implemented exactly to the 2014-07-18 Specification Draft.
+    - Implemented exactly to the former 2014-08-24 ES6 Specification Draft Rev 27, Section 15
+      http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts#august_24_2014_draft_rev_27
 
     - Functions are commented with their spec numbers, with spec differences commented.
 
@@ -13,8 +14,6 @@
       commented.
 
     - Realm implementation is entirely omitted.
-
-    - Loader module table iteration currently not yet implemented.
 
 *********************************************************************************************
 */

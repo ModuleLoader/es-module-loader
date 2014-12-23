@@ -1,13 +1,11 @@
 # ES6 Module Loader Polyfill [![Build Status][travis-image]][travis-url]
 
-Dynamically loads ES6 modules in NodeJS and current browsers.
+Dynamically loads ES6 modules in browsers and [NodeJS](#nodejs-usage) supporting custom module resolution and the loading of existing module formats from ES6 modules via a hookable pipeline.
 
-* Implemented exactly to the July 18 2014 ES6 specification draft.
 * Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#basic-use).
 * Uses [Traceur](https://github.com/google/traceur-compiler) for compiling ES6 modules and syntax into ES5 in the browser with source map support.
 * Fully supports [ES6 circular references and bindings](#circular-references--bindings).
 * Polyfills ES6 Promises in the browser with an optionally bundled ES6 promise implementation.
-* [Compatible with NodeJS](#nodejs-usage) allowing for server-side module loading and tracing extensions.
 * Supports ES6 module loading in IE8+. Other ES6 features only supported by Traceur in IE9+.
 * The complete combined polyfill, including ES6 promises, comes to 9KB minified and gzipped, making it suitable for production use, provided that modules are [built into ES5 making them independent of Traceur](#moving-to-production).
 
@@ -17,15 +15,21 @@ See the [demo folder](https://github.com/ModuleLoader/es6-module-loader/blob/mas
 
 For an example of a universal module loader based on this polyfill for loading AMD, CommonJS and globals, see [SystemJS](https://github.com/systemjs/systemjs).
 
-_The current version is tested against **[Traceur 0.0.72](https://github.com/google/traceur-compiler/tree/0.0.72)**._
+_The current version is tested against **[Traceur 0.0.79](https://github.com/google/traceur-compiler/tree/0.0.79)**._
 
-_Note the ES6 module specification is still in draft, and subject to change._
+### Background
+
+The ES6 specification defines a module system in JavaScript using `import` and `export` syntax. This syntax will be supported within the `<script type="module">` tag in the browser. For dynamically loading modules, a dynamic browser module loader was initially proposed for the ES6 module specification, and is now being developed as a browser specification.
+
+The proposed dynamic loader API uses a global loader at `window.System` for importing modules dynamically and allows customisation of the ES6 lookup process including loading from other module formats.
+
+This project implements the dynamic module loading through `System` exactly to the previous ES6-specified API at [2014-08-24 ES6 Specification Draft Rev 27](http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts#august_24_2014_draft_rev_27), Section 15, and will continue to track changes as it is re-drafted as a browser specification (currently most likely to be at https://github.com/whatwg/loader).
 
 ### Basic Use
 
-Download both [es6-module-loader.js](https://raw.githubusercontent.com/ModuleLoader/es6-module-loader/v0.9.4/dist/es6-module-loader.js) and traceur.js into the same folder.
+Download both [es6-module-loader.js](https://raw.githubusercontent.com/ModuleLoader/es6-module-loader/v0.11.0/dist/es6-module-loader.js) and traceur.js into the same folder.
 
-If using ES6 syntax (optional), include [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.72/traceur.js) in the page first then include `es6-module-loader.js`:
+If using ES6 syntax (optional), include [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.79/traceur.js) in the page first then include `es6-module-loader.js`:
 
 ```html
   <script src="traceur.js"></script>
@@ -187,7 +191,7 @@ A basic example of using this extension with a build would be the following:
     traceur --out app-build.js app/app.js --modules=instantiate
   ```
 
-2. If using additional ES6 features apart from modules syntax, load [`traceur-runtime.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.72/traceur-runtime.js) (also included in the `bin` folder when installing Traceur through Bower or npm). Then include `es6-module-loader.js` and then apply the register extension before doing the import or loading the bundle as a script:
+2. If using additional ES6 features apart from modules syntax, load [`traceur-runtime.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.79/traceur-runtime.js) (also included in the `bin` folder when installing Traceur through Bower or npm). Then include `es6-module-loader.js` and then apply the register extension before doing the import or loading the bundle as a script:
 
   ```html
     <script src="traceur-runtime.js"></script>
