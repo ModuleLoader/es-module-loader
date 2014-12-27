@@ -5,8 +5,8 @@
 
   <script src="test.js"></script>
 
-  <!-- set this to the path to traceur.js -->
-  <script src="../node_modules/traceur/bin/traceur.js"></script>
+  <!-- set this to the path to 6to5.js -->
+  <script src="../node_modules/6to5/browser.js"></script>
 
   <script>
     // test promise polyfill
@@ -15,10 +15,10 @@
 
   <script src="../node_modules/when/es6-shim/Promise.js"></script>
 
-  <script src="../dist/es6-module-loader.src.js"></script>
+  <script src="../dist/es6-module-loader-6to5.src.js"></script>
   <script>
-    // test traceurOptions and anonymous errors
-    // System.traceurOptions = { classes: false };
+    // test parseOptions and anonymous errors
+    // System.parseOptions = { classes: false };
   </script>
 
   <script>

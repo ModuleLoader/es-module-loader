@@ -14,35 +14,53 @@ module.exports = function (grunt) {
         jshintrc: '.jshintrc'
       },
       dist: [
-        'lib/index.js',
-        'lib/loader.js',
-        'lib/system.js'
+        'lib/index.js'
       ]
     },
     concat: {
       dist: {
         files: {
-          'dist/<%= pkg.name %>.src.js': [
+          'dist/<%= pkg.name %>-traceur.src.js': [
             'node_modules/when/es6-shim/Promise.js',
             'src/polyfill-wrapper-start.js',
-            'dist/<%= pkg.name %>.js',
+            'dist/<%= pkg.name %>-traceur.js',
             'src/polyfill-wrapper-end.js'
           ],
-          'dist/<%= pkg.name %>-sans-promises.src.js': [
+          'dist/<%= pkg.name %>-6to5.src.js': [
+            'node_modules/when/es6-shim/Promise.js',
             'src/polyfill-wrapper-start.js',
-            'dist/<%= pkg.name %>.js',
+            'dist/<%= pkg.name %>-6to5.js',
+            'src/polyfill-wrapper-end.js'
+          ],
+          'dist/<%= pkg.name %>-traceur-sp.src.js': [
+            'src/polyfill-wrapper-start.js',
+            'dist/<%= pkg.name %>-traceur.js',
+            'src/polyfill-wrapper-end.js'
+          ],
+          'dist/<%= pkg.name %>-6to5-sp.src.js': [
+            'src/polyfill-wrapper-start.js',
+            'dist/<%= pkg.name %>-6to5.js',
             'src/polyfill-wrapper-end.js'
           ]
         }
       }
     },
     esnext: {
-      dist: {
+      distTraceur: {
         src: [
           'src/loader.js',
+          'src/traceur-loader.js',
           'src/system.js'
         ],
-        dest: 'dist/<%= pkg.name %>.js'
+        dest: 'dist/<%= pkg.name %>-traceur.js'
+      },
+      dist6to5: {
+        src: [
+          'src/loader.js',
+          'src/6to5-loader.js',
+          'src/system.js'
+        ],
+        dest: 'dist/<%= pkg.name %>-6to5.js'
       }
     },
     'string-replace': {
@@ -71,16 +89,27 @@ module.exports = function (grunt) {
         },
         sourceMap: true
       },
-      dist: {
+      distTraceur: {
         options: {
           banner: '<%= meta.banner %>\n'
         },
-        src: 'dist/<%= pkg.name %>.src.js',
-        dest: 'dist/<%= pkg.name %>.js'
+        src: 'dist/<%= pkg.name %>-traceur.src.js',
+        dest: 'dist/<%= pkg.name %>-traceur.js'
       },
-      polyfillOnly: {
-        src: 'dist/<%= pkg.name %>-sans-promises.src.js',
-        dest: 'dist/<%= pkg.name %>-sans-promises.js'
+      dist6to5: {
+        options: {
+          banner: '<%= meta.banner %>\n'
+        },
+        src: 'dist/<%= pkg.name %>-6to5.src.js',
+        dest: 'dist/<%= pkg.name %>-6to5.js'
+      },
+      distTraceurSansPromises: {
+        src: 'dist/<%= pkg.name %>-traceur-sp.src.js',
+        dest: 'dist/<%= pkg.name %>-traceur-sp.js'
+      },
+      dist6to5SansPromises: {
+        src: 'dist/<%= pkg.name %>-6to5-sp.src.js',
+        dest: 'dist/<%= pkg.name %>-6to5-sp.js'
       }
     }
   });

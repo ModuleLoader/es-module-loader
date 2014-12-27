@@ -52,7 +52,7 @@
   "engines": {
     "node": ">=0.8.0"
   },
-  "main": "lib/index",
+  "main": "lib/index-traceur",
   "scripts": {
     "test": "npm run test:node && npm run test:browsers",
     "test:node": "mocha test/_node.js",
@@ -60,6 +60,8 @@
     "test:browsers:perf": "karma start karma-benchmark.conf.js --single-run"
   },
   "dependencies": {
+    "6to5": "^2.0.2",
+    "grunt-contrib-uglify": "0.6.0",
     "traceur": "0.0.79",
     "when": "^3.6.4"
   }
