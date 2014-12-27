@@ -17,8 +17,6 @@
         throw new TypeError('Include 6to5 for module syntax support');
     }
 
-    load.isDeclarative = true;
-
     var options = this.parseOptions || {};
     options.modules = 'system';
     options.sourceMap = 'inline';

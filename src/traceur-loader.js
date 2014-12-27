@@ -28,8 +28,6 @@
 
     console.assert(load.source, 'Non-empty source');
 
-    load.isDeclarative = true;
-
     var options = this.parseOptions || {};
     options.modules = 'instantiate';
     options.script = false;
