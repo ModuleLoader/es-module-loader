@@ -1,7 +1,5 @@
 //
 
-var System = require('../lib').System;
-
 var customModules = {};
 var customFactories = {};
 
@@ -113,5 +111,3 @@ var customLoader = new Reflect.Loader({
 customLoader.parse = function(load) {
   return System.parse(load);
 };
-
-module.exports = customLoader;

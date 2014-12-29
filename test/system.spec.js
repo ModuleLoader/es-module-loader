@@ -1,10 +1,7 @@
 //
 
-var ml = require('../lib');
-
-var System = ml.System;
-
-var expect = require('chai').expect;
+// Change base url to the karma "base"
+System.baseURL += 'base/';
 
 //
 
@@ -270,8 +267,7 @@ describe('System', function() {
         }
 
         dummyLoad(function(e) {
-          expect(e).to.an.instanceof(Error);
-          expect(e.message).to.be.match(/Error loading "\S+" at file:\S+\nENOENT, open '\S+'/);
+          expect(e).to.be.match(/Error loading "\S+" at \S+\nNot Found: \S+/);
           done();
         });
 
@@ -443,9 +439,9 @@ describe('System', function() {
 
   });
 
-  if (global.Worker) {
+  if (window.Worker) {
     it('should loading inside of a Web Worker', function(done) {
-      var worker = new Worker('worker/worker.js');
+      var worker = new Worker(System.baseURL + 'test/worker/worker.js');
 
       worker.onmessage = function(e) {
         expect(e.data).to.be.equal('p');

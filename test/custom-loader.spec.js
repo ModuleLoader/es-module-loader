@@ -1,11 +1,5 @@
 //
 
-var customLoader = require('./custom-loader');
-
-var expect = require('chai').expect;
-
-//
-
 describe('Custom Loader', function() {
 
   it('should support standard load', function(done) {
@@ -58,40 +52,35 @@ describe('Custom Loader', function() {
 
     it('should make the normalize throw', function(done) {
       dummyLoad('test/loader/error1-parent', function(e) {
-        expect(e).to.an.instanceof(Error);
-        expect(e.message).to.be.match(/Error loading "error1" at file:\S+error1\.js\nError loading "error1" from "test\/loader\/error1-parent"/);
+        expect(e).to.be.match(/Error loading "error1" at \S+error1\.js\nError loading "error1" from "test\/loader\/error1-parent"/);
         done();
       });
     });
 
     it('should make the locate throw', function(done) {
       dummyLoad('test/loader/error2', function(e) {
-        expect(e).to.an.instanceof(Error);
-        expect(e.message).to.be.match(/Error loading "test\/loader\/error2" at file:\S+test\/loader\/error2\.js/);
+        expect(e).to.be.match(/Error loading "test\/loader\/error2" at \S+test\/loader\/error2\.js\nNot Found: \S+/);
         done();
       });
     });
 
     it('should make the fetch throw', function(done) {
       dummyLoad('test/loader/error3', function(e) {
-        expect(e).to.an.instanceof(Error);
-        expect(e.message).to.be.match(/Error loading "test\/loader\/error3" at file:\S+test\/loader\/error3\.js/);
+        expect(e).to.be.match(/Error loading "test\/loader\/error3" at \S+test\/loader\/error3\.js/);
         done();
       });
     });
 
     it('should make the translate throw', function(done) {
       dummyLoad('test/loader/error4', function(e) {
-        expect(e).to.an.instanceof(Error);
-        expect(e.message).to.be.match(/Error loading "test\/loader\/error4" at file:\S+test\/loader\/error4\.js/);
+        expect(e).to.be.match(/Error loading "test\/loader\/error4" at \S+test\/loader\/error4\.js/);
         done();
       });
     });
 
     it('should make the instantiate throw', function(done) {
       dummyLoad('test/loader/error5', function(e) {
-        expect(e).to.an.instanceof(Error);
-        expect(e.message).to.be.match(/Error loading "test\/loader\/error5" at file:\S+test\/loader\/error5\.js/);
+        expect(e).to.be.match(/Error loading "test\/loader\/error5" at \S+test\/loader\/error5\.js/);
         done();
       });
     });
