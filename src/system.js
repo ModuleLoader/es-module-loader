@@ -203,7 +203,17 @@
       var parentParts = (parentName || '').split('/');
       var normalizedLen = parentParts.length - 1 - dotdots;
 
-      normalizedParts = normalizedParts.concat(parentParts.splice(0, parentParts.length - 1 - dotdots));
+      var prefixParts = parentParts.length - 1 - dotdots;
+
+      if (prefixParts >= 0) {
+        normalizedParts = normalizedParts.concat(parentParts.splice(0, prefixParts));
+      } else {
+        while(prefixParts < 0) {
+          normalizedParts.push('..');
+          prefixParts++;
+        }
+      }
+
       normalizedParts = normalizedParts.concat(segments.splice(i, segments.length - i));
 
       return normalizedParts.join('/');
