@@ -345,7 +345,6 @@ describe('System', function() {
       System.import('test/syntax/export-star2').then(function(m) {
         setTimeout(function() {
           expect(m.bar, 'should re-export "./export-star" bar variable').to.be.equal('bar');
-          // TO VERIFY
           expect(m.foo, 'should overwrite "./star-dep" foo variable with a function').to.be.a('function');
           done();
         });
