@@ -1,5 +1,5 @@
 module.exports = function (config) {
-  config.set({
+  var opts = {
     basePath: '',
     frameworks: ['benchmark'],
     files: [
@@ -18,5 +18,17 @@ module.exports = function (config) {
     browserDisconnectTolerance: 2,
     browserNoActivityTimeout: 30000,
     captureTimeout: 120000
-  });
+  };
+
+  if(process.env.TRAVIS){
+    opts.customLaunchers = {
+      'TR_Chrome': {
+        base: 'Chrome',
+        flags: ['--no-sandbox']
+      }
+    },
+    opts.browsers = ['TR_Chrome', 'Firefox'];
+  }
+
+  config.set(opts);
 };

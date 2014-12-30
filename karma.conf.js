@@ -1,5 +1,5 @@
 module.exports = function(config) {
-  config.set({
+  var opts = {
     basePath: '',
     frameworks: ['mocha', 'chai'],
     files: [
@@ -18,5 +18,18 @@ module.exports = function(config) {
     autoWatch: true,
     browsers: ['Chrome', 'Firefox'],
     singleRun: false
-  });
+  };
+
+  if(process.env.TRAVIS){
+    opts.reporters = ['dots'];
+    opts.customLaunchers = {
+      'TR_Chrome': {
+        base: 'Chrome',
+        flags: ['--no-sandbox']
+      }
+    },
+    opts.browsers = ['TR_Chrome', 'Firefox'];
+  }
+
+  config.set(opts);
 };
