@@ -1,6 +1,7 @@
 //
 
 // Change base url to the karma "base"
+System.trace = true;
 System.baseURL += 'base/';
 
 //
