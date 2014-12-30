@@ -444,8 +444,10 @@ describe('System', function() {
       var worker = new Worker(System.baseURL + 'test/worker/worker.js');
 
       worker.onmessage = function(e) {
-        expect(e.data).to.be.equal('p');
-        done();
+        setTimeout(function() {
+          expect(e.data).to.be.equal('p');
+          done();
+        }, 0);
       };
     });
   }
