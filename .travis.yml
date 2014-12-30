@@ -14,5 +14,6 @@ script:
   - grunt
   - npm run test
   - npm run test:polyfill
+  - npm run test:sl
 after_script:
   - npm run test:perf
