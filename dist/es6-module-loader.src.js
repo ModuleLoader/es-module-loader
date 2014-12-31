@@ -1603,9 +1603,15 @@ function logloads(loads) {
         throw new TypeError('"' + name + '" already exists in the module table');
 
       // adjusted to pick up existing loads
-      for (var i = 0, l = loader.loads.length; i < l; i++)
-        if (loader.loads[i].name == name)
-          return resolve(loader.loads[i].linkSets[0].done);
+      var existingLoad;
+      for (var i = 0, l = loader.loads.length; i < l; i++) {
+        if (loader.loads[i].name == name) {
+          existingLoad = loader.loads[i];
+          return existingLoad.linkSets[0].done.then(function() {
+            resolve(existingLoad);
+          });
+        }
+      }
 
       var load = createLoad(name);
 
