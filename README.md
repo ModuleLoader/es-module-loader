@@ -1,6 +1,6 @@
 # ES6 Module Loader Polyfill [![Build Status][travis-image]][travis-url]
 
-Dynamically loads ES6 modules in browsers and [NodeJS](#nodejs-usage) with support for loading existing and custom module formats through loader hooks.
+Dynamically loads ES6 modules in browsers and [NodeJS](#nodejs-use) with support for loading existing and custom module formats through loader hooks.
 
 This project implements dynamic module loading through `System` exactly to the previous ES6-specified loader API at [2014-08-24 ES6 Specification Draft Rev 27, Section 15](http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts#august_24_2014_draft_rev_27) and will continue to track this API as it is re-drafted as a browser specification (currently most likely to be at https://github.com/whatwg/loader).
 
