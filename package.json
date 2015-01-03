@@ -43,7 +43,6 @@
     "test": "cd test && node test"
   },
   "dependencies": {
-    "grunt-contrib-uglify": "0.6.0",
     "traceur": "0.0.79",
     "when": "^3.6.4"
   }
