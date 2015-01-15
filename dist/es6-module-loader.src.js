@@ -1829,7 +1829,7 @@ function logloads(loads) {
   // 1. groups is an already-interleaved array of group kinds
   // 2. load.groupIndex is set when this function runs
   // 3. load.groupIndex is the interleaved index ie 0 declarative, 1 dynamic, 2 declarative, ... (or starting with dynamic)
-  function buildLinkageGroups(load, loads, groups, loader) {
+  function buildLinkageGroups(load, loads, groups) {
     groups[load.groupIndex] = groups[load.groupIndex] || [];
 
     // if the load already has a group index and its in its group, its already been done
@@ -1857,7 +1857,7 @@ function logloads(loads) {
           if (loadDep.groupIndex === undefined || loadDep.groupIndex < loadDepGroupIndex) {
 
             // if already in a group, remove from the old group
-            if (loadDep.groupIndex) {
+            if (loadDep.groupIndex !== undefined) {
               groups[loadDep.groupIndex].splice(indexOf.call(groups[loadDep.groupIndex], loadDep), 1);
 
               // if the old group is empty, then we have a mixed depndency cycle
@@ -1868,7 +1868,7 @@ function logloads(loads) {
             loadDep.groupIndex = loadDepGroupIndex;
           }
 
-          buildLinkageGroups(loadDep, loads, groups, loader);
+          buildLinkageGroups(loadDep, loads, groups);
         }
       }
     }
@@ -1907,7 +1907,7 @@ function logloads(loads) {
     var groups = [];
     var startingLoad = linkSet.loads[0];
     startingLoad.groupIndex = 0;
-    buildLinkageGroups(startingLoad, linkSet.loads, groups, loader);
+    buildLinkageGroups(startingLoad, linkSet.loads, groups);
 
     // determine the kind of the bottom group
     var curGroupDeclarative = startingLoad.isDeclarative == groups.length % 2;
