@@ -21,22 +21,20 @@ var options = extend({
   coverage: false
 }, argv);
 
-if (options.ie8){
+if (options.ie8) {
   console.log('IE8 Mode !\n - polyfill required\n');
   options.polyfill = true;
 }
 
 ////
 
-module.exports = function (config) {
+module.exports = function(config) {
 
   var files = [
     'test/_helper.js',
-    [!options.ie8 ? 'node_modules/traceur/bin/traceur.js' : ''],
+    [!options.ie8 ? (!options['6to5'] ? 'node_modules/traceur/bin/traceur.js' : 'node_modules/6to5/browser.js') : ''],
 
-    'dist/es6-module-loader' +
-    (options.polyfill ? '' : '-sans-promises')
-    + '.src.js',
+    'dist/es6-module-loader-' + (!options['6to5'] ? 'traceur' : '6to5') + (options.polyfill ? '' : '-sp') + '.src.js',
 
     'test/_browser.js',
     'test/browser-script-type-module.js',
@@ -151,7 +149,7 @@ module.exports = function (config) {
 };
 
 function flatten(arr) {
-  return arr.reduce(function (memo, val) {
+  return arr.reduce(function(memo, val) {
     return memo.concat(util.isArray(val) ? flatten(val) : val ? [val] : []);
   }, []);
 }

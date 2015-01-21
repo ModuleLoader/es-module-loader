@@ -54,9 +54,9 @@
   },
   "main": "lib/index-traceur",
   "scripts": {
-    "test": "npm run test:node && npm run test:browsers",
-    "test:node": "mocha test/_node.js",
-    "test:browsers": "karma start --single-run",
+    "test": "npm run test:node && npm run test:browser",
+    "test:node": "mocha test/_node-traceur.js && mocha test/_node-6to5.js",
+    "test:browser": "karma start --single-run && karma start --single-run --6to5",
     "test:browsers:perf": "karma start karma-benchmark.conf.js --single-run"
   },
   "dependencies": {

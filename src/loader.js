@@ -899,7 +899,6 @@ function logloads(loads) {
     });
 
     // 26.3.3.13 realm not implemented
-    this.parseOptions = {};
   }
 
   function Module() {}

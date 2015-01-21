@@ -14,7 +14,6 @@ before_install:
 script:
   - grunt
   - npm test
-  - npm run test:browsers -- --polyfill
-  - npm run test:browsers -- --saucelabs
-  - npm run test:browsers -- --saucelabs --ie8
-  - npm run test:browsers:perf
+  - npm run test:browser -- --polyfill
+  - npm run test:browser -- --saucelabs
+  - npm run test:browser -- --saucelabs --ie8

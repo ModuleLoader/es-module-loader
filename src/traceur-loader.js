@@ -28,7 +28,7 @@
 
     console.assert(load.source, 'Non-empty source');
 
-    var options = this.parseOptions || {};
+    var options = this.traceurOptions || {};
     options.modules = 'instantiate';
     options.script = false;
     options.sourceMaps = 'inline';

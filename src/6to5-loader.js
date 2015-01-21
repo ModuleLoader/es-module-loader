@@ -17,13 +17,12 @@
         throw new TypeError('Include 6to5 for module syntax support');
     }
 
-    var options = this.parseOptions || {};
+    var options = this.to5Options || {};
     options.modules = 'system';
     options.sourceMap = 'inline';
     options.filename = load.address;
     options.code = true;
     options.ast = false;
-    options.runtime = true;
 
     var source = to5.transform(load.source, options).code;
 
@@ -32,7 +31,7 @@
 
     // add "!eval" to end of 6to5 sourceURL
     // I believe this does something?
-    source = 'var __moduleAddress = "' + load.address + '";' + source + '!eval';
+    source = 'var __moduleAddress = "' + load.address + '";' + source + '\n//# sourceURL=' + load.address + '!eval';
 
     __eval(source, __global, load);
   }

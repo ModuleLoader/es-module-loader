@@ -60,7 +60,7 @@ if (typeof window != 'undefined') {
 }
 else {
   // nodejs
-  var ml = require('../lib');
+  var ml = require('../lib/index-' + process.env.es6compiler);
 
   process.on('uncaughtException', function(err) {
     console.log('Caught: ' + err);
@@ -75,6 +75,8 @@ else {
     completeTest: function(id, name, failure, summary) {
       console.log(name + ': ' + (!failure ? 'Passed' : 'Failed: ' + failure));
       console.log(summary.passed + '/' + summary.total + ' passed. ');
+      if (failure)
+        process.exit(1);
     },
   };
 
