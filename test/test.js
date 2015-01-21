@@ -62,6 +62,9 @@ else {
   // nodejs
   var ml = require('../lib/index-' + process.env.es6compiler);
 
+  if (process.env.es6compiler == '6to5')
+    require('regenerator/runtime');
+
   process.on('uncaughtException', function(err) {
     console.log('Caught: ' + err);
   });
@@ -334,6 +337,8 @@ function runTests() {
     });
   });
 
+  // test not enabled for 6to5
+  if (typeof traceur == 'undefined')
   test('Export Star 2', function(assert) {
     System['import']('syntax/export-star2').then(function(m) {
       assert(
@@ -605,7 +610,7 @@ function runTests() {
     assert(System instanceof Reflect.Loader, true);
   });
 
-  if (Worker)
+  if (typeof Worker != 'undefined')
   test('Loading inside of a Web Worker', function(assert) {
     var worker = new Worker('worker/worker-' + (typeof traceur != 'undefined' ? 'traceur' : '6to5') + '.js');
 
