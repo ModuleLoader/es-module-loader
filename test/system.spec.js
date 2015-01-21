@@ -375,7 +375,7 @@ describe('System', function () {
     typeof window != 'undefined' && window.Worker,
     'with Web Worker', function () {
       it('should loading inside of a Web Worker', function (done) {
-        var worker = new Worker(System.baseURL + 'test/worker/worker.js');
+        var worker = new Worker(System.baseURL + 'test/worker/worker-' + (typeof traceur != 'undefined' ? 'traceur' : '6to5') + '.js');
 
         worker.onmessage = function (e) {
           expect(e.data).to.be.equal('p');

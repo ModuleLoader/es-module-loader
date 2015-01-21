@@ -1,6 +1,6 @@
 importScripts("../../node_modules/traceur/bin/traceur.js",
              "../../node_modules/when/es6-shim/Promise.js",
-             "../../dist/es6-module-loader.js");
+             "../../dist/es6-module-loader-traceur.js");
 
 System['import']('es6').then(function(m) {
   postMessage(m.p);

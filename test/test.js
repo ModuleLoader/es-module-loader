@@ -607,7 +607,7 @@ function runTests() {
 
   if (Worker)
   test('Loading inside of a Web Worker', function(assert) {
-    var worker = new Worker('worker/worker.js');
+    var worker = new Worker('worker/worker-' + (typeof traceur != 'undefined' ? 'traceur' : '6to5') + '.js');
 
     worker.onmessage = function(e) {
       assert(e.data, 'p');
