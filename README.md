@@ -112,6 +112,27 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 _Also, please don't edit files in the "dist" subdirectory as they are generated via grunt. You'll find source code in the "lib" subdirectory!_
 
+## Testing
+
+- `npm run test:node` will use node to  to run the tests
+- `npm run test:browsers` will use karma to run the tests
+- `npm run test:browsers:perf` will use karma to run benchmarks
+- `npm test` run `npm run test:node && npm run test:browsers`
+
+`npm run test:browsers` supports options after a double dash (`--`) :
+
+- You can use the `--polyfill` option to test ths code with polyfill.
+
+- You can use the `--ie8` option to test ths code in the ie8 scope only.
+
+- You can use the `--saucelabs` option to use karma and saucelabs to run the tests in various browsers.
+Note: you will need to export your username and key to launch it.
+
+  ```sh
+  export SAUCE_USERNAME={your user name} && export SAUCE_ACCESS_KEY={the access key that you see once logged in}
+  npm run test:browsers -- --saucelabs
+  ```
+
 ## Credit
 Copyright (c) 2014 Luke Hoban, Addy Osmani, Guy Bedford
 
