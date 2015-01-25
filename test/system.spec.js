@@ -406,4 +406,16 @@ describe('System', function () {
       });
 
     });
+
+  describeIf(
+    typeof window != 'undefined',
+    'with script type "module"', function () {
+      it('should load the module on the document "load" event', function (done) {
+        setTimeout(function(){ // wait for script processing first
+          expect(window.anon).to.be.a('function');
+          done();
+        }, 0);
+      });
+
+    });
 });

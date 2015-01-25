@@ -38,6 +38,7 @@ module.exports = function (config) {
     + '.src.js',
 
     'test/_browser.js',
+    'test/browser-script-type-module.js',
     'test/custom-loader.js',
 
     [!options.ie8 ? 'test/*.spec.js' : 'test/*.normalize.spec.js'],
