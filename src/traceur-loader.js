@@ -15,6 +15,8 @@
       throw e[0];
     }
   }
+
+  Loader.prototype.parser = 'traceur';
   Loader.prototype.parse = function(load) {
     if (!traceur) {
       if (typeof window == 'undefined' &&

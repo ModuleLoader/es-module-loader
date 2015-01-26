@@ -6,6 +6,8 @@
   // Returns an array of ModuleSpecifiers
   var to5;
 
+  Loader.prototype.parser = '6to5';
+
   Loader.prototype.parse = function(load) {
     if (!to5) {
       if (typeof window == 'undefined' &&
