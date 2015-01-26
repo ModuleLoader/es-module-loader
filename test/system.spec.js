@@ -203,7 +203,7 @@ describe('System', function () {
 
 
       it('Unhandled rejection test', function (done) {
-        System.import('test/loads/load-non-existet')
+        System.import('test/loads/load-non-existent')
           .then(supposeToFail)
           .catch(function (e) {
             expect(e).to.be.match(/Error loading "\S+" at \S+/);
@@ -283,7 +283,7 @@ describe('System', function () {
           .then(done, done);
       });
 
-      it('should support re-exporting overwriting', function (done) {
+      (typeof traceur == 'undefined' ? it.skip : it)('should support re-exporting overwriting', function (done) {
         System.import('test/syntax/export-star2')
           .then(function (m) {
             expect(m.bar, 'should re-export "./export-star" bar variable')
