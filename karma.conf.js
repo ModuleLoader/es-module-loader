@@ -17,7 +17,8 @@ var options = extend({
   travis: process.env.TRAVIS,
   polyfill: false,
   saucelabs: false,
-  ie8: false
+  ie8: false,
+  coverage: false
 }, argv);
 
 if (options.ie8){
@@ -55,6 +56,20 @@ module.exports = function (config) {
     reporters: ['mocha'],
     browsers: ['Chrome', 'Firefox']
   });
+
+  if (options.coverage) {
+    config.set({
+      reporters: ['mocha', 'coverage'],
+      preprocessors: {
+        'dist/es6-module-loader*.src.js': ['coverage']
+      },
+      coverageReporter: {
+        type : 'html',
+        dir : 'coverage/'
+      },
+      browsers: ['Chrome']
+    });
+  }
 
   if (options.travis) {
     // TRAVIS config overwrite

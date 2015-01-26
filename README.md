@@ -123,6 +123,8 @@ _Also, please don't edit files in the "dist" subdirectory as they are generated 
 
 - You can use the `--polyfill` option to test the code with polyfill.
 
+- You can use the `--coverage` option to test and extract coverage info.
+
 - You can use the `--ie8` option to test the code in the ie8 scope only.
 
 - You can use the `--saucelabs` option to use karma and saucelabs to run the tests in various browsers.
