@@ -15,8 +15,6 @@ script:
   - grunt
   - npm test
   - npm run test:browsers -- --polyfill
-
-after_script:
   - npm run test:browsers -- --saucelabs
   - npm run test:browsers -- --saucelabs --ie8
   - npm run test:browsers:perf
