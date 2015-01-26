@@ -16,27 +16,6 @@ describe('System', function () {
 
   });
 
-  describe('#locate', function () {
-
-    beforeEach(function () {
-      System.baseURL = 'http://example.org/a/';
-    });
-
-    it('should resolve paths', function () {
-      expect(System.locate({name: '@abc/def'}))
-        .to.equal('http://example.org/a/@abc/def.js');
-      expect(System.locate({name: ' abc/def'}))
-        .to.equal('http://example.org/a/abc/def.js');
-    });
-
-    it('should resolve paths with the existing config', function () {
-      System.paths['path/*'] = '/test/*.js';
-      expect(System.locate({name: 'path/test'}))
-        .to.equal('http://example.org/test/test.js');
-    });
-
-  });
-
   describe('#import', function () {
 
     describe('an ES5 script', function () {
