@@ -46,7 +46,7 @@ module.exports = function(config) {
 
     {pattern: 'test/{loader,loads,syntax,worker}/**/*', included: false},
     {pattern: 'node_modules/when/es6-shim/Promise.js', included: false},
-    {pattern: 'dist/es6-module-loader.js', included: false}
+    {pattern: 'dist/es6-module-loader*.js', included: false}
   ];
 
   // Default Config
@@ -59,7 +59,7 @@ module.exports = function(config) {
     client: {
       mocha: {
         reporter: 'html',
-        timeout: 10000
+        timeout: 8000
       }
     }
   });
