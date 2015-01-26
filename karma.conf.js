@@ -54,7 +54,13 @@ module.exports = function (config) {
     frameworks: ['mocha', 'expect'],
     files: flatten(files),
     reporters: ['mocha'],
-    browsers: ['Chrome', 'Firefox']
+    browsers: ['Chrome', 'Firefox'],
+    client: {
+      mocha: {
+        reporter: 'html',
+        timeout: 5000
+      }
+    }
   });
 
   if (options.coverage) {

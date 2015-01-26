@@ -3,6 +3,11 @@
 (function (__global){
   'use strict';
 
+  if(!__global.console){
+    __global.console = { log : __global.dump || function (){} };
+  }
+
+
   /**
    * Describe a block if the bool is true.
    * Will skip it otherwise.
