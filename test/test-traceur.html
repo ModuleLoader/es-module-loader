@@ -9,13 +9,14 @@
   <script src="../node_modules/traceur/bin/traceur.js"></script>
 
   <script>
+    System.parser = 'traceur';
     // test promise polyfill
     // delete window.Promise;
   </script>
 
   <script src="../node_modules/when/es6-shim/Promise.js"></script>
 
-  <script src="../dist/es6-module-loader-traceur.src.js"></script>
+  <script src="../dist/es6-module-loader.src.js"></script>
   <script>
     // test parseOptions and anonymous errors
     // System.parseOptions = { classes: false };

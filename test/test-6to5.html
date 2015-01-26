@@ -10,13 +10,14 @@
   <script src="../node_modules/regenerator/runtime.js"></script>
 
   <script>
+    System.parser = '6to5';
     // test promise polyfill
     // delete window.Promise;
   </script>
 
   <script src="../node_modules/when/es6-shim/Promise.js"></script>
 
-  <script src="../dist/es6-module-loader-6to5.src.js"></script>
+  <script src="../dist/es6-module-loader.src.js"></script>
   <script>
     // test parseOptions and anonymous errors
     // System.parseOptions = { classes: false };

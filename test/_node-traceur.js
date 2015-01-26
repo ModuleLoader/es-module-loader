@@ -4,7 +4,9 @@ global.expect = require('expect.js');
 
 require('./_helper');
 
-require('../lib/index-traceur');
+global.System = require('../lib/index-traceur').System;
+
+System.parser = 'traceur';
 
 require('./system.spec');
 

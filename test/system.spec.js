@@ -1,5 +1,8 @@
 //
 
+if (typeof to5 != 'undefined')
+  System.parser = '6to5';
+
 describe('System', function () {
 
   var originBaseUrl = System.baseURL;
@@ -283,7 +286,7 @@ describe('System', function () {
           .then(done, done);
       });
 
-      (typeof traceur == 'undefined' ? it.skip : it)('should support re-exporting overwriting', function (done) {
+      (System.parser != 'traceur' ? it.skip : it)('should support re-exporting overwriting', function (done) {
         System.import('test/syntax/export-star2')
           .then(function (m) {
             expect(m.bar, 'should re-export "./export-star" bar variable')
@@ -375,7 +378,7 @@ describe('System', function () {
     typeof window != 'undefined' && window.Worker,
     'with Web Worker', function () {
       it('should loading inside of a Web Worker', function (done) {
-        var worker = new Worker(System.baseURL + 'test/worker/worker-' + (typeof traceur != 'undefined' ? 'traceur' : '6to5') + '.js');
+        var worker = new Worker(System.baseURL + 'test/worker/worker-' + System.parser + '.js');
 
         worker.onmessage = function (e) {
           expect(e.data).to.be.equal('p');

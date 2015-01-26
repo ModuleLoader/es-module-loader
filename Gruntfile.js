@@ -20,47 +20,28 @@ module.exports = function (grunt) {
     concat: {
       dist: {
         files: {
-          'dist/<%= pkg.name %>-traceur.src.js': [
+          'dist/<%= pkg.name %>.src.js': [
             'node_modules/when/es6-shim/Promise.js',
             'src/polyfill-wrapper-start.js',
-            'dist/<%= pkg.name %>-traceur.js',
+            'dist/<%= pkg.name %>.js',
             'src/polyfill-wrapper-end.js'
           ],
-          'dist/<%= pkg.name %>-6to5.src.js': [
-            'node_modules/when/es6-shim/Promise.js',
+          'dist/<%= pkg.name %>-sans-promises.src.js': [
             'src/polyfill-wrapper-start.js',
-            'dist/<%= pkg.name %>-6to5.js',
-            'src/polyfill-wrapper-end.js'
-          ],
-          'dist/<%= pkg.name %>-traceur-sp.src.js': [
-            'src/polyfill-wrapper-start.js',
-            'dist/<%= pkg.name %>-traceur.js',
-            'src/polyfill-wrapper-end.js'
-          ],
-          'dist/<%= pkg.name %>-6to5-sp.src.js': [
-            'src/polyfill-wrapper-start.js',
-            'dist/<%= pkg.name %>-6to5.js',
+            'dist/<%= pkg.name %>.js',
             'src/polyfill-wrapper-end.js'
           ]
         }
       }
     },
     esnext: {
-      distTraceur: {
+      dist: {
         src: [
           'src/loader.js',
-          'src/traceur-loader.js',
+          'src/parser.js',
           'src/system.js'
         ],
-        dest: 'dist/<%= pkg.name %>-traceur.js'
-      },
-      dist6to5: {
-        src: [
-          'src/loader.js',
-          'src/6to5-loader.js',
-          'src/system.js'
-        ],
-        dest: 'dist/<%= pkg.name %>-6to5.js'
+        dest: 'dist/<%= pkg.name %>.js'
       }
     },
     'string-replace': {
@@ -89,27 +70,16 @@ module.exports = function (grunt) {
         },
         sourceMap: true
       },
-      distTraceur: {
+      dist: {
         options: {
           banner: '<%= meta.banner %>\n'
         },
-        src: 'dist/<%= pkg.name %>-traceur.src.js',
-        dest: 'dist/<%= pkg.name %>-traceur.js'
+        src: 'dist/<%= pkg.name %>.src.js',
+        dest: 'dist/<%= pkg.name %>.js'
       },
-      dist6to5: {
-        options: {
-          banner: '<%= meta.banner %>\n'
-        },
-        src: 'dist/<%= pkg.name %>-6to5.src.js',
-        dest: 'dist/<%= pkg.name %>-6to5.js'
-      },
-      distTraceurSansPromises: {
-        src: 'dist/<%= pkg.name %>-traceur-sp.src.js',
-        dest: 'dist/<%= pkg.name %>-traceur-sp.js'
-      },
-      dist6to5SansPromises: {
-        src: 'dist/<%= pkg.name %>-6to5-sp.src.js',
-        dest: 'dist/<%= pkg.name %>-6to5-sp.js'
+      distSansPromises: {
+        src: 'dist/<%= pkg.name %>-sans-promises.src.js',
+        dest: 'dist/<%= pkg.name %>-sans-promises.js'
       }
     }
   });

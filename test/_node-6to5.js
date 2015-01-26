@@ -4,7 +4,11 @@ global.expect = require('expect.js');
 
 require('./_helper');
 
-require('../lib/index-6to5');
+require('regenerator/runtime');
+
+global.System = require('../lib/index-6to5').System;
+
+System.parser = '6to5';
 
 require('./system.spec');
 
