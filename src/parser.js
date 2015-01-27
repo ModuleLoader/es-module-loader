@@ -4,7 +4,7 @@
 (function(Loader) {
   // parse function is used to parse a load record
   // Returns an array of ModuleSpecifiers
-  var parser, parserName, parserOptionsName;
+  var parser, parserModule, parserName, parserOptionsName;
 
   // use Traceur by default
   Loader.prototype.parser = 'traceur';
@@ -15,17 +15,17 @@
 
       // try to pick up parser from global or require
       if (typeof window == 'undefined' && typeof WorkerGlobalScope == 'undefined')
-        parser = require(this.parser);
+        parserModule = require(this.parser);
       else
-        parser = __global[parserName]
+        parserModule = __global[parserName];
       
-      if (!parser)
+      if (!parserModule)
         throw new TypeError('Include Traceur or 6to5 for module syntax support');
 
-      parserOptionsName = parserName + 'Options';
+      parser = this.parser == '6to5' ? to5Parse : traceurParse;
     }
 
-    var source = (this.parser == '6to5' ? to5Parse : traceurParse).call(this, load);
+    var source = parser.call(this, load);
 
     source = 'var __moduleAddress = "' + load.address + '";' + source;
 
@@ -39,7 +39,7 @@
     options.sourceMaps = 'inline';
     options.filename = load.address;
 
-    var compiler = new parser.Compiler(options);
+    var compiler = new parserModule.Compiler(options);
     var source = doTraceurCompile(load.source, compiler, options.filename);
 
     // add "!eval" to end of Traceur sourceURL
@@ -66,7 +66,7 @@
     options.code = true;
     options.ast = false;
 
-    var source = parser.transform(load.source, options).code;
+    var source = parserModule.transform(load.source, options).code;
 
     // add "!eval" to end of 6to5 sourceURL
     // I believe this does something?
