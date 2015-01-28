@@ -98,11 +98,15 @@ module.exports = function(config) {
 
   if (options.saucelabs) {
 
-    var customLaunchers = geSaLaKaCuLa({
+    var customLaunchers;
+
+    /*
+    customLaunchers = geSaLaKaCuLa({
       'Windows 7': {
-        'internet explorer': '10..11'
+        'internet explorer': '9..11'
       }
     });
+    */
 
     if (options.ie8) {
       customLaunchers = geSaLaKaCuLa({
