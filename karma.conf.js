@@ -100,6 +100,7 @@ module.exports = function(config) {
 
     var customLaunchers;
 
+    // IE tests disabled for now
     /*
     customLaunchers = geSaLaKaCuLa({
       'Windows 7': {
