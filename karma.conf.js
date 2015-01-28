@@ -113,7 +113,7 @@ module.exports = function(config) {
     var buildData = options.travis ?
     {
       location: 'TRAVIS',
-      name: process.env.TRAVIS_BUILD_NUMBER,
+      name: process.env.TRAVIS_JOB_NUMBER,
       id: process.env.TRAVIS_BUILD_ID
     }
       :
