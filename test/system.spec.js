@@ -3,6 +3,8 @@
 if (typeof to5 != 'undefined')
   System.parser = '6to5';
 
+var ie = typeof window != 'undefined' && window.navigator.userAgent.match(/Trident/);
+
 describe('System', function () {
 
   var originBaseUrl = System.baseURL;
@@ -377,7 +379,7 @@ describe('System', function () {
   describeIf(
     typeof window != 'undefined' && window.Worker,
     'with Web Worker', function () {
-      it('should loading inside of a Web Worker', function (done) {
+      (ie ? it.skip : it)('should loading inside of a Web Worker', function (done) {
         var worker = new Worker(System.baseURL + 'test/worker/worker-' + System.parser + '.js');
 
         worker.onmessage = function (e) {

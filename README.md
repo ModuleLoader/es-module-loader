@@ -5,19 +5,17 @@ Dynamically loads ES6 modules in browsers and [NodeJS](#nodejs-use) with support
 This project implements dynamic module loading through `System` exactly to the previous ES6-specified loader API at [2014-08-24 ES6 Specification Draft Rev 27, Section 15](http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts#august_24_2014_draft_rev_27) and will continue to track this API as it is re-drafted as a browser specification (currently most likely to be at https://github.com/whatwg/loader).
 
 * Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](##getting-started).
-* Uses [Traceur](https://github.com/google/traceur-compiler) for compiling ES6 modules and syntax into ES5 in the browser with source map support.
+* Supports both [Traceur](https://github.com/google/traceur-compiler) and [6to5](https://6to5.org/) for compiling ES6 modules and syntax into ES5 in the browser with source map support.
 * Fully supports [ES6 circular references and live bindings](https://github.com/ModuleLoader/es6-module-loader/wiki/Circular-References-&-Bindings).
 * Includes [`baseURL` and `paths` implementations](https://github.com/ModuleLoader/es6-module-loader/wiki/Configuring-the-Loader).
 * Can be used as a [tracing tool](https://github.com/ModuleLoader/es6-module-loader/wiki/Tracing-API) for static analysis of modules.
 * Polyfills ES6 Promises in the browser with an optionally bundled ES6 promise implementation.
-* Supports ES6 module loading in IE8+. Other ES6 features only supported by Traceur in IE9+.
+* Supports IE8+, with IE9+ support for ES6 development without pre-compilation.
 * The complete combined polyfill, including ES6 promises, comes to 9KB minified and gzipped, making it suitable for production use, provided that modules are [built into ES5 making them independent of Traceur](https://github.com/ModuleLoader/es6-module-loader/wiki/Production-Workflows).
 
 For an overview of build workflows, [see the production guide](https://github.com/ModuleLoader/es6-module-loader/wiki/Production-Workflows).
 
 For an example of a universal module loader based on this polyfill for loading AMD, CommonJS and globals, see [SystemJS](https://github.com/systemjs/systemjs).
-
-_The current version is tested against **[Traceur 0.0.79](https://github.com/google/traceur-compiler/tree/0.0.79)**._
 
 ### Documentation
 
@@ -30,9 +28,7 @@ _The current version is tested against **[Traceur 0.0.79](https://github.com/goo
 
 ### Getting Started
 
-Download both [es6-module-loader.js](https://raw.githubusercontent.com/ModuleLoader/es6-module-loader/v0.11.0/dist/es6-module-loader.js) and traceur.js into the same folder.
-
-If using ES6 syntax (optional), include [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.79/traceur.js) in the page first then include `es6-module-loader.js`:
+If using ES6 syntax (optional), include `traceur.js` in the page first then include `es6-module-loader.js`:
 
 ```html
   <script src="traceur.js"></script>

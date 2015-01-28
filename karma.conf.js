@@ -25,6 +25,9 @@ if (options.ie8) {
   console.log('IE8 Mode !\n - polyfill required\n');
   options.polyfill = true;
 }
+if (options.saucelabs) {
+  options.polyfill = true;
+}
 
 ////
 

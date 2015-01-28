@@ -15,8 +15,8 @@ before_install:
 script:
   - grunt
   - npm test
-  - npm run test:browser-traceur -- --polyfill
-  - npm run test:browser-6to5 -- --polyfill
+  - npm run test:browser-traceur
+  - npm run test:browser-6to5
   - npm run test:browser-traceur -- --saucelabs
   - npm run test:browser-6to5 -- --saucelabs
   - npm run test:browser-traceur -- --saucelabs --ie8

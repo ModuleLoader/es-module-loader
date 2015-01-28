@@ -1,11 +1,13 @@
 //
 
+var ie = typeof window != 'undefined' && window.navigator.userAgent.match(/Trident/);
+
 describe('Custom Loader', function () {
 
   describe('#import', function () {
 
     describe('scripts', function () {
-      it('should support ES6 scripts', function (done) {
+      (ie ? it.skip : it)('should support ES6 scripts', function (done) {
         customLoader.import('test/loader/test')
           .then(function (m) {
             expect(m.loader).to.be.equal('custom');
@@ -13,7 +15,7 @@ describe('Custom Loader', function () {
           .then(done, done)
       });
 
-      it('should support AMD scripts', function (done) {
+      (ie ? it.skip : it)('should support AMD scripts', function (done) {
         customLoader.import('test/loader/amd')
           .then(function (m) {
             expect(m.format).to.be.equal('amd');
