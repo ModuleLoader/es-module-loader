@@ -28,14 +28,22 @@ For an example of a universal module loader based on this polyfill for loading A
 
 ### Getting Started
 
-If using ES6 syntax (optional), include `traceur.js` in the page first then include `es6-module-loader.js`:
+If using ES6 syntax (optional), include `traceur.js` or `6to5.js` in the page first then include `es6-module-loader.js`:
 
 ```html
   <script src="traceur.js"></script>
   <script src="es6-module-loader.js"></script>
 ```
 
-Write an ES6 module:
+To use 6to5, set the parser to `6to5` with the loader configuration:
+
+```html
+<script>
+  System.parser = '6to5';
+</script>
+```
+
+Then we can write any ES6 module:
 
 mymodule.js:
 ```javascript
@@ -46,7 +54,7 @@ mymodule.js:
   }
 ```
 
-We can then load the module with the dynamic loader:
+and load the module dynamically in the browser
 
 ```html
 <script>
@@ -86,6 +94,11 @@ For use in NodeJS, the `Loader` and `System` globals are provided as exports:
 index.js:
 ```javascript
   var System = require('es6-module-loader').System;
+  /*  
+   *  Include:
+   *    System.parser = '6to5'; 
+   *  to use 6to5 instead of Traceur
+   */
 
   System.import('some-module').then(function(m) {
     console.log(m.p);
@@ -132,7 +145,7 @@ Note: you will need to export your username and key to launch it.
   ```
 
 ## Credit
-Copyright (c) 2014 Luke Hoban, Addy Osmani, Guy Bedford
+Copyright (c) 2015 Luke Hoban, Addy Osmani, Guy Bedford
 
 ## License
 Licensed under the MIT license.
