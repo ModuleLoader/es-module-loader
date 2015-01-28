@@ -64,7 +64,7 @@ describe('System', function () {
           .then(done, done);
       });
 
-      it('should import an ES6 script with a generator', function (done) {
+      (ie ? it.skip : it)('should import an ES6 script with a generator', function (done) {
         System.import('test/syntax/es6-generator')
           .then(function (m) {
             expect(!!m.generator).to.be.ok();
