@@ -124,11 +124,11 @@ _Also, please don't edit files in the "dist" subdirectory as they are generated 
 ## Testing
 
 - `npm run test:node` will use node to  to run the tests
-- `npm run test:browsers` will use karma to run the tests
-- `npm run test:browsers:perf` will use karma to run benchmarks
-- `npm test` run `npm run test:node && npm run test:browsers`
+- `npm run test:browser` will run `npm run test:browser-6to5` and `npm run test:browser-traceur`
+- `npm run test:browser-[parser]` use karma to run the tests with traceur or 6to5.
+- `npm run test:browser:perf` will use karma to run benchmarks
 
-`npm run test:browsers` supports options after a double dash (`--`) :
+`npm run test:browser-[parser]` supports options after a double dash (`--`) :
 
 - You can use the `--polyfill` option to test the code with polyfill.
 
