@@ -97,7 +97,7 @@ describe('System', function () {
 
     describe('with circular dependencies', function () {
 
-      it('should resolve circular dependencies', function (done) {
+      (System.parser == 'traceur' ? it : it.skip)('should resolve circular dependencies', function (done) {
         System.import('test/syntax/circular1')
           .then(function (m1) {
             return System.import('test/syntax/circular2').then(function (m2) {
