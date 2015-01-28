@@ -98,16 +98,15 @@ module.exports = function(config) {
 
   if (options.saucelabs) {
 
-    var customLaunchers;
-
-    // IE tests disabled for now
-    /*
-    customLaunchers = geSaLaKaCuLa({
+    var customLaunchers = geSaLaKaCuLa({
       'Windows 7': {
         'internet explorer': '9..11'
       }
     });
-    */
+    
+
+    // IE tests disabled for now (https://github.com/ModuleLoader/es6-module-loader/issues/295)
+    customLaunchers = undefined;
 
     if (options.ie8) {
       customLaunchers = geSaLaKaCuLa({
@@ -143,18 +142,20 @@ module.exports = function(config) {
       browserNoActivityTimeout: 30000,
       captureTimeout: 120000,
 
-      browsers: Object.keys(customLaunchers),
       sauceLabs: {
         testName: pkg.name,
         recordScreenshots: false,
         build: build,
         tunnelIdentifier: options.travis ?
           process.env.TRAVIS_JOB_NUMBER : Math.floor(Math.random() * 1000)
-      },
-      customLaunchers: customLaunchers
+      }
     });
 
-
+    if (customLaunchers)
+      config.set({
+        browsers: Object.keys(customLaunchers),
+        customLaunchers: customLaunchers
+      });
   }
 };
 
