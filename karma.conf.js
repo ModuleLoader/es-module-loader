@@ -97,7 +97,7 @@ module.exports = function(config) {
 
     var customLaunchers = geSaLaKaCuLa({
       'Windows 7': {
-        'internet explorer': '9..11'
+        'internet explorer': '10..11'
       }
     });
 
