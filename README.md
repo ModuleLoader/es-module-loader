@@ -66,6 +66,20 @@ and load the module dynamically in the browser
 
 The dynamic loader returns a `Module` object, which contains getters for the named exports (in this case, `q`).
 
+#### Setting transpilation options
+
+If using Traceur, these can be set with:
+
+```javascript
+System.traceurOptions = {...};
+```
+
+Or with 6to5:
+
+```javascript
+System.to5Options = {...};
+```
+
 #### Module Tag
 
 As well as defining `window.System`, this polyfill provides support for the `<script type="module">` tag:
