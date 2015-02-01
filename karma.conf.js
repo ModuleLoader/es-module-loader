@@ -37,7 +37,7 @@ module.exports = function(config) {
     'test/_helper.js',
     [options['6to5'] ? 'node_modules/regenerator/runtime.js' : ''],
 
-    [!options.ie8 ? (!options['6to5'] ? 'node_modules/traceur/bin/traceur.js' : 'node_modules/6to5/browser.js') : ''],
+    [!options.ie8 ? (!options['6to5'] ? 'node_modules/traceur/bin/traceur.js' : 'node_modules/6to5-core/browser.js') : ''],
 
     'dist/es6-module-loader' + (options.polyfill ? '' : '-sans-promises') + '.src.js',
 

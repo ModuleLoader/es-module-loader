@@ -251,8 +251,7 @@ function logloads(loads) {
 
         // instead of load.kind, use load.isDeclarative
         load.isDeclarative = true;
-        // parse sets load.declare, load.depsList
-        loader.loaderObj.parse(load);
+        __eval(loader.loaderObj.transpile(load), __global, load);
       }
       else if (typeof instantiateResult == 'object') {
         load.depsList = instantiateResult.deps || [];
@@ -1046,9 +1045,6 @@ function logloads(loads) {
     // 26.3.3.18.4
     translate: function(load) {
       return load.source;
-    },
-    parse: function(load) {
-      throw new TypeError('Loader.parse is not implemented');
     },
     // 26.3.3.18.5
     instantiate: function(load) {
