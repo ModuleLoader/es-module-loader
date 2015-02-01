@@ -63,7 +63,7 @@
     "test:browser:perf": "karma start karma-benchmark.conf.js --single-run"
   },
   "dependencies": {
-    "6to5": "^3.0.0",
+    "6to5-core": "~3.3.1",
     "grunt-contrib-uglify": "0.6.0",
     "traceur": "0.0.82",
     "when": "^3.6.4"

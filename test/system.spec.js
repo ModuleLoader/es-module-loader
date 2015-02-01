@@ -1,7 +1,7 @@
 //
 
 if (typeof to5 != 'undefined')
-  System.parser = '6to5';
+  System.transpiler = '6to5';
 
 var ie = typeof window != 'undefined' && window.navigator.userAgent.match(/Trident/);
 
@@ -99,7 +99,7 @@ describe('System', function () {
 
     describe('with circular dependencies', function () {
 
-      (System.parser == 'traceur' ? it : it.skip)('should resolve circular dependencies', function (done) {
+      (System.transpiler == 'traceur' ? it : it.skip)('should resolve circular dependencies', function (done) {
         System.import('test/syntax/circular1')
           .then(function (m1) {
             return System.import('test/syntax/circular2').then(function (m2) {
@@ -288,7 +288,7 @@ describe('System', function () {
           .then(done, done);
       });
 
-      (System.parser != 'traceur' ? it.skip : it)('should support re-exporting overwriting', function (done) {
+      (System.transpiler != 'traceur' ? it.skip : it)('should support re-exporting overwriting', function (done) {
         System.import('test/syntax/export-star2')
           .then(function (m) {
             expect(m.bar, 'should re-export "./export-star" bar variable')
@@ -380,7 +380,7 @@ describe('System', function () {
     typeof window != 'undefined' && window.Worker,
     'with Web Worker', function () {
       (ie ? it.skip : it)('should loading inside of a Web Worker', function (done) {
-        var worker = new Worker(System.baseURL + 'test/worker/worker-' + System.parser + '.js');
+        var worker = new Worker(System.baseURL + 'test/worker/worker-' + System.transpiler + '.js');
 
         worker.onmessage = function (e) {
           expect(e.data).to.be.equal('p');
