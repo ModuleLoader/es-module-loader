@@ -35,11 +35,11 @@ If using ES6 syntax (optional), include `traceur.js` or `6to5.js` in the page fi
   <script src="es6-module-loader.js"></script>
 ```
 
-To use 6to5, set the parser to `6to5` with the loader configuration:
+To use 6to5, set the transpiler to `6to5` with the loader configuration:
 
 ```html
 <script>
-  System.parser = '6to5';
+  System.transpiler = '6to5';
 </script>
 ```
 
@@ -96,7 +96,7 @@ index.js:
   var System = require('es6-module-loader').System;
   /*  
    *  Include:
-   *    System.parser = '6to5'; 
+   *    System.transpiler = '6to5'; 
    *  to use 6to5 instead of Traceur
    */
 
@@ -125,10 +125,10 @@ _Also, please don't edit files in the "dist" subdirectory as they are generated 
 
 - `npm run test:node` will use node to  to run the tests
 - `npm run test:browser` will run `npm run test:browser-6to5` and `npm run test:browser-traceur`
-- `npm run test:browser-[parser]` use karma to run the tests with traceur or 6to5.
+- `npm run test:browser-[transpiler]` use karma to run the tests with traceur or 6to5.
 - `npm run test:browser:perf` will use karma to run benchmarks
 
-`npm run test:browser-[parser]` supports options after a double dash (`--`) :
+`npm run test:browser-[transpiler]` supports options after a double dash (`--`) :
 
 - You can use the `--polyfill` option to test the code with polyfill.
 
