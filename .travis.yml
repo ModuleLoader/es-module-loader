@@ -18,10 +18,10 @@ matrix:
       env: SAUCE_LABS=true PARSER="traceur"
     - node_js: "0.10"
       env: SAUCE_LABS=true PARSER="6to5"
-    - node_js: "0.10"
-      env: SAUCE_LABS=true PARSER="traceur" OPTIONS="--ie8"
-    - node_js: "0.10"
-      env: SAUCE_LABS=true PARSER="6to5" OPTIONS="--ie8"
+#    - node_js: "0.10"
+#      env: SAUCE_LABS=true PARSER="traceur" OPTIONS="--ie8"
+#    - node_js: "0.10"
+#      env: SAUCE_LABS=true PARSER="6to5" OPTIONS="--ie8"
 before_install:
   - export CHROME_BIN=chromium-browser
   - export DISPLAY=:99.0
