@@ -1,5 +1,5 @@
 /*
- *  es6-module-loader v0.13.0
+ *  es6-module-loader v0.13.1
  *  https://github.com/ModuleLoader/es6-module-loader
  *  Copyright (c) 2015 Guy Bedford, Luke Hoban, Addy Osmani; Licensed MIT
  */

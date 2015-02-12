@@ -1,7 +1,7 @@
 {
   "name": "es6-module-loader",
   "description": "An ES6 Module Loader shim",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "homepage": "https://github.com/ModuleLoader/es6-module-loader",
   "author": {
     "name": "Guy Bedford, Luke Hoban, Addy Osmani",
@@ -63,7 +63,7 @@
     "test:browser:perf": "karma start karma-benchmark.conf.js --single-run"
   },
   "dependencies": {
-    "6to5-core": "~3.3.2",
+    "6to5-core": "~3.5.3",
     "grunt-contrib-uglify": "0.6.0",
     "traceur": "0.0.82",
     "when": "^3.7.2"
