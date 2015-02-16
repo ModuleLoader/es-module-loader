@@ -361,7 +361,8 @@ function logloads(loads) {
         if (loader.loads[i].name == name) {
           existingLoad = loader.loads[i];
 
-          proceedToStepState(loader, existingLoad, stepState);
+          if(stepState.step == 'translate' && !existingLoad.source)
+            proceedToStepState(loader, existingLoad, stepState);
 
           return existingLoad.linkSets[0].done.then(function() {
             resolve(existingLoad);

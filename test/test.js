@@ -441,6 +441,34 @@ function runTests() {
     });
   });
 
+  test('should load System.define', function(assert) {
+    var oldLocate = System.locate;
+    var slaveLocatePromise = new Promise(function(resolve, reject) {
+
+      System.locate = function(load) {
+        if(load.name === 'slave') {
+          setTimeout(function() {
+            System.define('slave', 'var double = [1,2,3].map(i => i * 2);');
+            resolve('slave.js');
+          }, 1);
+          return slaveLocatePromise;
+        }
+        return oldLocate.apply(this, arguments);
+      };
+
+    });
+
+    System.import('loader/master').then(function() {
+      assert(true, true, 'Able to load');
+    }, function(err) {
+      assert('Did not resolve');
+    }).then(reset, reset);
+
+    function reset() {
+      System.locate = oldLocate;
+    }
+  });
+
   var customModules = {};
   var customFactories = {};
 
