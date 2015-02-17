@@ -60,6 +60,8 @@
     options.filename = load.address;
     options.code = true;
     options.ast = false;
+    options.blacklist = options.blacklist || [];
+    options.blacklist.push('react');
 
     var source = transpilerModule.transform(load.source, options).code;
 
