@@ -375,6 +375,36 @@ describe('System', function () {
     });
 
   });
+  
+  describe('#System.define', function () {
+
+    it('should load System.define', function(done) {
+      var oldLocate = System.locate;
+      var slaveLocatePromise = new Promise(function(resolve, reject) {
+
+        System.locate = function(load) {
+          if(load.name === 'slave') {
+            setTimeout(function() {
+              System.define('slave', 'var double = [1,2,3].map(i => i * 2);');
+              resolve('slave.js');
+            }, 1);
+            return slaveLocatePromise;
+          }
+          return oldLocate.apply(this, arguments);
+        };
+
+      });
+
+      System.import('test/loader/master').then(function(m) {
+        done()
+      }, done).then(reset, reset);
+
+      function reset() {
+        System.locate = oldLocate;
+      }
+    });
+
+  });
 
   describeIf(
     typeof window != 'undefined' && window.Worker,
