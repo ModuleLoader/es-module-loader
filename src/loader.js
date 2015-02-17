@@ -330,12 +330,27 @@ function logloads(loads) {
 
   // 15.2.4.7 PromiseOfStartLoadPartwayThrough absorbed into calling functions
 
+  function proceedToStepState(loader, load, stepState) {
+    var step = stepState.step;
+
+    if (step == 'locate')
+      proceedToLocate(loader, load);
+
+    else if (step == 'fetch')
+      proceedToFetch(loader, load, Promise.resolve(stepState.moduleAddress));
+
+    else {
+      console.assert(step == 'translate', 'translate step');
+      load.address = stepState.moduleAddress;
+      proceedToTranslate(loader, load, Promise.resolve(stepState.moduleSource));
+    }
+  }
+
   // 15.2.4.7.1
   function asyncStartLoadPartwayThrough(stepState) {
     return function(resolve, reject) {
       var loader = stepState.loader;
       var name = stepState.moduleName;
-      var step = stepState.step;
 
       if (loader.modules[name])
         throw new TypeError('"' + name + '" already exists in the module table');
@@ -345,6 +360,10 @@ function logloads(loads) {
       for (var i = 0, l = loader.loads.length; i < l; i++) {
         if (loader.loads[i].name == name) {
           existingLoad = loader.loads[i];
+
+          if(stepState.step == 'translate' && !existingLoad.source)
+            proceedToStepState(loader, existingLoad, stepState);
+
           return existingLoad.linkSets[0].done.then(function() {
             resolve(existingLoad);
           });
@@ -361,17 +380,7 @@ function logloads(loads) {
 
       resolve(linkSet.done);
 
-      if (step == 'locate')
-        proceedToLocate(loader, load);
-
-      else if (step == 'fetch')
-        proceedToFetch(loader, load, Promise.resolve(stepState.moduleAddress));
-
-      else {
-        console.assert(step == 'translate', 'translate step');
-        load.address = stepState.moduleAddress;
-        proceedToTranslate(loader, load, Promise.resolve(stepState.moduleSource));
-      }
+      proceedToStepState(loader, load, stepState);
     }
   }
 
