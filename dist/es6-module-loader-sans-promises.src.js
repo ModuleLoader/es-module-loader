@@ -381,6 +381,12 @@ function logloads(loads) {
       for (var i = 0, l = loader.loads.length; i < l; i++) {
         if (loader.loads[i].name == name) {
           existingLoad = loader.loads[i];
+
+          if(step == 'translate' && !existingLoad.source) {
+            existingLoad.address = stepState.moduleAddress;
+            proceedToTranslate(loader, existingLoad, Promise.resolve(stepState.moduleSource));
+          }
+
           return existingLoad.linkSets[0].done.then(function() {
             resolve(existingLoad);
           });
@@ -1100,7 +1106,7 @@ function logloads(loads) {
 })();
 
 /*
- * Traceur and 6to5 transpile hook for Loader
+ * Traceur and Babel transpile hook for Loader
  */
 (function(Loader) {
   // Returns an array of ModuleSpecifiers
@@ -1112,9 +1118,9 @@ function logloads(loads) {
 
   Loader.prototype.transpile = function(load) {
     if (!transpiler) {
-      if (this.transpiler == '6to5') {
-        transpiler = to5Transpile;
-        transpilerModule = isNode ? require('6to5-core') : __global.to5;
+      if (this.transpiler == 'babel') {
+        transpiler = babelTranspile;
+        transpilerModule = isNode ? require('babel-core') : __global.babel;
       }
       else {
         transpiler = traceurTranspile;
@@ -1122,7 +1128,7 @@ function logloads(loads) {
       }
       
       if (!transpilerModule)
-        throw new TypeError('Include Traceur or 6to5 for module syntax support.');
+        throw new TypeError('Include Traceur or Babel for module syntax support.');
     }
 
     return 'var __moduleAddress = "' + load.address + '";' + transpiler.call(this, load);
@@ -1154,17 +1160,19 @@ function logloads(loads) {
     }
   }
 
-  function to5Transpile(load) {
-    var options = this.to5Options || {};
+  function babelTranspile(load) {
+    var options = this.babelOptions || {};
     options.modules = 'system';
     options.sourceMap = 'inline';
     options.filename = load.address;
     options.code = true;
     options.ast = false;
+    options.blacklist = options.blacklist || [];
+    options.blacklist.push('react');
 
     var source = transpilerModule.transform(load.source, options).code;
 
-    // add "!eval" to end of 6to5 sourceURL
+    // add "!eval" to end of Babel sourceURL
     // I believe this does something?
     return source + '\n//# sourceURL=' + load.address + '!eval';
   }

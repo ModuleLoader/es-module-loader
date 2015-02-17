@@ -5,7 +5,7 @@ Dynamically loads ES6 modules in browsers and [NodeJS](#nodejs-use) with support
 This project implements dynamic module loading through `System` exactly to the previous ES6-specified loader API at [2014-08-24 ES6 Specification Draft Rev 27, Section 15](http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts#august_24_2014_draft_rev_27) and will continue to track this API as it is re-drafted as a browser specification (currently most likely to be at https://github.com/whatwg/loader).
 
 * Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#getting-started).
-* Supports both [Traceur](https://github.com/google/traceur-compiler) and [6to5](https://6to5.org/) for compiling ES6 modules and syntax into ES5 in the browser with source map support.
+* Supports both [Traceur](https://github.com/google/traceur-compiler) and [Babel](https://babel.org/) for compiling ES6 modules and syntax into ES5 in the browser with source map support.
 * Fully supports [ES6 circular references and live bindings](https://github.com/ModuleLoader/es6-module-loader/wiki/Circular-References-&-Bindings).
 * Includes [`baseURL` and `paths` implementations](https://github.com/ModuleLoader/es6-module-loader/wiki/Configuring-the-Loader).
 * Can be used as a [tracing tool](https://github.com/ModuleLoader/es6-module-loader/wiki/Tracing-API) for static analysis of modules.
@@ -28,18 +28,18 @@ For an example of a universal module loader based on this polyfill for loading A
 
 ### Getting Started
 
-If using ES6 syntax (optional), include `traceur.js` or `6to5.js` in the page first then include `es6-module-loader.js`:
+If using ES6 syntax (optional), include `traceur.js` or `babel.js` in the page first then include `es6-module-loader.js`:
 
 ```html
   <script src="traceur.js"></script>
   <script src="es6-module-loader.js"></script>
 ```
 
-To use 6to5, set the transpiler to `6to5` with the loader configuration:
+To use Babel, set the transpiler to `babel` with the loader configuration:
 
 ```html
 <script>
-  System.transpiler = '6to5';
+  System.transpiler = 'babel';
 </script>
 ```
 
@@ -74,7 +74,7 @@ If using Traceur, these can be set with:
 System.traceurOptions = {...};
 ```
 
-Or with 6to5:
+Or with Babel:
 
 ```javascript
 System.to5Options = {...};
@@ -110,8 +110,8 @@ index.js:
   var System = require('es6-module-loader').System;
   /*  
    *  Include:
-   *    System.transpiler = '6to5'; 
-   *  to use 6to5 instead of Traceur
+   *    System.transpiler = 'babel'; 
+   *  to use Babel instead of Traceur
    */
 
   System.import('some-module').then(function(m) {
@@ -138,8 +138,8 @@ _Also, please don't edit files in the "dist" subdirectory as they are generated 
 ## Testing
 
 - `npm run test:node` will use node to  to run the tests
-- `npm run test:browser` will run `npm run test:browser-6to5` and `npm run test:browser-traceur`
-- `npm run test:browser-[transpiler]` use karma to run the tests with traceur or 6to5.
+- `npm run test:browser` will run `npm run test:browser-babel` and `npm run test:browser-traceur`
+- `npm run test:browser-[transpiler]` use karma to run the tests with Traceur or Babel.
 - `npm run test:browser:perf` will use karma to run benchmarks
 
 `npm run test:browser-[transpiler]` supports options after a double dash (`--`) :

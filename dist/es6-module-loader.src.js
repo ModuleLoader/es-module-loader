@@ -52,9 +52,9 @@ define(function() {
 		this._async = async;
 		this._running = false;
 
-		this._queue = new Array(1<<16);
+		this._queue = this;
 		this._queueLen = 0;
-		this._afterQueue = new Array(1<<4);
+		this._afterQueue = {};
 		this._afterQueueLen = 0;
 
 		var self = this;
@@ -126,6 +126,7 @@ define(function(require) {
 	var format = require('../format');
 
 	return function unhandledRejection(Promise) {
+
 		var logError = noop;
 		var logInfo = noop;
 		var localConsole;
@@ -345,6 +346,7 @@ define(function() {
 	return function makePromise(environment) {
 
 		var tasks = environment.scheduler;
+		var emitRejection = initEmitRejection();
 
 		var objectCreate = Object.create ||
 			function(proto) {
@@ -811,7 +813,8 @@ define(function() {
 
 		Pending.prototype.run = function() {
 			var q = this.consumers;
-			var handler = this.join();
+			var handler = this.handler;
+			this.handler = this.handler.join();
 			this.consumers = void 0;
 
 			for (var i = 0; i < q.length; ++i) {
@@ -973,6 +976,8 @@ define(function() {
 		};
 
 		Rejected.prototype.fail = function(context) {
+			this.reported = true;
+			emitRejection('unhandledRejection', this);
 			Promise.onFatalRejection(this, context === void 0 ? this.context : context);
 		};
 
@@ -982,9 +987,10 @@ define(function() {
 		}
 
 		ReportTask.prototype.run = function() {
-			if(!this.rejection.handled) {
+			if(!this.rejection.handled && !this.rejection.reported) {
 				this.rejection.reported = true;
-				Promise.onPotentiallyUnhandledRejection(this.rejection, this.context);
+				emitRejection('unhandledRejection', this.rejection) ||
+					Promise.onPotentiallyUnhandledRejection(this.rejection, this.context);
 			}
 		};
 
@@ -994,14 +1000,14 @@ define(function() {
 
 		UnreportTask.prototype.run = function() {
 			if(this.rejection.reported) {
-				Promise.onPotentiallyUnhandledRejectionHandled(this.rejection);
+				emitRejection('rejectionHandled', this.rejection) ||
+					Promise.onPotentiallyUnhandledRejectionHandled(this.rejection);
 			}
 		};
 
 		// Unhandled rejection hooks
 		// By default, everything is a noop
 
-		// TODO: Better names: "annotate"?
 		Promise.createContext
 			= Promise.enterContext
 			= Promise.exitContext
@@ -1213,6 +1219,45 @@ define(function() {
 		}
 
 		function noop() {}
+
+		function initEmitRejection() {
+			/*global process, self, CustomEvent*/
+			if(typeof process !== 'undefined' && process !== null
+				&& typeof process.emit === 'function') {
+				// Returning falsy here means to call the default
+				// onPotentiallyUnhandledRejection API.  This is safe even in
+				// browserify since process.emit always returns falsy in browserify:
+				// https://github.com/defunctzombie/node-process/blob/master/browser.js#L40-L46
+				return function(type, rejection) {
+					return type === 'unhandledRejection'
+						? process.emit(type, rejection.value, rejection)
+						: process.emit(type, rejection);
+				};
+			} else if(typeof self !== 'undefined' && typeof CustomEvent === 'function') {
+				return (function(noop, self, CustomEvent) {
+					var hasCustomEvent = false;
+					try {
+						var ev = new CustomEvent('unhandledRejection');
+						hasCustomEvent = ev instanceof CustomEvent;
+					} catch (e) {}
+
+					return !hasCustomEvent ? noop : function(type, rejection) {
+						var ev = new CustomEvent(type, {
+							detail: {
+								reason: rejection.value,
+								key: rejection
+							},
+							bubbles: false,
+							cancelable: true
+						});
+
+						return !self.dispatchEvent(ev);
+					};
+				}(noop, self, CustomEvent));
+			}
+
+			return noop;
+		}
 
 		return Promise;
 	};
@@ -1606,6 +1651,12 @@ function logloads(loads) {
       for (var i = 0, l = loader.loads.length; i < l; i++) {
         if (loader.loads[i].name == name) {
           existingLoad = loader.loads[i];
+
+          if(step == 'translate' && !existingLoad.source) {
+            existingLoad.address = stepState.moduleAddress;
+            proceedToTranslate(loader, existingLoad, Promise.resolve(stepState.moduleSource));
+          }
+
           return existingLoad.linkSets[0].done.then(function() {
             resolve(existingLoad);
           });
@@ -2325,7 +2376,7 @@ function logloads(loads) {
 })();
 
 /*
- * Traceur and 6to5 transpile hook for Loader
+ * Traceur and Babel transpile hook for Loader
  */
 (function(Loader) {
   // Returns an array of ModuleSpecifiers
@@ -2337,9 +2388,9 @@ function logloads(loads) {
 
   Loader.prototype.transpile = function(load) {
     if (!transpiler) {
-      if (this.transpiler == '6to5') {
-        transpiler = to5Transpile;
-        transpilerModule = isNode ? require('6to5-core') : __global.to5;
+      if (this.transpiler == 'babel') {
+        transpiler = babelTranspile;
+        transpilerModule = isNode ? require('babel-core') : __global.babel;
       }
       else {
         transpiler = traceurTranspile;
@@ -2347,7 +2398,7 @@ function logloads(loads) {
       }
       
       if (!transpilerModule)
-        throw new TypeError('Include Traceur or 6to5 for module syntax support.');
+        throw new TypeError('Include Traceur or Babel for module syntax support.');
     }
 
     return 'var __moduleAddress = "' + load.address + '";' + transpiler.call(this, load);
@@ -2379,17 +2430,19 @@ function logloads(loads) {
     }
   }
 
-  function to5Transpile(load) {
-    var options = this.to5Options || {};
+  function babelTranspile(load) {
+    var options = this.babelOptions || {};
     options.modules = 'system';
     options.sourceMap = 'inline';
     options.filename = load.address;
     options.code = true;
     options.ast = false;
+    options.blacklist = options.blacklist || [];
+    options.blacklist.push('react');
 
     var source = transpilerModule.transform(load.source, options).code;
 
-    // add "!eval" to end of 6to5 sourceURL
+    // add "!eval" to end of Babel sourceURL
     // I believe this does something?
     return source + '\n//# sourceURL=' + load.address + '!eval';
   }
