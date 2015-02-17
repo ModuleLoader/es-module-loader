@@ -1,5 +1,5 @@
 /*
- * Traceur and 6to5 transpile hook for Loader
+ * Traceur and Babel transpile hook for Loader
  */
 (function(Loader) {
   // Returns an array of ModuleSpecifiers
@@ -11,9 +11,9 @@
 
   Loader.prototype.transpile = function(load) {
     if (!transpiler) {
-      if (this.transpiler == '6to5') {
-        transpiler = to5Transpile;
-        transpilerModule = isNode ? require('6to5-core') : __global.to5;
+      if (this.transpiler == 'babel') {
+        transpiler = babelTranspile;
+        transpilerModule = isNode ? require('babel-core') : __global.babel;
       }
       else {
         transpiler = traceurTranspile;
@@ -21,7 +21,7 @@
       }
       
       if (!transpilerModule)
-        throw new TypeError('Include Traceur or 6to5 for module syntax support.');
+        throw new TypeError('Include Traceur or Babel for module syntax support.');
     }
 
     return 'var __moduleAddress = "' + load.address + '";' + transpiler.call(this, load);
@@ -53,8 +53,8 @@
     }
   }
 
-  function to5Transpile(load) {
-    var options = this.to5Options || {};
+  function babelTranspile(load) {
+    var options = this.babelOptions || {};
     options.modules = 'system';
     options.sourceMap = 'inline';
     options.filename = load.address;
@@ -65,7 +65,7 @@
 
     var source = transpilerModule.transform(load.source, options).code;
 
-    // add "!eval" to end of 6to5 sourceURL
+    // add "!eval" to end of Babel sourceURL
     // I believe this does something?
     return source + '\n//# sourceURL=' + load.address + '!eval';
   }

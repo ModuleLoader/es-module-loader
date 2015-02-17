@@ -1,7 +1,7 @@
 //
 
-if (typeof to5 != 'undefined')
-  System.transpiler = '6to5';
+if (typeof babel != 'undefined')
+  System.transpiler = 'babel';
 
 var ie = typeof window != 'undefined' && window.navigator.userAgent.match(/Trident/);
 

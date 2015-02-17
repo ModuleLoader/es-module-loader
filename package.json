@@ -56,14 +56,14 @@
   "main": "lib/index-traceur",
   "scripts": {
     "test": "npm run test:node && npm run test:browser",
-    "test:node": "mocha test/_node-traceur.js && mocha test/_node-6to5.js",
-    "test:browser": "npm run test:browser-traceur && npm run test:browser-6to5",
+    "test:node": "mocha test/_node-traceur.js && mocha test/_node-babel.js",
+    "test:browser": "npm run test:browser-traceur && npm run test:browser-babel",
     "test:browser-traceur": "karma start --single-run",
-    "test:browser-6to5": "karma start --single-run --6to5",
+    "test:browser-babel": "karma start --single-run --babel",
     "test:browser:perf": "karma start karma-benchmark.conf.js --single-run"
   },
   "dependencies": {
-    "6to5-core": "~3.5.3",
+    "babel-core": "^4.1.1",
     "traceur": "0.0.82",
     "when": "^3.7.2"
   }

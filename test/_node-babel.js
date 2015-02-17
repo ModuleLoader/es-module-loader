@@ -6,9 +6,9 @@ require('./_helper');
 
 require('regenerator/runtime');
 
-global.System = require('../lib/index-6to5').System;
+global.System = require('../lib/index-babel').System;
 
-System.parser = '6to5';
+System.parser = 'babel';
 
 require('./system.spec');
 
