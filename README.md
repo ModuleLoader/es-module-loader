@@ -95,7 +95,7 @@ As well as defining `window.System`, this polyfill provides support for the `<sc
 
 Because it is only possible to load ES6 modules with this tag, it is not suitable for production use in this way.
 
-See the [demo folder](https://github.com/ModuleLoader/es6-module-loader/blob/master/demo/index.html) in this repo for a working example demonstrating both module loading the module tag in the browser.
+See the [demo folder](https://github.com/ModuleLoader/es6-module-loader/blob/master/demo/index.html) in this repo for a working example demonstrating module loading in the browser both with `System.import` and with the module-type script tag.
 
 #### NodeJS Use
 
