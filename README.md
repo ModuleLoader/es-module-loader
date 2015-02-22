@@ -5,7 +5,7 @@ Dynamically loads ES6 modules in browsers and [NodeJS](#nodejs-use) with support
 This project implements dynamic module loading through `System` exactly to the previous ES6-specified loader API at [2014-08-24 ES6 Specification Draft Rev 27, Section 15](http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts#august_24_2014_draft_rev_27) and will continue to track this API as it is re-drafted as a browser specification (currently most likely to be at https://github.com/whatwg/loader).
 
 * Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#getting-started).
-* Supports both [Traceur](https://github.com/google/traceur-compiler) and [Babel](https://babel.org/) for compiling ES6 modules and syntax into ES5 in the browser with source map support.
+* Supports both [Traceur](https://github.com/google/traceur-compiler) and [Babel](http://babeljs.io/) for compiling ES6 modules and syntax into ES5 in the browser with source map support.
 * Fully supports [ES6 circular references and live bindings](https://github.com/ModuleLoader/es6-module-loader/wiki/Circular-References-&-Bindings).
 * Includes [`baseURL` and `paths` implementations](https://github.com/ModuleLoader/es6-module-loader/wiki/Configuring-the-Loader).
 * Can be used as a [tracing tool](https://github.com/ModuleLoader/es6-module-loader/wiki/Tracing-API) for static analysis of modules.
