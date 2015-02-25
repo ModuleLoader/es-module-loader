@@ -1,4 +1,4 @@
-export { b } from './_b';
-export { d } from './_d';
-export { g } from './_g';
+export { b } from './_b.js';
+export { d } from './_d.js';
+export { g } from './_g.js';
 export var a = 'a';

@@ -1,1 +1,1 @@
-import 'slave';
+export * from 'slave';

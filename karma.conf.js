@@ -41,11 +41,13 @@ module.exports = function(config) {
 
     'dist/es6-module-loader' + (options.polyfill ? '' : '-sans-promises') + '.src.js',
 
-    'test/_browser.js',
     'test/browser-script-type-module.js',
-    'test/custom-loader.js',
 
-    [!options.ie8 ? 'test/*.spec.js' : 'test/*.normalize.spec.js'],
+    'test/system.normalize.spec.js',
+    'test/custom-loader.spec.js',
+    options.ie8 ? [] : ['test/system.spec.js'],
+
+    'test/custom-loader.js',
 
     {pattern: 'test/{loader,loads,syntax,worker}/**/*', included: false},
     {pattern: 'node_modules/when/es6-shim/Promise.js', included: false},

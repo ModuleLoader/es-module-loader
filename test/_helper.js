@@ -21,6 +21,13 @@
 
   __global.describeIf = describeIf;
 
+  if (typeof babel != 'undefined')
+    System.transpiler = 'babel';
+
+  window.ie = typeof window != 'undefined' && window.navigator.userAgent.match(/Trident/);
+
+  window.base = window.location.href.substr(0, window.location.href.lastIndexOf('/') + 1);
+
 }(typeof window != 'undefined' ? window : global));
 
 

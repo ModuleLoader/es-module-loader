@@ -1,1 +1,2 @@
-import 'error1';
+define(['error1'], function() {
+});

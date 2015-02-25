@@ -1,27 +1,17 @@
 //
 
+var base = window.location.href.substr(0, window.location.href.lastIndexOf('/') + 1);
+
 describe('System', function () {
-  describe('#normalize', function () {
+  describe('#resolve', function () {
 
-    // Normalize tests - identical to https://github.com/google/traceur-compiler/blob/master/test/unit/runtime/System.js
+    describe('when having no arguments', function () {
 
-    var originBaseUrl = System.baseURL;
-
-    beforeEach(function () {
-      System.baseURL = 'http://example.org/a/b.html';
-    });
-
-    afterEach(function () {
-      System.baseURL = originBaseUrl;
-    });
-
-    describe('when having no argument', function () {
-
-      it('should throw with no specified name', function () {
-        expect(function () { System.normalize(); })
+      it('should throw', function () {
+        expect(function () { System.resolve() })
           .to.throwException(function (e) {
             expect(e).to.be.a(TypeError);
-            expect(e.message).to.match(/Module name must be a string/);
+            expect(e.message).to.match(/URL must be a string/);
           });
       });
 
@@ -29,87 +19,86 @@ describe('System', function () {
 
     describe('when having one argument', function () {
 
-      it('should not referer', function () {
-        expect(System.normalize('d/e/f')).to.equal('d/e/f');
+      it('should normalize to base', function () {
+        expect(System.resolve('d/e/f')).to.equal(base + 'd/e/f');
       });
 
-      it.skip('should "below baseURL"', function () {
-        expect(System.normalize('../e/f')).to.equal('../e/f');
+      it('should "below baseURL"', function () {
+        expect(System.resolve('../../../../e/f')).to.equal(base + 'e/f');
       });
 
       it('should be backwards compat', function () {
-        expect(System.normalize('./a.js')).to.equal('a.js');
+        expect(System.resolve('./a.js')).to.equal(base + 'a.js');
       });
 
-      it('should throw with an url as name', function () {
-        expect(function () { System.normalize('http://example.org/a/b.html'); })
-          .to.throwException(function (e) {
-            expect(e).to.be.a(TypeError);
-            expect(e.message).to.match(/Illegal module name "\S+"/);
-          });
+      it('shouldn\'t change an absolute URL', function () {
+        expect(System.resolve('file:///example.org/a/b.html')).to.equal('file:///example.org/a/b.html');
       });
 
-      it('should throw with embedded path', function () {
-        expect(function () { System.normalize('a/b/../c'); })
-          .to.throwException(function (e) {
-            expect(e).to.be.a(TypeError);
-            expect(e.message).to.match(/Illegal module name "\S+"/);
-          });
+      it('should resolve an embedded path', function () {
+        expect(System.resolve('a/b/../c')).to.equal(base + 'a/c');
       });
 
     });
 
     describe('when having two arguments', function () {
 
-      var refererName = 'dir/file';
+      var referrer = base + 'dir/path';
 
       it('should support relative path', function () {
-        expect(System.normalize('./d/e/f', refererName)).to.equal('dir/d/e/f');
-        expect(System.normalize('../e/f', refererName)).to.equal('e/f');
+        expect(System.resolve('d/e/f', referrer)).to.equal(base + 'dir/d/e/f');
+        expect(System.resolve('./d/e/f', referrer)).to.equal(base + 'dir/d/e/f');
+        expect(System.resolve('../e/f', referrer)).to.equal(base + 'e/f');
       });
 
       it('should resolve the path with relative parent', function () {
-        expect(System.normalize('./a/b', 'c')).to.equal('a/b');
-        expect(System.normalize('./a/b', 'c/d')).to.equal('c/a/b');
-        expect(System.normalize('./a/b', '../c/d')).to.equal('../c/a/b');
-        expect(System.normalize('./a/b', '../../c/d')).to.equal('../../c/a/b');
+        expect(System.resolve('./a/b', base + 'c')).to.equal(base + 'a/b');
+        expect(System.resolve('./a/b', base + 'c/d')).to.equal(base + 'c/a/b');
       });
 
-      it('should throw with embedded path', function () {
-
-        expect(function () { System.normalize('a/b/../c'); })
-          .to.throwException(function (e) {
-            expect(e).to.be.a(TypeError);
-            expect(e.message).to.match(/Illegal module name "\S+"/);
-          });
-
-        expect(function () { System.normalize('a/../b'); })
-          .to.throwException(function (e) {
-            expect(e).to.be.a(TypeError);
-            expect(e.message).to.match(/Illegal module name "\S+"/);
-          });
-
-      });
     });
   });
 
-  describe('#locate', function () {
+  describe('#sites', function () {
 
-    beforeEach(function () {
-      System.baseURL = 'http://example.org/a/';
+    it('should resolve exact site matches', function () {
+      System.site({
+        jquery: '/jquery.js'
+      });
+
+      expect(System.resolve('jquery')).to.equal(base + 'jquery.js');
+      expect(System.resolve('jquery/nomatch')).to.equal(base + 'jquery/nomatch');
     });
 
-    it('should resolve paths', function () {
-      expect(System.locate({name: '@abc/def'}))
-        .to.equal('http://example.org/a/@abc/def.js');
-      expect(System.locate({name: ' abc/def'}))
-        .to.equal('http://example.org/a/abc/def.js');
+    it('sites table items can be added, checked and removed', function () {
+      
+      System.site.set('jquery', 'custom-jquery');
+
+      expect(System.site.has('jquery')).to.be.ok();
+
+      expect(System.site.get('jquery')).to.equal('custom-jquery');
+      
+      expect(System.resolve('jquery')).to.equal(base + 'custom-jquery');
+      
+      System.site['delete']('jquery');
+      
+      expect(System.resolve('jquery')).to.equal(base + 'jquery');
+
+      expect(!System.site.has('jquery')).to.be.ok();
+
     });
 
-    it('should resolve paths with the existing config', function () {
-      System.paths['path/*'] = '/test/*.js';
-      expect(System.locate({name: 'path/test'}))
-        .to.equal('http://example.org/test/test.js');
+    it('should resolve wildcard site matches', function() {
+
+      System.site['delete']('jquery');
+      System.site({
+        'jquery/*': '/path/to/jquery/*.js'
+      });
+
+      expect(System.resolve('jquery')).to.equal(base + 'jquery');
+      expect(System.resolve('jquery/sub')).to.equal(base + 'path/to/jquery/sub.js');
+      expect(System.resolve('jquery/sub/path')).to.equal(base + 'path/to/jquery/sub/path.js');
+
     });
 
   });
