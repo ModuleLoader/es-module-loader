@@ -1,8 +1,8 @@
-import {fn1, variable1} from './circular1';
+import {fn1, variable1} from './circular1.js';
 
 export var variable2 = 'test circular 2';
 
-export { output as output1 } from './circular1';
+export { output as output1 } from './circular1.js';
 
 fn1();
 

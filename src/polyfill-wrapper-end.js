@@ -1,16 +1,23 @@
 
-// Define our eval outside of the scope of any other reference defined in this
-// file to avoid adding those references to the evaluation scope.
-function __eval(__source, __global, __load) {
-  try {
-    eval('(function() { var __moduleName = "' + (__load.name || '').replace('"', '\"') + '"; ' + __source + ' \n }).call(__global);');
-  }
-  catch(e) {
-    if (e.name == 'SyntaxError' || e.name == 'TypeError')
-      e.message = 'Evaluating ' + (__load.name || load.address) + '\n\t' + e.message;
-    throw e;
-  }
-}
+  // ---------- Export Definitions ----------  
+  
+  var Reflect;
 
-})(typeof window != 'undefined' ? window : (typeof WorkerGlobalScope != 'undefined' ?
-                                           self : global));
+  (function(exports) {
+
+    Reflect = exports.Reflect || {};
+
+    Reflect.Loader = Reflect.Loader || Loader;
+    Reflect.Module = Reflect.Module || Module;
+    Reflect.global = Reflect.global || __global;
+
+    exports.LoaderPolyfill = Loader;
+    exports.ModulePolyfill = Module;
+    exports.Reflect = Reflect;
+    exports.System = System;
+
+  })(cjsMode ? exports : __global);
+
+  //module.exports = exports;
+
+})(typeof window != 'undefined' ? window : (typeof WorkerGlobalScope != 'undefined' ? self : global));

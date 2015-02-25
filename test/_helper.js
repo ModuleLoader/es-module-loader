@@ -7,7 +7,6 @@
     __global.console = { log : __global.dump || function (){} };
   }
 
-
   /**
    * Describe a block if the bool is true.
    * Will skip it otherwise.
@@ -20,6 +19,13 @@
   }
 
   __global.describeIf = describeIf;
+
+  if (typeof babel != 'undefined')
+    System.transpiler = 'babel';
+
+  __global.ie = typeof window != 'undefined' && window.navigator.userAgent.match(/Trident/);
+
+  __global.base = typeof window != 'undefined' && (window.location.href.substr(0, window.location.href.lastIndexOf('/') + 1) + 'base/') || ('file://' + process.cwd() + require('path').sep);
 
 }(typeof window != 'undefined' ? window : global));
 
