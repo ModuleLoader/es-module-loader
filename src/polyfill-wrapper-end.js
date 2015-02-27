@@ -1,19 +1,23 @@
 
   // ---------- Export Definitions ----------  
-
-  var exports;
-  if (!cjsMode)
-    exports = __global;
   
-  var Reflect = exports.Reflect || {};
+  var Reflect;
 
-  Reflect.Loader = Reflect.Loader || Loader;
-  Reflect.Module = Reflect.Module || Module;
-  Reflect.global = Reflect.global || __global;
+  (function(exports) {
 
-  exports.LoaderPolyfill = Loader;
-  exports.ModulePolyfill = Module;
-  exports.Reflect = Reflect;
-  exports.System = System;
+    Reflect = exports.Reflect || {};
+
+    Reflect.Loader = Reflect.Loader || Loader;
+    Reflect.Module = Reflect.Module || Module;
+    Reflect.global = Reflect.global || __global;
+
+    exports.LoaderPolyfill = Loader;
+    exports.ModulePolyfill = Module;
+    exports.Reflect = Reflect;
+    exports.System = System;
+
+  })(cjsMode ? exports : __global);
+
+  //module.exports = exports;
 
 })(typeof window != 'undefined' ? window : (typeof WorkerGlobalScope != 'undefined' ? self : global));

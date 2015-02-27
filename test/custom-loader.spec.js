@@ -7,7 +7,7 @@ describe('Custom Loader', function () {
     describe('scripts', function () {
 
       it('should support AMD scripts', function (done) {
-        customLoader.import('base/test/loader/amd.js')
+        customLoader.import(base + 'test/loader/amd.js')
         .then(function (m) {
           expect(m.format).to.be.equal('amd');
         })
@@ -34,9 +34,9 @@ describe('Custom Loader', function () {
       }
 
       it('should make the resolve throw', function (done) {
-        customLoader.import('base/test/loader/error1-parent.js')
+        customLoader.import(base + 'test/loader/error1-parent.js')
         .then(supposedToFail, function (e) {
-          expect(e).to.be('error1\n  Resolving error1.js, http://localhost:9876/base/test/loader/error1-parent.js\n  Instantiating http://localhost:9876/base/test/loader/error1-parent.js');
+          expect(e).to.be('error1\n  Resolving error1.js, ' + base + 'test/loader/error1-parent.js\n  Instantiating ' + base + 'test/loader/error1-parent.js');
         })
         .then(done, done);
       });

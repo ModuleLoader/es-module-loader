@@ -1,5 +1,9 @@
   // ---------- System Loader Definition ----------
 
+  /*
+   * Corrsponds to section 8 of the specification
+   */
+
   var isWindows = typeof process != 'undefined' && !!process.platform.match(/^win/);
 
   // Fetch Implementation
@@ -57,12 +61,13 @@
   else if (cjsMode) {
     var fs;
     fetchURI = function(url, fulfill, reject) {
-      if (url.substr(0, 5) != 'file:')
+      if (url.substr(0, 8) != 'file:///')
         throw 'Only file URLs of the form file: allowed running in Node.';
       fs = fs || require('fs');
-      url = url.substr(5);
       if (isWindows)
-        url = url.replace(/\//g, '\\');
+        url = url.replace(/\//g, '\\').substr(8)
+      else
+        url = url.substr(7);
       fs.readFile(url, function(err, data) {
         if (err)
           reject(err);

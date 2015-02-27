@@ -1,8 +1,9 @@
 //
 
-var base = window.location.href.substr(0, window.location.href.lastIndexOf('/') + 1);
-
 describe('System', function () {
+
+  var base = window.location.href.substr(0, window.location.href.lastIndexOf('/') + 1);
+  
   describe('#resolve', function () {
 
     describe('when having no arguments', function () {

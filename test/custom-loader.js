@@ -7,11 +7,11 @@
     return new Promise(function (resolve, reject) {
       if (name == 'asdfasdf')
         return setTimeout(function () {
-          resolve('base/test/loader/async-norm.js');
+          resolve(base + 'test/loader/async-norm.js');
         }, 10);
 
       if (name.substr(0, 5) == 'path/')
-        name = 'base/test/loader/' + name.substr(5) + '.js';
+        name = base + 'test/loader/' + name.substr(5) + '.js';
 
       if (name == 'error1.js')
         return setTimeout(function () { reject('error1'); }, 100);

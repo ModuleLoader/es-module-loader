@@ -15,7 +15,7 @@ describe('System', function () {
     describe('an ES5 script', function () {
 
       it('should import a ES5 script', function (done) {
-        System.import('base/test/syntax/script.js')
+        System.import(base + 'test/syntax/script.js')
         .then(function (m) {
           expect(!!m).to.be.ok();
         })
@@ -23,9 +23,9 @@ describe('System', function () {
       });
 
       it('should import a ES5 script once loaded', function (done) {
-        System.import('base/test/syntax/script.js')
+        System.import(base + 'test/syntax/script.js')
         .then(function () {
-          return System.import('base/test/syntax/script.js').
+          return System.import(base + 'test/syntax/script.js').
             then(function (m) {
               expect(!!m).to.be.ok();
             });
@@ -38,7 +38,7 @@ describe('System', function () {
     describe('an ES6 script', function () {
 
       it('should import an ES6 script', function (done) {
-        System.import('base/test/syntax/es6.js')
+        System.import(base + 'test/syntax/es6.js')
         .then(function (m) {
           expect(m.p).to.equal('p');
         })
@@ -46,7 +46,7 @@ describe('System', function () {
       });
 
       it('should import an ES6 script with its dependencies', function (done) {
-        System.import('base/test/syntax/es6-withdep.js')
+        System.import(base + 'test/syntax/es6-withdep.js')
         .then(function (m) {
           expect(m.p).to.equal('p');
         })
@@ -54,7 +54,7 @@ describe('System', function () {
       });
 
       (ie ? it.skip : it)('should import an ES6 script with a generator', function (done) {
-        System.import('base/test/syntax/es6-generator.js')
+        System.import(base + 'test/syntax/es6-generator.js')
         .then(function (m) {
           expect(!!m.generator).to.be.ok();
         })
@@ -62,7 +62,7 @@ describe('System', function () {
       });
 
       it('should import without bindings', function (done) {
-        System.import('base/test/syntax/direct.js')
+        System.import(base + 'test/syntax/direct.js')
         .then(function (m) {
           expect(!!m).to.be.ok();
         })
@@ -70,7 +70,7 @@ describe('System', function () {
       });
 
       it('should support es6 various syntax', function (done) {
-        System.import('base/test/syntax/es6-file.js')
+        System.import(base + 'test/syntax/es6-file.js')
         .then(function (m) {
 
           expect(m.q).to.be.a('function');
@@ -89,9 +89,9 @@ describe('System', function () {
     describe('with circular dependencies', function () {
 
       (System.transpiler == 'traceur' ? it : it.skip)('should resolve circular dependencies', function (done) {
-        System.import('base/test/syntax/circular1.js')
+        System.import(base + 'test/syntax/circular1.js')
         .then(function (m1) {
-          return System.import('base/test/syntax/circular2.js').then(function (m2) {
+          return System.import(base + 'test/syntax/circular2.js').then(function (m2) {
             expect(m1.variable1).to.equal('test circular 1');
             expect(m2.variable2).to.equal('test circular 2');
 
@@ -110,7 +110,7 @@ describe('System', function () {
 
 
       it('should update circular dependencies', function (done) {
-        System.import('base/test/syntax/even.js')
+        System.import(base + 'test/syntax/even.js')
         .then(function (m) {
           expect(m.counter, 'Counter initially at 1').to.be.equal(1);
           expect(m.even(10), 'Must be an even number').to.be.ok();
@@ -126,7 +126,7 @@ describe('System', function () {
     describe('loading order', function () {
 
       function expectedOrder(file, order, done) {
-        System.import('base/test/loads/' + file)
+        System.import(base + 'test/loads/' + file)
         .then(function (m) {
           order.forEach(function (letter) {
             expect(m[letter], 'The "' + letter + '" file wasn\'t loaded')
@@ -175,32 +175,39 @@ describe('System', function () {
       }
 
       it('should throw if on syntax error', function (done) {
-        System.import('base/test/loads/main.js')
+        System.import(base + 'test/loads/main.js')
         .then(supposedToFail)
         .catch(function(e) {
           expect(e)
-            .to.be.equal('dep error\n  Error evaluating ' + base + 'base/test/loads/deperror.js\n  Error evaluating ' + base + 'base/test/loads/main.js');
+            .to.be.equal('dep error\n  Error evaluating ' + base + 'test/loads/deperror.js\n  Error evaluating ' + base + 'test/loads/main.js');
         })
         .then(done, done);
       });
 
       it('should throw what the script throws', function (done) {
-        System.import('base/test/loads/deperror.js')
+        System.import(base + 'test/loads/deperror.js')
         .then(supposedToFail)
         .catch(function(e) {
           expect(e)
-            .to.be.equal('dep error\n  Error evaluating ' + base + 'base/test/loads/deperror.js');
+            .to.be.equal('dep error\n  Error evaluating ' + base + 'test/loads/deperror.js');
         })
         .then(done, done);
       });
 
 
       it('404 error', function (done) {
-        System.import('base/test/loads/load-non-existent.js')
+        System.import(base + 'test/loads/load-non-existent.js')
         .then(supposedToFail)
         .catch(function (e) {
+          var b = typeof window == 'undefined' ? base.substr(7) : base;
+          var e;
+          if (typeof window == 'undefined') {
+            e = e.toString().substr(14);
+            if (e.substr(26, 1) == ',')
+              e = e.substr(27);
+          }
           expect(e.toString())
-            .to.be.equal('Error: GET ' + base + 'base/test/loads/non-existent.js 404 (Not Found)\n  Fetching ' + base + 'base/test/loads/non-existent.js\n  Loading ' + base + 'base/test/loads/load-non-existent.js');
+            .to.be.equal((typeof window == 'undefined' ? ' open \'' : 'Error: GET ') + b + 'test/loads/non-existent.js' + (typeof window == 'undefined' ? '\'' : ' 404 (Not Found)') + '\n  Fetching ' + base + 'test/loads/non-existent.js\n  Loading ' + base + 'test/loads/load-non-existent.js');
         })
         .then(done, done);
       });
@@ -209,7 +216,7 @@ describe('System', function () {
 
     describe('es6 export syntax overview', function () {
       it('should resolve different export syntax', function (done) {
-        System.import('base/test/syntax/export.js')
+        System.import(base + 'test/syntax/export.js')
         .then(function (m) {
           expect(m.p, 'should export a number').to.be.equal(5);
           expect(m.foo, 'should export a function').to.be.a('function');
@@ -226,7 +233,7 @@ describe('System', function () {
 
     describe('es6 export default syntax', function () {
       it('should resolve "export default"', function (done) {
-        System.import('base/test/syntax/export-default.js')
+        System.import(base + 'test/syntax/export-default.js')
         .then(function (m) {
           expect(m.default()).to.be.equal('test');
         })
@@ -236,7 +243,7 @@ describe('System', function () {
 
     describe('es6 export re-exporting', function () {
       it('should support simple re-exporting', function (done) {
-        System.import('base/test/syntax/reexport1.js')
+        System.import(base + 'test/syntax/reexport1.js')
         .then(function (m) {
           expect(m.p, 'should export 5 from the "./export"').to.be.equal(5);
         })
@@ -244,9 +251,9 @@ describe('System', function () {
       });
 
       it('should support re-exporting binding', function (done) {
-        System.import('base/test/syntax/reexport-binding.js')
+        System.import(base + 'test/syntax/reexport-binding.js')
         .then(function () {
-          return System.import('base/test/syntax/rebinding.js').then(function (m) {
+          return System.import(base + 'test/syntax/rebinding.js').then(function (m) {
             expect(m.p, 'should export "p" from the "./rebinding"')
               .to.be.equal(4);
           });
@@ -255,7 +262,7 @@ describe('System', function () {
       });
 
       it('should support re-exporting with a new name', function (done) {
-        System.import('base/test/syntax/reexport2.js')
+        System.import(base + 'test/syntax/reexport2.js')
         .then(function (m) {
           expect(m.q, 'should export "t" as "q" from the "./export"')
             .to.be.equal(4);
@@ -266,7 +273,7 @@ describe('System', function () {
       });
 
       it('should support re-exporting', function (done) {
-        System.import('base/test/syntax/export-star.js')
+        System.import(base + 'test/syntax/export-star.js')
         .then(function (m) {
           expect(m.foo, 'should export a function').to.be.equal('foo');
           expect(m.bar, 'should re-export export-star bar variable')
@@ -276,7 +283,7 @@ describe('System', function () {
       });
 
       (System.transpiler != 'traceur' ? it.skip : it)('should support re-exporting overwriting', function (done) {
-        System.import('base/test/syntax/export-star2.js')
+        System.import(base + 'test/syntax/export-star2.js')
         .then(function (m) {
           expect(m.bar, 'should re-export "./export-star" bar variable')
             .to.be.equal('bar');
@@ -291,7 +298,7 @@ describe('System', function () {
 
     describe('es6 import syntax overview', function () {
       it('should resolve different import syntax', function (done) {
-        System.import('base/test/syntax/import.js')
+        System.import(base + 'test/syntax/import.js')
         .then(function (m) {
           expect(m.a, 'should export "d" as "a" from the "./export"')
             .to.be.a('function');
@@ -315,7 +322,7 @@ describe('System', function () {
     describe('a script with metas', function () {
       // NB module name meta
       it.skip('should support module name meta', function (done) {
-        System.import('base/test/loader/moduleName.js')
+        System.import(base + 'test/loader/moduleName.js')
         .then(function (m) {
           expect(m.name).to.be.equal('test/loader/moduleName');
           expect(m.address)
@@ -343,7 +350,7 @@ describe('System', function () {
         return oldResolve.apply(this, arguments);
       });
 
-      System.import('base/test/loader/master.js').then(function(m) {
+      System.import(base + 'test/loader/master.js').then(function(m) {
         expect(m.p).to.be.equal(5);
       }).then(reset, reset);
 
@@ -359,7 +366,7 @@ describe('System', function () {
     typeof window != 'undefined' && window.Worker && !ie,
     'with Web Worker', function () {
       it('should loading inside of a Web Worker', function (done) {
-        var worker = new Worker(base + 'base/test/worker/worker-' + System.transpiler + '.js');
+        var worker = new Worker(base + 'test/worker/worker-' + System.transpiler + '.js');
         worker.onmessage = function (e) {
           expect(e.data).to.be.equal('p');
           done();

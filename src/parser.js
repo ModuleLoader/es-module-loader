@@ -9,16 +9,17 @@
   Loader.prototype.parse = function(key, source) {
     if (!transpiler) {
       if (this.transpiler == 'babel') {
-        transpiler = babelTranspile;
         transpilerModule = cjsMode ? require('babel-core') : __global.babel;
+        if (!transpilerModule)
+          throw new TypeError('Unable to find the Babel transpiler.');
+        transpiler = babelTranspile;
       }
       else {
-        transpiler = traceurTranspile;
         transpilerModule = cjsMode ? require('traceur') : __global.traceur;
+        if (!transpilerModule)
+          throw new TypeError('Unable to find the Traceur transpiler.');
+        transpiler = traceurTranspile;
       }
-      
-      if (!transpilerModule)
-        throw new TypeError('Include Traceur or Babel for module syntax support.');
     }
 
     // transpile to System register and evaluate out the { deps, declare } form
