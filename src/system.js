@@ -117,11 +117,14 @@
 
     this.hook('resolve', function(url, parentUrl, metadata) {
       // first check site table
-      url = siteLookup(url) || url;
+      var sitesUrl = siteLookup(url);
+      
+      if (sitesUrl || !parentUrl)
+        parentUrl = base;
 
       // then do url normalization
       // NB for performance, test out a normalization cache here
-      return new URLUtils(url, parentUrl || base).href;
+      return new URLUtils(sitesUrl || url, parentUrl).href;
     });
 
     this.hook('fetch', function(url, metadata) {
