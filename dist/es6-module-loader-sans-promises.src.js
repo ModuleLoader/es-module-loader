@@ -975,7 +975,10 @@ function logloads(loads) {
     },
     // 26.3.3.3
     'delete': function(name) {
-      return this._loader.modules[name] ? delete this._loader.modules[name] : false;
+      var loader = this._loader;
+      delete loader.importPromises[name];
+      delete loader.moduleRecords[name];
+      return loader.modules[name] ? delete loader.modules[name] : false;
     },
     // 26.3.3.4 entries not implemented
     // 26.3.3.5
@@ -1140,6 +1143,7 @@ function logloads(loads) {
     options.script = false;
     options.sourceMaps = 'inline';
     options.filename = load.address;
+    options.inputSourceMap = load.metadata.sourceMap;
 
     var compiler = new transpilerModule.Compiler(options);
     var source = doTraceurCompile(load.source, compiler, options.filename);
