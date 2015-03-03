@@ -33,6 +33,7 @@
     options.script = false;
     options.sourceMaps = 'inline';
     options.filename = load.address;
+    options.inputSourceMap = load.metadata.sourceMap;
 
     var compiler = new transpilerModule.Compiler(options);
     var source = doTraceurCompile(load.source, compiler, options.filename);
