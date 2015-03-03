@@ -88,7 +88,7 @@
     // this way the graph can be built up by chaining these promises
     if (instance === undefined) {
       var key = entry.key;
-      var registration = loader.loaderObj.parse(key, source);
+      var registration = loader.loaderObj.parse(key, source, entry.metadata);
       entry.declare = registration.declare;
       var dependencies = [];
       var depLoads = [];

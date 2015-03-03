@@ -6,7 +6,7 @@
   // use Traceur by default
   Loader.prototype.transpiler = 'traceur';
 
-  Loader.prototype.parse = function(key, source) {
+  Loader.prototype.parse = function(key, source, metadata) {
     if (!transpiler) {
       if (this.transpiler == 'babel') {
         transpilerModule = cjsMode ? require('babel-core') : __global.babel;
@@ -23,14 +23,15 @@
     }
 
     // transpile to System register and evaluate out the { deps, declare } form
-    return evaluateSystemRegister(key, transpiler.call(this, key, source));
+    return evaluateSystemRegister(key, transpiler.call(this, key, source, metadata));
   }
 
-  function traceurTranspile(key, source) {
+  function traceurTranspile(key, source, metadata) {
     var options = this.traceurOptions || {};
     options.modules = 'instantiate';
     options.script = false;
     options.sourceMaps = 'inline';
+    options.inputSourceMap = metadata.sourceMap;
     options.filename = key;
 
     var compiler = new transpilerModule.Compiler(options);
@@ -51,7 +52,7 @@
     }
   }
 
-  function babelTranspile(key, source) {
+  function babelTranspile(key, source, metadata) {
     var options = this.babelOptions || {};
     options.modules = 'system';
     options.sourceMap = 'inline';
