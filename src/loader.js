@@ -226,7 +226,24 @@
       return dependencyGraph(entry);
     })
     .then(function(depGraph) {
-      link(loader, entry, depGraph);
+
+      // 5.2.1 Link inlined to reduce stack size
+
+      // adjusted for graph already being computed in requestLink
+      for (var i = 0, len = depGraph.length; i < len; i++) {
+        var dep = depGraph[i];
+        if (dep.state == LINK && typeof dep.module == 'function') {
+          doDynamicLink(dep);
+          // console.assert(dep.module instanceof Module)
+          dep.state = READY;
+        }
+      }
+
+      // adjusted linking implementation
+      // to handle setter graph logic
+      if (entry.state == LINK)
+        declareModule(entry);
+
       // NB assert entry's whole graph is in ready state
       return entry;
     }, function(err) {
@@ -263,23 +280,8 @@
 
   // 5. Linking
 
-  // 5.2.1
-  function link(loader, root, depGraph) {
-    // adjusted for graph already being computed in requestLink
-    for (var i = 0, len = depGraph.length; i < len; i++) {
-      var dep = depGraph[i];
-      if (dep.state == LINK && typeof dep.module == 'function') {
-        doDynamicLink(dep);
-        // console.assert(dep.module instanceof Module)
-        dep.state = READY;
-      }
-    }
+  // 5.2.1 inlined
 
-    // adjusted linking implementation
-    // to handle setter graph logic
-    if (root.state == LINK)
-      declareModule(root);
-  }
 
   function doDynamicLink(dep) {
     // may have had a previous error
