@@ -939,7 +939,10 @@ function logloads(loads) {
     },
     // 26.3.3.3
     'delete': function(name) {
-      return this._loader.modules[name] ? delete this._loader.modules[name] : false;
+      var loader = this._loader;
+      delete loader.importPromises[name];
+      delete loader.moduleRecords[name];
+      return loader.modules[name] ? delete loader.modules[name] : false;
     },
     // 26.3.3.4 entries not implemented
     // 26.3.3.5

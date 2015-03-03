@@ -179,6 +179,23 @@ function runTests() {
     assert(System.normalize('../a/b', '../../c/d'), '../../a/b');
   });
 
+  test('Setting & deleting modules', function(assert, err) {
+    System['import']('loader/module').then(function(m1) {
+      System['delete']('loader/module');
+      System['import']('loader/module').then(function(m2) {
+        System['delete']('loader/module');
+        System.set('loader/module', System.newModule({custom: 'module'}));
+        System['import']('loader/module').then(function(m3) {
+          assert(
+            [m1.run, 'first'],
+            [m2.run, 'second'],
+            [m3.custom, 'module']
+          );
+        }, err);
+      }, err);
+    }, err);
+  });
+
   test('Import a script', function(assert, err) {
     System['import']('syntax/script').then(function(m) {
       assert(!!m, true);

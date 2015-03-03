@@ -46,6 +46,30 @@ describe('System', function () {
 
     });
 
+    describe('System registry methods', function() {
+
+      it('should support set, get and delete', function(done) {
+
+        var testPath = 'test/loader/module';
+  
+        System.import(testPath).then(function(m) {
+          expect(m.run).to.equal('first');
+          System.delete(testPath);
+          return System.import(testPath);
+        })
+        .then(function(m) {
+          expect(m.run).to.equal('second');
+          System.delete('loader.module');
+          System.set(testPath, System.newModule({ custom: 'module' }));
+          return System.import(testPath);
+        })
+        .then(function(m) {
+          expect(m.custom).to.equal('module');
+        })
+        .then(done, done);
+      });
+    });
+
     describe('an ES6 script', function () {
 
       it('should import an ES6 script', function (done) {
