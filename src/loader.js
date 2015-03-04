@@ -273,10 +273,6 @@ function logloads(loads) {
           // 15.2.4.6.1 AddDependencyLoad (load is parentLoad)
           .then(function(depLoad) {
 
-            console.assert(!load.dependencies.some(function(dep) {
-              return dep.key == request;
-            }), 'not already a dependency');
-
             // adjusted from spec to maintain dependency order
             // this is due to the System.register internal implementation needs
             load.dependencies[index] = {
