@@ -10,7 +10,7 @@
 
   Loader.prototype.transpile = function(load) {
     if (!transpiler) {
-      transpilerModule = this.get('@' + this.transpiler);
+      transpilerModule = this.get(this.transpiler);
 
       if (transpilerModule) {
         transpilerModule = transpilerModule['default'];
@@ -24,7 +24,7 @@
         }
         if (!transpilerModule)
           throw new TypeError('Include Traceur or Babel for module syntax support.');
-        this.set('@' + this.transpiler, this.newModule({ 'default': transpilerModule, __useDefault: true }));
+        this.set(this.transpiler, this.newModule({ 'default': transpilerModule, __useDefault: true }));
       }
 
       if (this.transpiler == 'babel')
