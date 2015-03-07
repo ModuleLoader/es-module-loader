@@ -16,7 +16,12 @@
         transpilerModule = transpilerModule['default'];
       }
       else {
-        transpilerModule = __global[this.transpiler] || typeof require != 'undefined' && require(this.transpiler == 'babel' ? 'babel-core' : 'traceur');
+        transpilerModule = __global[this.transpiler];
+        if (!transpilerModule && typeof require != 'undefined') {
+          var curSystem = __global.System;
+          transpilerModule = require(this.transpiler == 'babel' ? 'babel-core' : 'traceur');
+          __global.System = curSystem;
+        }
         if (!transpilerModule)
           throw new TypeError('Include Traceur or Babel for module syntax support.');
         this.set('@' + this.transpiler, this.newModule({ 'default': transpilerModule, __useDefault: true }));
