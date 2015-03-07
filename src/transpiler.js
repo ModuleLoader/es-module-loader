@@ -4,24 +4,28 @@
 (function(Loader) {
   // Returns an array of ModuleSpecifiers
   var transpiler, transpilerModule;
-  var isNode = typeof window == 'undefined' && typeof WorkerGlobalScope == 'undefined';
 
   // use Traceur by default
   Loader.prototype.transpiler = 'traceur';
 
   Loader.prototype.transpile = function(load) {
     if (!transpiler) {
-      if (this.transpiler == 'babel') {
-        transpiler = babelTranspile;
-        transpilerModule = isNode ? require('babel-core') : __global.babel;
+      transpilerModule = this.get('@' + this.transpiler);
+
+      if (transpilerModule) {
+        transpilerModule = transpilerModule['default'];
       }
       else {
-        transpiler = traceurTranspile;
-        transpilerModule = isNode ? require('traceur') : __global.traceur;
+        transpilerModule = __global[this.transpiler] || typeof require != 'undefined' && require(this.transpiler == 'babel' ? 'babel-core' : 'traceur');
+        if (!transpilerModule)
+          throw new TypeError('Include Traceur or Babel for module syntax support.');
+        this.set('@' + this.transpiler, this.newModule({ 'default': transpilerModule, __useDefault: true }));
       }
-      
-      if (!transpilerModule)
-        throw new TypeError('Include Traceur or Babel for module syntax support.');
+
+      if (this.transpiler == 'babel')
+        transpiler = babelTranspile;
+      else if (this.transpiler == 'traceur')
+        transpiler = traceurTranspile;
     }
 
     return 'var __moduleAddress = "' + load.address + '";' + transpiler.call(this, load);
