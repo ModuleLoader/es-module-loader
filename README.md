@@ -77,7 +77,7 @@ System.traceurOptions = {...};
 Or with Babel:
 
 ```javascript
-System.to5Options = {...};
+System.babelOptions = {...};
 ```
 
 #### Module Tag
