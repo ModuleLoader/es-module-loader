@@ -1,9 +1,9 @@
-importScripts("../../node_modules/babel-core/browser.js",
-             "../../node_modules/when/es6-shim/Promise.js",
+importScripts("../../node_modules/when/es6-shim/Promise.js",
              "../../dist/es6-module-loader.src.js"
              );
 
 System.transpiler = 'babel';
+System.paths['babel'] = '../../node_modules/babel-core/browser.js';
 
 System['import']('es6').then(function(m) {
   postMessage(m.p);

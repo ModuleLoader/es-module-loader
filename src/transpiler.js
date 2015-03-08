@@ -2,41 +2,36 @@
  * Traceur and Babel transpile hook for Loader
  */
 (function(Loader) {
-  // Returns an array of ModuleSpecifiers
-  var transpiler, transpilerModule;
-
   // use Traceur by default
   Loader.prototype.transpiler = 'traceur';
 
   Loader.prototype.transpile = function(load) {
-    if (!transpiler) {
-      transpilerModule = this.get(this.transpiler);
-
-      if (transpilerModule) {
-        transpilerModule = transpilerModule['default'];
-      }
-      else {
-        transpilerModule = __global[this.transpiler];
-        if (!transpilerModule && typeof require != 'undefined') {
-          var curSystem = __global.System;
-          transpilerModule = require(this.transpiler == 'babel' ? 'babel-core' : 'traceur');
-          __global.System = curSystem;
-        }
-        if (!transpilerModule)
-          throw new TypeError('Include Traceur or Babel for module syntax support.');
-        this.set(this.transpiler, this.newModule({ 'default': transpilerModule, __useDefault: true }));
-      }
-
-      if (this.transpiler == 'babel')
-        transpiler = babelTranspile;
-      else if (this.transpiler == 'traceur')
-        transpiler = traceurTranspile;
-    }
-
-    return 'var __moduleAddress = "' + load.address + '";' + transpiler.call(this, load);
+    return this['import'](this.transpiler).then(function(transpiler) {
+      if (transpiler.__useDefault)
+        transpiler = transpiler['default'];
+      return 'var __moduleAddress = "' + load.address + '";' + (transpiler.Compiler ? traceurTranspile : babelTranspile).call(this, load, transpiler);
+    });
   }
 
-  function traceurTranspile(load) {
+  var g = __global;
+
+  Loader.prototype.instantiate = function(load) {
+    // load transpiler as a global (avoiding System clobbering)
+    if (load.name === this.transpiler)
+      return {
+        deps: [],
+        execute: function() {
+          var curSystem = g.System;
+          var curLoader = g.Reflect.Loader;
+          __eval('(function(require,exports,module){' + load.source + '})();', g, load);
+          g.System = curSystem;
+          g.Reflect.Loader = curLoader;
+          return System.newModule({ 'default': g[load.name], __useDefault: true });
+        }
+      };
+  }
+
+  function traceurTranspile(load, traceur) {
     var options = this.traceurOptions || {};
     options.modules = 'instantiate';
     options.script = false;
@@ -44,7 +39,7 @@
     options.filename = load.address;
     options.inputSourceMap = load.metadata.sourceMap;
 
-    var compiler = new transpilerModule.Compiler(options);
+    var compiler = new traceur.Compiler(options);
     var source = doTraceurCompile(load.source, compiler, options.filename);
 
     // add "!eval" to end of Traceur sourceURL
@@ -63,7 +58,7 @@
     }
   }
 
-  function babelTranspile(load) {
+  function babelTranspile(load, babel) {
     var options = this.babelOptions || {};
     options.modules = 'system';
     options.sourceMap = 'inline';
@@ -73,7 +68,7 @@
     options.blacklist = options.blacklist || [];
     options.blacklist.push('react');
 
-    var source = transpilerModule.transform(load.source, options).code;
+    var source = babel.transform(load.source, options).code;
 
     // add "!eval" to end of Babel sourceURL
     // I believe this does something?

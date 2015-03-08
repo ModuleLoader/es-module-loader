@@ -6,7 +6,6 @@
   <script src="test.js"></script>
 
   <!-- set this to the path to babel.js -->
-  <script src="../node_modules/babel-core/browser.js"></script>
   <script src="../node_modules/regenerator/runtime.js"></script>
 
   <script>
@@ -19,6 +18,7 @@
   <script src="../dist/es6-module-loader.src.js"></script>
   <script>
     System.transpiler = 'babel';
+    System.paths['babel'] = '../node_modules/babel-core/browser.js';
   </script>
 
   <script>

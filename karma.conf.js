@@ -48,6 +48,8 @@ module.exports = function(config) {
     [!options.ie8 ? 'test/*.spec.js' : 'test/*.normalize.spec.js'],
 
     {pattern: 'test/{loader,loads,syntax,worker}/**/*', included: false},
+    {pattern: 'node_modules/traceur/bin/traceur.js', included: false},
+    {pattern: 'node_modules/babel-core/browser.js', included: false},
     {pattern: 'node_modules/when/es6-shim/Promise.js', included: false},
     {pattern: 'dist/es6-module-loader*.js', included: false}
   ];
@@ -63,6 +65,9 @@ module.exports = function(config) {
       mocha: {
         reporter: 'html',
         timeout: 8000
+      },
+      system: {
+        transpiler: options.babel ? 'babel' : 'traceur'
       }
     }
   });

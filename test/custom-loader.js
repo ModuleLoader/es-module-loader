@@ -62,6 +62,18 @@
       return System.translate.apply(this, arguments);
     },
     instantiate: function (load) {
+      if (load.name == this.transpiler) {
+        var transpiler = this.transpiler;
+        return System.import(transpiler).then(function() {
+          return {
+            deps: [],
+            execute: function() {
+              return System.get(transpiler);
+            }
+          };
+        });
+      }
+
       if (load.name == 'error5') {
         return new Promise(function (resolve, reject) {
           setTimeout(function () { reject('error5'); }, 100);
@@ -111,9 +123,7 @@
     }
   });
 
-  customLoader.parse = function (load) {
-    return System.parse(load);
-  };
+  customLoader.transpiler = System.transpiler;
 
 
   if (typeof exports === 'object')

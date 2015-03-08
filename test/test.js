@@ -307,6 +307,7 @@ function runTests() {
       );
     })
   });
+  
   test('Load order test: _f', function(assert) {
     System['import']('loads/_f').then(function(m) {
       assert(
@@ -354,8 +355,8 @@ function runTests() {
     });
   });
 
-  // test not enabled for 6to5
-  if (typeof traceur == 'undefined')
+  // test not enabled for Babel
+  if (System.transpiler != 'babel')
   test('Export Star 2', function(assert) {
     System['import']('syntax/export-star2').then(function(m) {
       assert(
@@ -538,6 +539,18 @@ function runTests() {
       return System.translate.apply(this, arguments);
     },
     instantiate: function(load) {
+      if (load.name == this.transpiler) {
+        var transpiler = this.transpiler;
+        return System.import(transpiler).then(function() {
+          return {
+            deps: [],
+            execute: function() {
+              return System.get(transpiler);
+            }
+          };
+        });
+      }
+
       if (load.name == 'error5')
         return new Promise(function(resolve, reject) {
           setTimeout(function(){ reject('error5'); }, 100);
@@ -551,6 +564,7 @@ function runTests() {
         deps = _deps;
         factory = _factory;
       }
+      //console.log(load.source);
       eval(load.source);
 
       customFactories[load.name] = factory;
@@ -581,10 +595,7 @@ function runTests() {
       });
     }
   });
-
-  customLoader.parse = function(load) {
-    return System.parse(load);
-  }
+  customLoader.transpiler = System.transpiler;
 
   test('Custom loader standard load', function(assert) {
     var p = customLoader['import']('loader/test').then(function(m) {
@@ -657,7 +668,7 @@ function runTests() {
 
   if (typeof Worker != 'undefined')
   test('Loading inside of a Web Worker', function(assert) {
-    var worker = new Worker('worker/worker-' + (typeof traceur != 'undefined' ? 'traceur' : 'babel') + '.js');
+    var worker = new Worker('worker/worker-' + System.transpiler + '.js');
 
     worker.onmessage = function(e) {
       assert(e.data, 'p');
