@@ -6,12 +6,13 @@
   Loader.prototype.transpiler = 'traceur';
 
   Loader.prototype.transpile = function(load) {
-    return this['import'](this.transpiler).then(function(transpiler) {
+    var self = this;
+    return self['import'](self.transpiler).then(function(transpiler) {
       if (transpiler.__useDefault)
         transpiler = transpiler['default'];
-      return 'var __moduleAddress = "' + load.address + '";' + (transpiler.Compiler ? traceurTranspile : babelTranspile).call(this, load, transpiler);
+      return 'var __moduleAddress = "' + load.address + '";' + (transpiler.Compiler ? traceurTranspile : babelTranspile).call(self, load, transpiler);
     });
-  }
+  };
 
   var g = __global;
 
@@ -29,7 +30,7 @@
           return System.newModule({ 'default': g[load.name], __useDefault: true });
         }
       };
-  }
+  };
 
   function traceurTranspile(load, traceur) {
     var options = this.traceurOptions || {};
