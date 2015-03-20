@@ -4,8 +4,8 @@
 (function(Loader) {
   var g = __global;
 
-  function getTranspilerModule(globalName) {
-    return System.newModule({ 'default': g[globalName], __useDefault: true });
+  function getTranspilerModule(loader, globalName) {
+    return loader.newModule({ 'default': g[globalName], __useDefault: true });
   }
   var firstRun = true;
 
@@ -13,16 +13,17 @@
   Loader.prototype.transpiler = 'traceur';
 
   Loader.prototype.transpile = function(load) {
+    var self = this;
+
     // pick up Transpiler modules from existing globals on first run if set
     if (firstRun) {
-      if (g.traceur && !this.has('traceur'))
-        this.set('traceur', getTranspilerModule('traceur'));
-      if (g.babel && !this.has('babel'))
-        this.set('babel', getTranspilerModule('babel'));
+      if (g.traceur && !self.has('traceur'))
+        self.set('traceur', getTranspilerModule(self, 'traceur'));
+      if (g.babel && !self.has('babel'))
+        self.set('babel', getTranspilerModule(self, 'babel'));
       firstRun = false;
     }
-
-    var self = this;
+    
     return self['import'](self.transpiler).then(function(transpiler) {
       if (transpiler.__useDefault)
         transpiler = transpiler['default'];
@@ -32,7 +33,8 @@
 
   Loader.prototype.instantiate = function(load) {
     // load transpiler as a global (avoiding System clobbering)
-    if (load.name === this.transpiler)
+    if (load.name === this.transpiler) {
+      var self = this;
       return {
         deps: [],
         execute: function() {
@@ -41,9 +43,10 @@
           __eval(load.source, g, load);
           g.System = curSystem;
           g.Reflect.Loader = curLoader;
-          return getTranspilerModule(load.name);
+          return getTranspilerModule(self, load.name);
         }
       };
+    }
   };
 
   function traceurTranspile(load, traceur) {
