@@ -2,10 +2,26 @@
  * Traceur and Babel transpile hook for Loader
  */
 (function(Loader) {
+  var g = __global;
+
+  function getTranspilerModule(globalName) {
+    return System.newModule({ 'default': g[globalName], __useDefault: true });
+  }
+  var firstRun = true;
+
   // use Traceur by default
   Loader.prototype.transpiler = 'traceur';
 
   Loader.prototype.transpile = function(load) {
+    // pick up Transpiler modules from existing globals on first run if set
+    if (firstRun) {
+      if (g.traceur && !this.has('traceur'))
+        this.set('traceur', getTranspilerModule('traceur'));
+      if (g.babel && !this.has('babel'))
+        this.set('babel', getTranspilerModule('babel'));
+      firstRun = false;
+    }
+
     var self = this;
     return self['import'](self.transpiler).then(function(transpiler) {
       if (transpiler.__useDefault)
@@ -13,8 +29,6 @@
       return 'var __moduleAddress = "' + load.address + '";' + (transpiler.Compiler ? traceurTranspile : babelTranspile).call(self, load, transpiler);
     });
   };
-
-  var g = __global;
 
   Loader.prototype.instantiate = function(load) {
     // load transpiler as a global (avoiding System clobbering)
@@ -24,10 +38,10 @@
         execute: function() {
           var curSystem = g.System;
           var curLoader = g.Reflect.Loader;
-          __eval('(function(require,exports,module){' + load.source + '})();', g, load);
+          __eval(load.source, g, load);
           g.System = curSystem;
           g.Reflect.Loader = curLoader;
-          return System.newModule({ 'default': g[load.name], __useDefault: true });
+          return getTranspilerModule(load.name);
         }
       };
   };
