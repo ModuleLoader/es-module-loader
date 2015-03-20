@@ -33,14 +33,14 @@
 
   Loader.prototype.instantiate = function(load) {
     // load transpiler as a global (avoiding System clobbering)
-    if (load.name === this.transpiler) {
+    if (load.name === this.transpiler) {      
       var self = this;
       return {
         deps: [],
         execute: function() {
           var curSystem = g.System;
           var curLoader = g.Reflect.Loader;
-          __eval(load.source, g, load);
+          __eval('(function(require,exports,module){' + load.source + '})();', g, load);
           g.System = curSystem;
           g.Reflect.Loader = curLoader;
           return getTranspilerModule(self, load.name);

@@ -402,7 +402,7 @@ describe('System', function () {
   
   describe('#System.define', function () {
 
-    it('should load System.define', function(done) {
+    it.skip('should load System.define', function(done) {
       var oldLocate = System.locate;
       var slaveLocatePromise = new Promise(function(resolve, reject) {
 
