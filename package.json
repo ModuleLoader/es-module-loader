@@ -1,7 +1,7 @@
 {
   "name": "es6-module-loader",
   "description": "An ES6 Module Loader shim",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "homepage": "https://github.com/ModuleLoader/es6-module-loader",
   "author": {
     "name": "Guy Bedford, Luke Hoban, Addy Osmani",
@@ -22,7 +22,7 @@
     }
   ],
   "devDependencies": {
-    "babel-core": "^4.7.12",
+    "babel-core": "^4.7.16",
     "expect.js": "^0.3.1",
     "gesalakacula": "^1.0.0",
     "grunt": "~0.4.1",
