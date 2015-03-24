@@ -2,7 +2,7 @@
 
 Dynamically loads ES6 modules in browsers and [NodeJS](#nodejs-use) with support for loading existing and custom module formats through loader hooks.
 
-This project implements dynamic module loading through `System` exactly to the previous ES6-specified loader API at [2014-08-24 ES6 Specification Draft Rev 27, Section 15](http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts#august_24_2014_draft_rev_27) and will continue to track this API as it is re-drafted as a browser specification (currently most likely to be at https://github.com/whatwg/loader).
+This project implements dynamic module loading through `System` exactly to the previous ES6-specified loader API at [2014-08-24 ES6 Specification Draft Rev 27, Section 15](http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts#august_24_2014_draft_rev_27) and is being converted to track the newly redrafted specification at https://github.com/whatwg/loader (work in progress at https://github.com/ModuleLoader/es6-module-loader/pull/317).
 
 * Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#getting-started).
 * Supports both [Traceur](https://github.com/google/traceur-compiler) and [Babel](http://babeljs.io/) for compiling ES6 modules and syntax into ES5 in the browser with source map support.
@@ -35,7 +35,7 @@ If using ES6 syntax (optional), include `traceur.js` or `babel.js` in the page f
   <script src="es6-module-loader.js"></script>
 ```
 
-To use Babel, set the transpiler to `babel` with the loader configuration:
+To use Babel, load Babel's `browser.js` instead and set the transpiler to `babel` with the loader configuration:
 
 ```html
 <script>
@@ -100,8 +100,10 @@ See the [demo folder](https://github.com/ModuleLoader/es6-module-loader/blob/mas
 #### NodeJS Use
 
 ```
-  npm install es6-module-loader
+  npm install es6-module-loader babel traceur
 ```
+
+It is important that Babel or Traceur is installed into the path in order to be found, since these are no longer project dependencies.
 
 For use in NodeJS, the `Loader` and `System` globals are provided as exports:
 
