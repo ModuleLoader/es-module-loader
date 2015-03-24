@@ -49,6 +49,9 @@
   }
   function toAbsoluteURL(base, href) {
 
+    if (isWindows)
+      href = href.replace(/\\/g, '/');
+
     href = parseURI(href || '');
     base = parseURI(base || '');
 
