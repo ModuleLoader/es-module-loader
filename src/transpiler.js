@@ -61,10 +61,6 @@
     var compiler = new traceur.Compiler(options);
     var source = doTraceurCompile(load.source, compiler, options.filename);
 
-    // add "!eval" to end of Traceur sourceURL
-    // I believe this does something?
-    source += '!eval';
-
     return source;
   }
   function doTraceurCompile(source, compiler, filename) {
@@ -89,10 +85,7 @@
       options.blacklist = ['react'];
 
     var source = babel.transform(load.source, options).code;
-
-    // add "!eval" to end of Babel sourceURL
-    // I believe this does something?
-    return source + '\n//# sourceURL=' + load.address + '!eval';
+    return source;
   }
 
 
