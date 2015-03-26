@@ -32,21 +32,25 @@
   };
 
   Loader.prototype.instantiate = function(load) {
-    // load transpiler as a global (avoiding System clobbering)
-    if (load.name === this.transpiler) {      
-      var self = this;
-      return {
-        deps: [],
-        execute: function() {
-          var curSystem = g.System;
-          var curLoader = g.Reflect.Loader;
-          __eval('(function(require,exports,module){' + load.source + '})();', g, load);
-          g.System = curSystem;
-          g.Reflect.Loader = curLoader;
-          return getTranspilerModule(self, load.name);
-        }
-      };
-    }
+    var self = this;
+    return Promise.resolve(self.normalize(self.transpiler))
+    .then(function(transpilerNormalized) {
+      // load transpiler as a global (avoiding System clobbering)
+      if (load.name === transpilerNormalized) {
+        return {
+          deps: [],
+          execute: function() {
+            var curSystem = g.System;
+            var curLoader = g.Reflect.Loader;
+            // ensure not detected as CommonJS
+            __eval('(function(require,exports,module){' + load.source + '})();', g, load);
+            g.System = curSystem;
+            g.Reflect.Loader = curLoader;
+            return getTranspilerModule(self, load.name);
+          }
+        };
+      }
+    });
   };
 
   function traceurTranspile(load, traceur) {
