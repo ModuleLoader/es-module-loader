@@ -7,6 +7,7 @@
   function getTranspilerModule(loader, globalName) {
     return loader.newModule({ 'default': g[globalName], __useDefault: true });
   }
+  // NB this does not support sub-classing well
   var firstRun = true;
 
   // use Traceur by default
