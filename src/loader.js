@@ -428,6 +428,9 @@ function logloads(loads) {
     var loader = linkSet.loader;
 
     for (var i = 0, l = load.dependencies.length; i < l; i++) {
+      if (!load.dependencies[i])
+        continue;
+      
       var name = load.dependencies[i].value;
 
       if (loader.modules[name])
@@ -597,6 +600,8 @@ function logloads(loads) {
 
       // dependencies not found are already linked
       for (var j = 0; j < load.dependencies.length; j++) {
+        if (!load.dependencies[j])
+          continue;
         if (loadDep.name == load.dependencies[j].value) {
           // by definition all loads in linkset are loaded, not linked
           console.assert(loadDep.status == 'loaded', 'Load in linkSet not loaded!');
@@ -740,6 +745,8 @@ function logloads(loads) {
     // now link all the module dependencies
     // amending the depMap as we go
     for (var i = 0, l = load.dependencies.length; i < l; i++) {
+      if (!load.dependencies[i])
+        continue;
       var depName = load.dependencies[i].value;
       var depModule = loader.modules[depName];
 
