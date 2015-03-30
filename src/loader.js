@@ -14,8 +14,9 @@
   var FETCH = 0;
   var TRANSLATE = 1;
   var INSTANTIATE = 2;
-  var LINK = 3;
-  var READY = 4;
+  var INSTANTIATE_ALL = 3;
+  var LINK = 4;
+  var READY = 5;
 
   // Loader class
   function Loader() {
@@ -26,7 +27,6 @@
       fetch: undefined,
       translate: undefined,
       instantiate: undefined,
-      haveGraph: false,
 
       registry: {}
       // Realm not implemented
@@ -46,6 +46,10 @@
       translate: undefined,
       instantiate: undefined,
 
+      fetchResolve: undefined,
+      translateResolve: undefined,
+      instantiateResolve: undefined,
+
       dependencies: undefined,
       module: undefined,
 
@@ -56,75 +60,64 @@
     });
   }
 
-  // 4.1.2
-  function resolveFetch(loader, entry, payload) {
-    entry.fetch = entry.fetch || Promise.resolve(payload);
-    entry.state = TRANSLATE;
-  }
+  // 4.1.2 inlined
 
   // 4.1.3
-  function resolveTranslate(loader, entry, source) {
-    entry.translate = entry.translate || Promise.resolve(source);
-    entry.state = INSTANTIATE;
+  function fulfillFetch(loader, entry, payload) {
+    if (entry.fetchResolve)
+      entry.fetchResolve(payload);
+    else
+      entry.fetch = Promise.resolve(payload);
+      
+    entry.fetchResolve = undefined;
+    entry.state = Math.max(entry.state, TRANSLATE);
   }
 
   // 4.1.4
-  function resolveInstantiate(loader, entry, instance, source) {
-    entry.instantiate = entry.instantiate || Promise.resolve(instance);
-    return commitInstantiated(loader, entry, instance, source);
+  function fulfillTranslate(loader, entry, source) {
+    if (entry.translateResolve)
+      entry.translateResolve(source);
+    else
+      entry.translate = Promise.resolve(source);
+      
+    entry.translateResolve = undefined;
+    entry.state = Math.max(entry.state, INSTANTIATE);
   }
 
   // 4.1.5
-  function commitInstantiated(loader, entry, instance, source) {
-    // 4.1.6 Instantiation
-    // adjusted to use custom transpile hook
-    // with the system register declare function
+  function fulfillInstantiate(loader, entry, instance, source) {
+    // 4.1.6 CommitInstantiated inlined
 
-    // key spec adjustment:
-    // adjusted to immediately requestInstantiate of dependencies
-    // moved dependency resolve from link to here
-    // returns a promise instead of synchronous
-    // promise returns when instantiate promises of dependencies exist
-    // this way the graph can be built up by chaining these promises
+    // 4.1.7 Instantiation inlined
+      if (instance === undefined)
+        var registration = loader.loaderObj.parse(entry.key, source, entry.metadata);
+      else if (typeof instance !== 'function')
+        throw new TypeError('Instantiate must return an execution function.');
+
+    // we should really resolve instantiate with a Source Text Module Record
+    // but we don't have that thing here
+    // it's not used through the instantiate promise though, so it's ok
+    if (entry.instantiateResolve)
+      entry.instantiateResolve(instance);
+    else
+      entry.instantiate = Promise.resolve(instance);
+    
+    entry.instantiateResolve = undefined;
+
+    var deps = [];
+
     if (instance === undefined) {
-      var key = entry.key;
-      var registration = loader.loaderObj.parse(key, source, entry.metadata);
+      // adjusted to use custom transpile hook
+      // with the system register declare function
       entry.declare = registration.declare;
-      var dependencies = [];
-      var depLoads = [];
-      for (var i = 0, len = registration.deps.length; i < len; i++) (function(dep) {
-        depLoads.push(Promise.resolve()
-        .then(function() {
-          return loader.resolve(dep, key, entry.metadata);
-        })
-        ['catch'](function(err) {
-          throw addToError(err, 'Resolving ' + name + ', ' + key);
-        })
-        .then(function(depKey) {
-          var depEntry = ensureRegistered(loader, depKey);
-          dependencies.push(depEntry);
-
-          if (depEntry.state === READY)
-            return depEntry;
-
-          // we run but dont rely on the promise to avoid circularity
-          // this is what allows us to guarantee purely that the 
-          // instantiate promises for all dependnecies will exist
-          requestInstantiate(loader, depKey, null, depEntry);
-        }));
-      })(registration.deps[i]);
-      return Promise.all(depLoads)
-      .then(function() {
-        entry.dependencies = dependencies;  
-        entry.state = LINK;
-        return entry;
-      });
+      
+      for (var i = 0; i < registration.deps.length; i++)
+        deps.push({ key: registration.deps[i], value: undefined });
     }
-    else {
-      entry.dependencies = [];
-      entry.module = instance;
-      return entry;
-    }
+
+    entry.dependencies = deps;
+    entry.module = instance;
+    entry.state = Math.max(entry.state, INSTANTIATE_ALL);
   }
 
   // 4.2.1
@@ -140,16 +133,26 @@
     if (entry.fetch)
       return entry.fetch;
 
-    return entry.fetch = Promise.resolve()
+    Promise.resolve()
     .then(function() {
       return loader.fetch(key, entry.metadata);
     })
-    ['catch'](function(err) {
-      throw entry.error = addToError(err, 'Fetching ' + key);
+    .then(function(payload) {
+      // in turn calls fetchResolve
+      fulfillFetch(loader, entry, payload);
+    }, function(err) {
+      throw addToError(err, 'Fetching ' + key);
     })
-    .then(function(v) {
-      entry.state = TRANSLATE;
-      return v;
+    ['catch'](function(err) {
+      entry.error = entry.error || err;
+    })
+    .then(function() {
+      if (entry.error && entry.fetchResolve)
+        entry.fetchResolve(Promise.reject(entry.error));
+    });
+
+    return entry.fetch = new Promise(function(resolve) {
+      entry.fetchResolve = resolve; 
     });
   }
 
@@ -166,19 +169,29 @@
     if (entry.translate)
       return entry.translate;
 
-    return entry.translate = requestFetch(loader, key, null, entry)
+    requestFetch(loader, key, null, entry)
     .then(function(payload) {
       return Promise.resolve()
       .then(function() {
         return loader.translate(key, payload, entry.metadata);
       })
-      ['catch'](function(err) {
-        throw entry.error = addToError(err, 'Translating ' + key);
+      .then(function(source) {
+        // in turn calls translateResolve
+        fulfillTranslate(loader, entry, source);
+      }, function(err) {
+        throw addToError(err, 'Translating ' + key);
       });
     })
-    .then(function(source) {
-      entry.state = INSTANTIATE;
-      return source;
+    ['catch'](function(err) {
+      entry.error = entry.error || err;
+    })
+    .then(function() {
+      if (entry.error && entry.translateResolve)
+        entry.translateResolve(Promise.reject(entry.error));
+    });
+
+    return entry.translate = new Promise(function(resolve) {
+      entry.translateResolve = resolve;
     });
   }
 
@@ -195,22 +208,65 @@
     if (entry.instantiate)
       return entry.instantiate;
 
-    return entry.instantiate = requestTranslate(loader, key, null, entry)
+    requestTranslate(loader, key, null, entry)
     .then(function(source) {
       return Promise.resolve()
       .then(function() {
         return loader.instantiate(key, source, entry.metadata);
       })
-      ['catch'](function(err) {
-        throw entry.error = addToError(err, 'Instantiating ' + key);
-      })
       .then(function(instance) {
-        return commitInstantiated(loader, entry, instance, source);
+        fulfillInstantiate(loader, entry, instance, source);
+      }, function(err) {
+        throw addToError(err, 'Instantiating ' + key);
       });
+    })
+    ['catch'](function(err) {
+      entry.error = entry.error || err;
+    })
+    .then(function() {
+      if (entry.error && entry.instantiateResolve)
+        entry.instantiateResolve(Promise.reject(entry.error));
+    });
+
+    return entry.instantiate = new Promise(function(resolve) {
+      entry.instantiateResolve = resolve;
     });
   }
 
   // 4.2.4
+  function requestInstantiateAll(loader, key, metadata, entry) {
+    entry = entry || ensureRegistered(loader, key, metadata);
+
+    if (entry.state > INSTANTIATE_ALL)
+      return entry;
+
+    return requestInstantiate(loader, key, null, entry)
+    .then(function() {
+      entry.state = Math.max(entry.state, LINK);
+
+      var depLoads = [];
+      for (var i = 0; i < entry.dependencies.length; i++) (function(pair) {
+        // create dep meta object now, passed through into ensureRegister shortly
+        var depMeta = {};
+        depLoads.push(Promise.resolve(loader.resolve(pair.key, key, depMeta))
+        .then(function(depKey) {
+          var depEntry = ensureRegistered(loader, depKey, depMeta);
+
+          pair.value = depEntry;
+
+          return requestInstantiateAll(loader, depKey, null, depEntry);
+        }));
+      })(entry.dependencies[i]);
+      return Promise.all(depLoads)
+      ['catch'](function(err) {
+        err = addToError(err, 'Loading ' + key);
+        entry.error = entry.error || err;
+        throw err;
+      });
+    });
+  }
+
+  // 4.2.5
   function requestLink(loader, key, metadata, entry) {
     entry = entry || ensureRegistered(loader, key, metadata);
 
@@ -220,39 +276,40 @@
     if (entry.state === READY)
       return Promise.resolve(entry);
 
-    return requestInstantiate(loader, key, null, entry)
-    .then(function(entry) {
-      // adjusted to use promise waiting until dependency graph is populated
-      return dependencyGraph(entry);
-    })
-    .then(function(depGraph) {
-
+    return requestInstantiateAll(loader, key, metadata, entry)
+    .then(function() {
       // 5.2.1 Link inlined to reduce stack size
+      
+        // 5.2.2 dependencyGraph inlined
+          var deps = [];
+          computeDependencyGraph(entry, deps);
 
-      // adjusted for graph already being computed in requestLink
-      for (var i = 0, len = depGraph.length; i < len; i++) {
-        var dep = depGraph[i];
-        if (dep.state == LINK && typeof dep.module == 'function') {
-          doDynamicLink(dep);
-          // console.assert(dep.module instanceof Module)
-          dep.state = READY;
+        // dynamic link
+        for (var i = 0; i < deps.length; i++) {
+          var dep = deps[i];
+          if (dep.state == LINK && typeof dep.module == 'function') {
+            doDynamicLink(dep);
+            // console.assert(dep.module instanceof Module)
+            dep.state = READY;
+          }
         }
-      }
 
-      // adjusted linking implementation
-      // to handle setter graph logic
-      if (entry.state == LINK)
-        declareModule(entry);
+        // declarative link
+        // adjusted linking implementation
+        // to handle setter graph logic
+        if (entry.state == LINK)
+          declareModule(entry);
 
-      // NB assert entry's whole graph is in ready state
+      // [assert entry's whole graph is in ready state]
       return entry;
-    }, function(err) {
+    })
+    ['catch'](function(err) {
       entry.error = err;
       throw err;
     });
   }
 
-  // 4.2.5
+  // 4.2.6
   function requestReady(loader, key, metadata, entry) {
     entry = entry || ensureRegistered(loader, key, metadata);
 
@@ -273,15 +330,15 @@
 
       return module.module;
     }, function(err) {
-      entry.error = err;
+      entry.error = entry.error || err;
       throw err;
     });
   }
 
   // 5. Linking
 
-  // 5.2.1 inlined
-
+  // 5.2.1 inlined in 4.2.5
+  // 5.2.2 inlined in 4.2.5
 
   function doDynamicLink(dep) {
     // may have had a previous error
@@ -297,45 +354,14 @@
     }
   }
 
-  // 5.2.2
-  function dependencyGraph(root) {
-    var result = [];
-    return computeDependencyGraph(root, result)
-    .then(function() {
-      return result;
-    })
-    ['catch'](function(err) {
-      // build up a tree stack error for better debugging
-      throw addToError(err, 'Loading ' + root.key);
-    });
-  }
-
   // 5.2.3
-  // spec adjustment. We make this a promise function
-  // that can be run during link, waiting on dependency
-  // downloads to complete before returning full graph
-  // assumption is that instantiate promises exist
   function computeDependencyGraph(entry, result) {
     if (indexOf.call(result, entry) != -1)
       return;
 
     result.push(entry);
-
-    var returnPromise = Promise.resolve();
-
-    for (var i = 0, len = entry.dependencies.length; i < len; i++) (function(depEntry) {
-      // ensure deterministic computation
-      // dont need parallel anyway as we know that underlying promises are being
-      // driven forward from elsewhere
-      returnPromise = returnPromise.then(function() {
-        return Promise.resolve(depEntry.instantiate)
-        .then(function() {
-          return computeDependencyGraph(depEntry, result);
-        });
-      });
-    })(entry.dependencies[i]);
-
-    return returnPromise;
+    for (var i = 0; i < entry.dependencies.length; i++)
+      computeDependencyGraph(entry.dependencies[i].value, result);
   }
 
   // ES6-style module binding and execution code
@@ -352,7 +378,7 @@
       module.locked = true;
       moduleObj[name] = value;
 
-      for (var i = 0, len = module.importers.length; i < len; i++) {
+      for (var i = 0; i < module.importers.length; i++) {
         var importerModule = module.importers[i];
         if (!importerModule.locked) {
           var importerIndex = indexOf.call(importerModule.dependencies, module);
@@ -368,8 +394,8 @@
     module.execute = registryEntry.execute;
 
     // now go through dependencies and declare them in turn, building up the binding graph as we go
-    for (var i = 0, len = entry.dependencies.length; i < len; i++) {
-      var depEntry = entry.dependencies[i];
+    for (var i = 0; i < entry.dependencies.length; i++) {
+      var depEntry = entry.dependencies[i].value;
 
       // if dependency not already declared, declare it now
       // we check module existence over state to stop at circular and dynamic
@@ -408,7 +434,7 @@
     var deps = module.dependencies;
     var err;
 
-    for (var i = 0, len = deps.length; i < len; i++) {
+    for (var i = 0; i < deps.length; i++) {
       var dep = deps[i];
 
       // dynamic modules are null in the ModuleRecord graph
@@ -489,7 +515,7 @@
       return requestTranslate(loader, key, metadata);
     
     else if (stage == 'instantiate')
-      return requestInstantiate(loader, key, metadata)
+      return requestInstantiateAll(loader, key, metadata)
       .then(function(entry) {
         if (!(entry.module instanceof Module))
           return entry.module;
@@ -519,21 +545,21 @@
     if (stage == 'fetch') {
       if (entry.state > FETCH)
         throw new TypeError(key + ' has already been fetched.');
-      resolveFetch(loader, entry, value);
+      fulfillFetch(loader, entry, value);
     }
     else if (stage == 'translate') {
       if (entry.state > TRANSLATE)
         throw new TypeError(key + ' has already been translated.');
-      resolveTranslate(loader, entry, value);
+      fulfillTranslate(loader, entry, value);
     }
     else if (stage == 'instantiate') {
       if (entry.state > INSTANTIATE)
         throw new TypeError(key + ' has already been instantiated.');
-      resolveFetch(loader, entry, undefined);
-      resolveTranslate(loader, entry, undefined);
+      fulfillFetch(loader, entry, undefined);
+      fulfillTranslate(loader, entry, undefined);
       // NB error propogation
       entry.translate.then(function(source) {
-        resolveInstantiate(loader, entry, value, source);
+        fulfillInstantiate(loader, entry, value, source);
       });
     }
     else

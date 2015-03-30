@@ -68,7 +68,9 @@
 
     return Promise.all(importPromises).then(function(resolvedDeps) {
       var module = factory.apply(null, resolvedDeps);
-      return new Reflect.Module(module);
+      return function() {
+        return new Reflect.Module(module);
+      };
     });
   });
 
