@@ -6,7 +6,7 @@
   // use Traceur by default
   Loader.prototype.transpiler = 'traceur';
 
-  Loader.prototype.parse = function(key, source, metadata) {
+  Loader.prototype.transpile = function(key, source, metadata) {
     if (!transpiler) {
       if (this.transpiler == 'babel') {
         transpilerModule = cjsMode ? require('babel-core') : __global.babel;
@@ -87,9 +87,6 @@
       };
     }
 
-    // closest we can get to undefined 'this'
-    // we use eval over new Function because of source maps support
-    // NB retry Function again here
     doEval(source);
 
     curSystem .register = curRegister;
@@ -99,7 +96,10 @@
 
   function doEval(source) {
     try {
-      eval.call({}, source);
+      // closest we can get to undefined 'this'
+      // we use eval over new Function because of source maps support
+      // NB retry Function again here
+      eval.call(null, source);
     }
     catch(e) {
       if (e.name == 'SyntaxError' || e.name == 'TypeError')

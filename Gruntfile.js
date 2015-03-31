@@ -24,7 +24,7 @@ module.exports = function (grunt) {
             'node_modules/when/es6-shim/Promise.js',
             'src/polyfill-wrapper-start.js',
             'src/loader.js',
-            'src/parser.js',
+            'src/transpiler.js',
             'src/url.js',
             'src/system.js',
             'src/module-tag.js',
@@ -33,7 +33,7 @@ module.exports = function (grunt) {
           'dist/<%= pkg.name %>-sans-promises.src.js': [
             'src/polyfill-wrapper-start.js',
             'src/loader.js',
-            'src/parser.js',
+            'src/transpiler.js',
             'src/url.js',
             'src/system.js',
             'src/module-tag.js',

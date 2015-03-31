@@ -90,7 +90,7 @@
 
     // 4.1.7 Instantiation inlined
       if (instance === undefined)
-        var registration = loader.loaderObj.parse(entry.key, source, entry.metadata);
+        var registration = loader.loaderObj.transpile(entry.key, source, entry.metadata);
       else if (typeof instance !== 'function')
         throw new TypeError('Instantiate must return an execution function.');
 
