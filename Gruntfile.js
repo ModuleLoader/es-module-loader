@@ -20,45 +20,40 @@ module.exports = function (grunt) {
     concat: {
       dist: {
         files: {
+          'dist/<%= pkg.name %>-prod.src.js': [
+            'node_modules/when/es6-shim/Promise.js',
+            'src/polyfill-wrapper-start.js',
+            'src/loader.js',
+            'src/dynamic-only.js',
+            'src/system.js',
+            'src/polyfill-wrapper-end.js'
+          ],
+          'dist/<%= pkg.name %>-prod-sans-promises.src.js': [
+            'src/polyfill-wrapper-start.js',
+            'src/loader.js',
+            'src/dynamic-only.js',
+            'src/system.js',
+            'src/polyfill-wrapper-end.js'
+          ],
           'dist/<%= pkg.name %>.src.js': [
             'node_modules/when/es6-shim/Promise.js',
             'src/polyfill-wrapper-start.js',
-            'dist/<%= pkg.name %>.js',
+            'src/loader.js',
+            'src/declarative.js',
+            'src/transpiler.js',
+            'src/system.js',
+            'src/module-tag.js',
             'src/polyfill-wrapper-end.js'
           ],
           'dist/<%= pkg.name %>-sans-promises.src.js': [
             'src/polyfill-wrapper-start.js',
-            'dist/<%= pkg.name %>.js',
+            'src/loader.js',
+            'src/declarative.js',
+            'src/transpiler.js',
+            'src/system.js',
+            'src/module-tag.js',
             'src/polyfill-wrapper-end.js'
           ]
-        }
-      }
-    },
-    esnext: {
-      dist: {
-        src: [
-          'src/loader.js',
-          'src/transpiler.js',
-          'src/system.js'
-        ],
-        dest: 'dist/<%= pkg.name %>.js'
-      }
-    },
-    'string-replace': {
-      dist: {
-        files: {
-          'dist/<%= pkg.name %>.js': 'dist/<%= pkg.name %>.js'
-        },
-        options: {
-          replacements:[{
-            pattern: 'var $__Object$getPrototypeOf = Object.getPrototypeOf;\n' +
-              'var $__Object$defineProperty = Object.defineProperty;\n' +
-              'var $__Object$create = Object.create;',
-            replacement: ''
-          }, {
-            pattern: '$__Object$getPrototypeOf(SystemLoader.prototype).constructor',
-            replacement: '$__super'
-          }]
         }
       }
     },
@@ -80,18 +75,26 @@ module.exports = function (grunt) {
       distSansPromises: {
         src: 'dist/<%= pkg.name %>-sans-promises.src.js',
         dest: 'dist/<%= pkg.name %>-sans-promises.js'
+      },
+      prodDist: {
+        options: {
+          banner: '<%= meta.banner %>\n'
+        },
+        src: 'dist/<%= pkg.name %>-prod.src.js',
+        dest: 'dist/<%= pkg.name %>-prod.js'
+      },
+      prodDistSansPromises: {
+        src: 'dist/<%= pkg.name %>-prod-sans-promises.src.js',
+        dest: 'dist/<%= pkg.name %>-prod-sans-promises.js'
       }
     }
   });
 
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-uglify');
-  grunt.loadNpmTasks('grunt-esnext');
   grunt.loadNpmTasks('grunt-contrib-concat');
-  grunt.loadNpmTasks('grunt-string-replace');
 
   grunt.registerTask('lint', ['jshint']);
-  grunt.registerTask('compile', ['esnext', 'string-replace', 'concat']);
-  grunt.registerTask('default', [/*'jshint', */'esnext', 'string-replace', 
-                     'concat', 'uglify']);
+  grunt.registerTask('compile', ['concat']);
+  grunt.registerTask('default', [/*'jshint', */'concat', 'uglify']);
 };
