@@ -34,18 +34,21 @@ if (options.saucelabs) {
 module.exports = function(config) {
 
   var files = [
-    'test/_helper.js',
     [options['babel'] ? 'node_modules/regenerator/runtime.js' : ''],
 
     [!options.ie8 ? (!options['babel'] ? 'node_modules/traceur/bin/traceur.js' : 'node_modules/babel-core/browser.js') : ''],
 
     'dist/es6-module-loader' + (options.polyfill ? '' : '-sans-promises') + '.src.js',
 
-    'test/_browser.js',
-    'test/browser-script-type-module.js',
-    'test/custom-loader.js',
+    'test/_helper.js',
 
-    [!options.ie8 ? 'test/*.spec.js' : 'test/*.normalize.spec.js'],
+    'test/browser-script-type-module.js',
+
+    'test/system.normalize.spec.js',
+    'test/custom-loader.spec.js',
+    options.ie8 ? [] : ['test/system.spec.js'],
+
+    'test/custom-loader.js',
 
     {pattern: 'test/{loader,loads,syntax,worker}/**/*', included: false},
     {pattern: 'node_modules/traceur/bin/traceur.js', included: false},

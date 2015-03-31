@@ -1,1 +1,1 @@
-import 'non-existent';
+import 'non-existent.js';

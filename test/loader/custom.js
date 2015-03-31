@@ -1,1 +1,3 @@
-export var path = true;
+define([], function() {
+  return { path: true };
+});

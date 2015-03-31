@@ -1,1 +1,1 @@
-import { p } from './es6-dep';
+import { p } from './es6-dep.js';

@@ -1,73 +1,43 @@
-/*
- * Traceur and Babel transpile hook for Loader
- */
-(function(Loader) {
-  var g = __global;
+  // ---------- Transpiler Hooks ----------
 
-  function getTranspilerModule(loader, globalName) {
-    return loader.newModule({ 'default': g[globalName], __useDefault: true });
-  }
-  // NB this does not support sub-classing well
-  var firstRun = true;
+  // Returns an array of ModuleSpecifiers
+  var transpiler, transpilerModule;
 
   // use Traceur by default
   Loader.prototype.transpiler = 'traceur';
 
-  Loader.prototype.transpile = function(load) {
-    var self = this;
-
-    // pick up Transpiler modules from existing globals on first run if set
-    if (firstRun) {
-      if (g.traceur && !self.has('traceur'))
-        self.set('traceur', getTranspilerModule(self, 'traceur'));
-      if (g.babel && !self.has('babel'))
-        self.set('babel', getTranspilerModule(self, 'babel'));
-      firstRun = false;
-    }
-    
-    return self['import'](self.transpiler).then(function(transpiler) {
-      if (transpiler.__useDefault)
-        transpiler = transpiler['default'];
-      return 'var __moduleAddress = "' + load.address + '";' + (transpiler.Compiler ? traceurTranspile : babelTranspile).call(self, load, transpiler);
-    });
-  };
-
-  Loader.prototype.instantiate = function(load) {
-    var self = this;
-    return Promise.resolve(self.normalize(self.transpiler))
-    .then(function(transpilerNormalized) {
-      // load transpiler as a global (avoiding System clobbering)
-      if (load.name === transpilerNormalized) {
-        return {
-          deps: [],
-          execute: function() {
-            var curSystem = g.System;
-            var curLoader = g.Reflect.Loader;
-            // ensure not detected as CommonJS
-            __eval('(function(require,exports,module){' + load.source + '})();', g, load);
-            g.System = curSystem;
-            g.Reflect.Loader = curLoader;
-            return getTranspilerModule(self, load.name);
-          }
-        };
+  Loader.prototype.transpile = function(key, source, metadata) {
+    if (!transpiler) {
+      if (this.transpiler == 'babel') {
+        transpilerModule = cjsMode ? require('babel-core') : __global.babel;
+        if (!transpilerModule)
+          throw new TypeError('Unable to find the Babel transpiler.');
+        transpiler = babelTranspile;
       }
-    });
-  };
+      else {
+        transpilerModule = cjsMode ? require('traceur') : __global.traceur;
+        if (!transpilerModule)
+          throw new TypeError('Unable to find the Traceur transpiler.');
+        transpiler = traceurTranspile;
+      }
+    }
 
-  function traceurTranspile(load, traceur) {
+    // transpile to System register and evaluate out the { deps, declare } form
+    return evaluateSystemRegister(key, transpiler.call(this, key, source, metadata));
+  }
+
+  function traceurTranspile(key, source, metadata) {
     var options = this.traceurOptions || {};
     options.modules = 'instantiate';
     options.script = false;
     options.sourceMaps = 'inline';
-    options.filename = load.address;
-    options.inputSourceMap = load.metadata.sourceMap;
-    options.moduleName = false;
+    options.inputSourceMap = metadata.sourceMap;
+    options.filename = key;
 
-    var compiler = new traceur.Compiler(options);
-    var source = doTraceurCompile(load.source, compiler, options.filename);
+    var compiler = new transpilerModule.Compiler(options);
+    var source = doTraceurCompile(source, compiler, options.filename);
 
     // add "!eval" to end of Traceur sourceURL
-    // I believe this does something?
     source += '!eval';
 
     return source;
@@ -78,27 +48,63 @@
     }
     catch(e) {
       // traceur throws an error array
-      throw e[0];
+      throw e[0] || e;
     }
   }
 
-  function babelTranspile(load, babel) {
+  function babelTranspile(key, source, metadata) {
     var options = this.babelOptions || {};
     options.modules = 'system';
     options.sourceMap = 'inline';
-    options.filename = load.address;
+    options.filename = key;
     options.code = true;
     options.ast = false;
-    
-    if (!options.blacklist)
-      options.blacklist = ['react'];
 
-    var source = babel.transform(load.source, options).code;
+    // We blacklist JSX because transpiling needs to take us only as far as
+    // the baseline ES features that exist when loaders are widely natively
+    // supported. This allows experimental features, but features certainly
+    // not in ES* won't make sense here so we try to encourage good habits.
+    options.blacklist = options.blacklist || [];
+    options.blacklist.push('react');
+
+    var source = transpilerModule.transform(source, options).code;
 
     // add "!eval" to end of Babel sourceURL
-    // I believe this does something?
-    return source + '\n//# sourceURL=' + load.address + '!eval';
+    return source + '\n//# sourceURL=' + key + '!eval';
   }
 
+  function evaluateSystemRegister(key, source) {
+    var curSystem = __global.System = __global.System || System;
 
-})(__global.LoaderPolyfill);
+    var registration;
+
+    // Hijack System .register to set declare function
+    var curRegister = curSystem .register;
+    curSystem .register = function(deps, declare) {
+      registration = {
+        deps: deps,
+        declare: declare
+      };
+    }
+
+    doEval(source);
+
+    curSystem .register = curRegister;
+    // console.assert(registration);
+    return registration;
+  }
+
+  function doEval(source) {
+    try {
+      // closest we can get to undefined 'this'
+      // we use eval over new Function because of source maps support
+      // NB retry Function again here
+      eval.call(null, source);
+    }
+    catch(e) {
+      if (e.name == 'SyntaxError' || e.name == 'TypeError')
+        e.message = 'Evaluating ' + key + '\n\t' + e.message;
+      throw e;
+    }
+  }
+

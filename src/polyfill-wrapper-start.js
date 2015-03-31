@@ -1,35 +1,27 @@
+/*
+ * Dynamic ES6 Module Loader Polyfill
+ *
+ * Implemented to the in-progress WhatWG loader standard at
+ *   https://github.com/whatwg/loader/tree/819035fd5c59c53130a025694162fcaa2315fc36
+ *
+ * Up to date as of 23 Feb 2015.
+ *
+ */
+
 (function(__global) {
-  
-$__Object$getPrototypeOf = Object.getPrototypeOf || function(obj) {
-  return obj.__proto__;
-};
 
-var $__Object$defineProperty;
-(function () {
-  try {
-    if (!!Object.defineProperty({}, 'a', {})) {
-      $__Object$defineProperty = Object.defineProperty;
-    }
-  } catch (e) {
-    $__Object$defineProperty = function (obj, prop, opt) {
-      try {
-        obj[prop] = opt.value || opt.get.call(obj);
-      }
-      catch(e) {}
-    }
-  }
-}());
+  var Promise = __global.Promise || require('when/es6-shim/Promise');
 
-$__Object$create = Object.create || function(o, props) {
-  function F() {}
-  F.prototype = o;
+  // IE8 support
+  // Note: console.assert is not supported or polyfillable in IE8
+  // so it is better to debug in IE8 against the source with 
+  // assertions removed.
+  var indexOf = Array.prototype.indexOf || function(item) {
+    for (var i = 0, thisLen = this.length; i < thisLen; i++)
+      if (this[i] === item)
+        return i;
+    return -1;
+  };
 
-  if (typeof(props) === "object") {
-    for (prop in props) {
-      if (props.hasOwnProperty((prop))) {
-        F[prop] = props[prop];
-      }
-    }
-  }
-  return new F();
-};
+  // if we have require and exports, then define as CommonJS
+  var cjsMode = typeof exports == 'object' && typeof require == 'function';
