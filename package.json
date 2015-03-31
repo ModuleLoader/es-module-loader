@@ -29,8 +29,6 @@
     "grunt-contrib-concat": "^0.5.0",
     "grunt-contrib-jshint": "~0.6.0",
     "grunt-contrib-uglify": "~0.6.0",
-    "grunt-esnext": "0.0.3",
-    "grunt-string-replace": "^0.2.7",
     "karma": "^0.12.28",
     "karma-benchmark": "^0.4.0",
     "karma-benchmark-reporter": "^0.1.1",

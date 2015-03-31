@@ -1,26 +1,27 @@
 /*
  * Traceur and Babel transpile hook for Loader
  */
-(function(Loader) {
   var g = __global;
 
   function getTranspilerModule(loader, globalName) {
     return loader.newModule({ 'default': g[globalName], __useDefault: true });
   }
+  // NB this does not support sub-classing well
+  var firstRun = true;
 
   // use Traceur by default
   Loader.prototype.transpiler = 'traceur';
 
-  Loader.prototype.transpile = function(load) {
+  function transpile(load) {
     var self = this;
 
     // pick up Transpiler modules from existing globals on first run if set
-    if (!self.transpilerHasRun) {
+    if (firstRun) {
       if (g.traceur && !self.has('traceur'))
         self.set('traceur', getTranspilerModule(self, 'traceur'));
       if (g.babel && !self.has('babel'))
         self.set('babel', getTranspilerModule(self, 'babel'));
-      self.transpilerHasRun = true;
+      firstRun = false;
     }
     
     return self['import'](self.transpiler).then(function(transpiler) {
@@ -95,6 +96,3 @@
     // I believe this does something?
     return source + '\n//# sourceURL=' + load.address + '!eval';
   }
-
-
-})(__global.LoaderPolyfill);

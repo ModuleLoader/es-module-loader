@@ -1,4 +1,6 @@
 
+})();
+
 // Define our eval outside of the scope of any other reference defined in this
 // file to avoid adding those references to the evaluation scope.
 function __eval(__source, __global, __load) {
