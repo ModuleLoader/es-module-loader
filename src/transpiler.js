@@ -1,7 +1,6 @@
 /*
  * Traceur and Babel transpile hook for Loader
  */
-(function(Loader) {
   var g = __global;
 
   function getTranspilerModule(loader, globalName) {
@@ -13,7 +12,7 @@
   // use Traceur by default
   Loader.prototype.transpiler = 'traceur';
 
-  Loader.prototype.transpile = function(load) {
+  function transpile(load) {
     var self = this;
 
     // pick up Transpiler modules from existing globals on first run if set
@@ -99,6 +98,3 @@
     // I believe this does something?
     return source + '\n//# sourceURL=' + load.address + '!eval';
   }
-
-
-})(__global.LoaderPolyfill);
