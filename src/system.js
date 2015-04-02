@@ -290,6 +290,7 @@
 
     function ready() {
       var scripts = document.getElementsByTagName('script');
+      var catchFn = function(err) { setTimeout(function() { throw err; }); };
       for (var i = 0; i < scripts.length; i++) {
         var script = scripts[i];
         if (script.type == 'module') {
@@ -297,7 +298,11 @@
           // It is important to reference the global System, rather than the one
           // in our closure. We want to ensure that downstream users/libraries
           // can override System w/ custom behavior.
-          __global.System.module(source)['catch'](function(err) { setTimeout(function() { throw err; }); });
+          if (script.hasAttribute('name')) {
+            __global.System.define(script.getAttribute('name'), source)['catch'](catchFn);
+          } else {
+            __global.System.module(source)['catch'](catchFn);
+          }
         }
       }
     }
