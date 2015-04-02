@@ -3,7 +3,11 @@
 // file to avoid adding those references to the evaluation scope.
 function __eval(__source, __global, __load) {
   try {
-    eval('(function() { var __moduleName = "' + (__load.name || '').replace('"', '\"') + '"; ' + __source + ' \n }).call(__global);');
+    // pass sourceURL tag so it will show up correctly in stacktraces
+    eval(
+      '(function() { var __moduleName = "' + (__load.name || '').replace('"', '\"') + '"; ' + __source + ' \n }).call(__global);' +
+      '\n//# sourceURL=' + __load.address + '\n'
+    );
   }
   catch(e) {
     if (e.name == 'SyntaxError' || e.name == 'TypeError')
