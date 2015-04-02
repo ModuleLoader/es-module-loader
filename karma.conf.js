@@ -38,7 +38,9 @@ module.exports = function(config) {
 
     [!options.ie8 ? (!options['babel'] ? 'node_modules/traceur/bin/traceur.js' : 'node_modules/babel-core/browser.js') : ''],
 
-    'dist/es6-module-loader' + (options.polyfill ? '' : '-sans-promises') + '.src.js',
+    [options.polyfill ? 'node_modules/when/es6-shim/Promise.js' : ''],
+
+    'dist/es6-module-loader-dev.src.js',
 
     'test/_helper.js',
 

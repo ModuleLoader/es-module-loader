@@ -6,7 +6,7 @@
   // use Traceur by default
   Loader.prototype.transpiler = 'traceur';
 
-  Loader.prototype.transpile = function(key, source, metadata) {
+  function transpile(key, source, metadata) {
     if (!transpiler) {
       if (this.transpiler == 'babel') {
         transpilerModule = cjsMode ? require('babel-core') : __global.babel;

@@ -21,18 +21,19 @@ module.exports = function (grunt) {
       dist: {
         files: {
           'dist/<%= pkg.name %>.src.js': [
-            'node_modules/when/es6-shim/Promise.js',
             'src/polyfill-wrapper-start.js',
             'src/loader.js',
+            'src/dynamic-only.js',
             'src/transpiler.js',
             'src/url.js',
             'src/system.js',
             'src/module-tag.js',
             'src/polyfill-wrapper-end.js'
           ],
-          'dist/<%= pkg.name %>-sans-promises.src.js': [
+          'dist/<%= pkg.name %>-dev.src.js': [
             'src/polyfill-wrapper-start.js',
             'src/loader.js',
+            'src/declarative.js',
             'src/transpiler.js',
             'src/url.js',
             'src/system.js',
@@ -54,9 +55,9 @@ module.exports = function (grunt) {
         src: 'dist/<%= pkg.name %>.src.js',
         dest: 'dist/<%= pkg.name %>.js'
       },
-      distSansPromises: {
-        src: 'dist/<%= pkg.name %>-sans-promises.src.js',
-        dest: 'dist/<%= pkg.name %>-sans-promises.js'
+      distDev: {
+        src: 'dist/<%= pkg.name %>-dev.src.js',
+        dest: 'dist/<%= pkg.name %>-dev.js'
       }
     }
   });
