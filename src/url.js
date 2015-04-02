@@ -59,5 +59,9 @@
     this.pathname = pathname;
     this.search = search;
     this.hash = hash;
+
+    // convert windows file URLs to use /
+    if (this.protocol == 'file')
+      this.pathname = this.pathname.replace(/\\/g, '/');
   }
   
