@@ -90,7 +90,8 @@
 
     // 4.1.7 Instantiation inlined
       if (instance === undefined)
-        var registration = transpile.call(loader.loaderObj, entry.key, source, entry.metadata);
+        // defined in transpiler.js
+        var registration = transpile(loader.loaderObj, entry.key, source, entry.metadata);
       else if (typeof instance !== 'function')
         throw new TypeError('Instantiate must return an execution function.');
 
@@ -120,6 +121,14 @@
     entry.state = Math.max(entry.state, INSTANTIATE_ALL);
   }
 
+  // adjusted asynchronous declarative instantiate fulfillment
+  // to load transpiler
+  function loadTranspilerThenFulfillInstantiate(loader, entry, instance, source) {
+    return Promise.resolve(instance === undefined && loadTranspiler(loader.loaderObj)).then(function() {
+      fulfillInstantiate(loader, entry, instance, source);
+    });
+  }
+
   // 4.2.1
   function requestFetch(loader, key, metadata, entry) {
     entry = entry || ensureRegistered(loader, key, metadata);
@@ -135,7 +144,7 @@
 
     Promise.resolve()
     .then(function() {
-      return loader.fetch(key, entry.metadata);
+      return loader.fetch.call(loader.loaderObj, key, entry.metadata);
     })
     .then(function(payload) {
       // in turn calls fetchResolve
@@ -173,7 +182,7 @@
     .then(function(payload) {
       return Promise.resolve()
       .then(function() {
-        return loader.translate(key, payload, entry.metadata);
+        return loader.translate.call(loader.loaderObj, key, payload, entry.metadata);
       })
       .then(function(source) {
         // in turn calls translateResolve
@@ -212,10 +221,10 @@
     .then(function(source) {
       return Promise.resolve()
       .then(function() {
-        return loader.instantiate(key, source, entry.metadata);
+        return loader.instantiate.call(loader.loaderObj, key, source, entry.metadata);
       })
       .then(function(instance) {
-        fulfillInstantiate(loader, entry, instance, source);
+        return loadTranspilerThenFulfillInstantiate(loader, entry, instance, source);
       }, function(err) {
         throw addToError(err, 'Instantiating ' + key);
       });
@@ -248,7 +257,7 @@
       for (var i = 0; i < entry.dependencies.length; i++) (function(pair) {
         // create dep meta object now, passed through into ensureRegister shortly
         var depMeta = {};
-        depLoads.push(Promise.resolve(loader.resolve(pair.key, key, depMeta))
+        depLoads.push(Promise.resolve(loader.resolve.call(loader.loaderObj, pair.key, key, depMeta))
         .then(function(depKey) {
           var depEntry = ensureRegistered(loader, depKey, depMeta);
 
@@ -298,6 +307,7 @@
         // adjusted linking implementation
         // to handle setter graph logic
         if (entry.state == LINK)
+          // defined in declare.js
           declareModule(entry);
 
       // [assert entry's whole graph is in ready state]
@@ -321,13 +331,13 @@
         return module;
 
       // ModuleRecord needs System register execute
+      // defined in declarative.js
       var err = ensureModuleExecution(module, []);
       if (err) {
         err = addToError(err, 'Error evaluating ' + key);
         entry.error = err;
         throw err;
       }
-
       return module.module;
     }, function(err) {
       entry.error = entry.error || err;
@@ -339,6 +349,16 @@
 
   // 5.2.1 inlined in 4.2.5
   // 5.2.2 inlined in 4.2.5
+
+  // 5.2.3
+  function computeDependencyGraph(entry, result) {
+    if (indexOf.call(result, entry) != -1)
+      return;
+
+    result.push(entry);
+    for (var i = 0; i < entry.dependencies.length; i++)
+      computeDependencyGraph(entry.dependencies[i].value, result);
+  }
 
   function doDynamicLink(dep) {
     // may have had a previous error
@@ -376,7 +396,7 @@
     var metadata = {};
     return Promise.resolve()
     .then(function() {
-      return loader.resolve(name, referrer, metadata);
+      return loader.resolve.call(loader.loaderObj, name, referrer, metadata);
     })
     ['catch'](function(err) {
       throw addToError(err, 'Resolving ' + name + (referrer ? ', ' + referrer : ''));
@@ -384,13 +404,13 @@
     .then(function(key) {
       return requestReady(loader, key, metadata);
     });
-  }
+  };
 
   // 6.2.1
   Loader.prototype.resolve = function(name, referrer, metadata) {
     var loader = this._loader;
-    return loader.resolve(name, referrer, metadata || {});
-  }
+    return loader.resolve.call(loader.loaderObj, name, referrer, metadata || {});
+  };
 
   // 6.3.1
   // For eg ready, <script type="module" src="${key}"></script>
@@ -422,10 +442,10 @@
 
     else
       throw new TypeError('Invalid stage ' + stage);
-  }
+  };
 
   // 6.4.1
-  // For eg fetch, <script type="module" src="${key}">${value}</script>
+  // For eg fetch, <script type="module">${value}</script>, key = anon
   Loader.prototype.provide = function(key, stage, value, metadata) {
     var loader = this._loader;
 
@@ -448,16 +468,16 @@
       fulfillTranslate(loader, entry, undefined);
       // NB error propogation
       entry.translate.then(function(source) {
-        fulfillInstantiate(loader, entry, value, source);
+        loadTranspilerThenFulfillInstantiate(loader, entry, value, source);
       });
     }
     else
       throw new TypeError('Invalid stage ' + stage);
-  }
+  };
 
   // 6.4.2
   // SPEC TODO
-  Loader.prototype.error = function(key, stage, value) {}
+  Loader.prototype.error = function(key, stage, value) {};
 
   // 6.5.1
   Loader.prototype.lookup = function(key) {
@@ -488,7 +508,7 @@
       module: entry.state == READY && (entry.module instanceof Module ? entry.module : entry.module.module),
       error: entry.error
     };
-  }
+  };
 
   // 6.5.2
   Loader.prototype.install = function(key, module) {
@@ -496,6 +516,9 @@
 
     if (loader.registry[key])
       throw new TypeError(key + ' is already defined in the Loader registry.');
+
+    if (!(module instanceof Module))
+      throw new TypeError('Install must provide a valid Module object.');
 
     loader.registry[key] = {
       key: key,
@@ -511,7 +534,7 @@
       declare: undefined,
       error: null
     };
-  }
+  };
 
   // 6.5.3
   Loader.prototype.uninstall = function(key) {
@@ -525,7 +548,7 @@
       throw new TypeError(key + ' is still loading.');
 
     delete loader.registry[key];
-  }
+  };
 
   // 6.5.4
   Loader.prototype.cancel = function(key) {
@@ -539,7 +562,7 @@
       throw new TypeError(key + ' is already past linking.');
 
     delete loader.registry[key];
-  }
+  };
 
   // 6.6.1
   // loader.hook('resolve') -> returns resolve hook
@@ -553,7 +576,7 @@
       loader[name] = value;
     else
       return loader[name];
-  }
+  };
 
   // 6.7 Module Reflection
 

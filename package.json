@@ -22,6 +22,7 @@
     }
   ],
   "devDependencies": {
+    "babel-core": "^4.7.16",
     "expect.js": "^0.3.1",
     "gesalakacula": "^1.0.0",
     "grunt": "~0.4.1",
@@ -40,7 +41,8 @@
     "karma-sauce-launcher": "^0.2.10",
     "minimist": "^1.1.0",
     "mocha": "^2.0.1",
-    "regenerator": "^0.8.9"
+    "regenerator": "^0.8.9",
+    "traceur": "0.0.87"
   },
   "keywords": [
     "script",
@@ -61,8 +63,6 @@
     "test:browser:perf": "karma start karma-benchmark.conf.js --single-run"
   },
   "dependencies": {
-    "babel-core": "^4.1.1",
-    "traceur": "0.0.82",
     "when": "^3.7.2"
   }
 }

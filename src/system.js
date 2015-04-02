@@ -137,8 +137,9 @@
       return source;
     });
 
-    this.hook('instantiate', function(url, source, metadata) {});
-  }
+    // defined in transpiler.js or dynamic-only.js
+    this.hook('instantiate', systemInstantiate);
+  };
 
   // inline Object.create-style class extension
   function LoaderProto() {}

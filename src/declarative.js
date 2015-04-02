@@ -1,15 +1,5 @@
   // ---------- Declarative Linking Code ----------
 
-  // 5.2.3
-  function computeDependencyGraph(entry, result) {
-    if (indexOf.call(result, entry) != -1)
-      return;
-
-    result.push(entry);
-    for (var i = 0; i < entry.dependencies.length; i++)
-      computeDependencyGraph(entry.dependencies[i].value, result);
-  }
-
   // ES6-style module binding and execution code
   function declareModule(entry) {
     // could consider a try catch around setters here that saves errors to module.error
