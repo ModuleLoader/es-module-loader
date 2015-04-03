@@ -244,7 +244,8 @@ function logloads(loads) {
               load.declare = declare;
               load.depsList = deps;
             }            
-            __eval(transpiled, __global, load);
+            // empty {} context is closest to undefined 'this' we can get
+            __eval(transpiled, load.address, {});
             curSystem.register = curRegister;
           });
         }
@@ -569,14 +570,6 @@ function logloads(loads) {
       linkError(load, new TypeError('Execution must define a Module instance'));
     else
       return module;
-  }
-
-  function addToError(err, msg) {
-    if (err instanceof Error)
-      err.message = msg + err.message;
-    else
-      err = msg + err;
-    return err;
   }
 
   // 26.3 Loader

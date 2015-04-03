@@ -22,23 +22,23 @@ module.exports = function (grunt) {
         files: {
           'dist/<%= pkg.name %>-prod.src.js': [
             'node_modules/when/es6-shim/Promise.js',
-            'src/polyfill-wrapper-start.js',
+            'src/wrapper-start.js',
             'src/loader.js',
             'src/dynamic-only.js',
             'src/url.js',
             'src/system.js',
-            'src/polyfill-wrapper-end.js'
+            'src/wrapper-end.js'
           ],
           'dist/<%= pkg.name %>.src.js': [
             'node_modules/when/es6-shim/Promise.js',
-            'src/polyfill-wrapper-start.js',
+            'src/wrapper-start.js',
             'src/loader.js',
             'src/declarative.js',
             'src/transpiler.js',
             'src/url.js',
             'src/system.js',
             'src/module-tag.js',
-            'src/polyfill-wrapper-end.js'
+            'src/wrapper-end.js'
           ]
         }
       }
