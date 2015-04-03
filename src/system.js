@@ -189,7 +189,7 @@
     if (isBrowser)
       outPath = outPath.replace(/#/g, '%23');
 
-    return new URLUtils(outPath, baseURLCache[this.baseURL] = baseURLCache[this.baseURL] || new URLUtils(this.baseURL)).href;
+    return new URL(outPath, baseURLCache[this.baseURL] = baseURLCache[this.baseURL] || new URL(this.baseURL)).href;
   };
 
   SystemLoader.prototype.fetch = function(load) {

@@ -25,7 +25,7 @@ module.exports = function (grunt) {
             'src/wrapper-start.js',
             'src/loader.js',
             'src/dynamic-only.js',
-            'src/url.js',
+            'src/url-polyfill.js',
             'src/system.js',
             'src/wrapper-end.js'
           ],
@@ -35,7 +35,7 @@ module.exports = function (grunt) {
             'src/loader.js',
             'src/declarative.js',
             'src/transpiler.js',
-            'src/url.js',
+            'src/url-polyfill.js',
             'src/system.js',
             'src/module-tag.js',
             'src/wrapper-end.js'

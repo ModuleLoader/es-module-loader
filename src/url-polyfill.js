@@ -1,5 +1,5 @@
   // from https://gist.github.com/Yaffle/1088850
-  function URLUtils(url, baseURL) {
+  function URL(url, baseURL) {
     if (typeof url != 'string')
       throw new TypeError('URL must be a string');
     var m = String(url).replace(/^\s+|\s+$/g, "").match(/^([^:\/?#]+:)?(?:\/\/(?:([^:@\/?#]*)(?::([^:@\/?#]*))?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
@@ -16,7 +16,7 @@
     var search = m[8] || "";
     var hash = m[9] || "";
     if (baseURL !== undefined) {
-      var base = baseURL instanceof URLUtils ? baseURL : new URLUtils(baseURL);
+      var base = baseURL instanceof URL ? baseURL : new URL(baseURL);
       var flag = protocol === "" && host === "" && username === "";
       if (flag && pathname === "" && search === "") {
         search = base.search;
