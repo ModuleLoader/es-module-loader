@@ -85,19 +85,34 @@
   var SystemLoader = function(options) {
     Loader.call(this, options || {});
 
+    var baseURL;
     // Set default baseURL and paths
-    if (typeof location != 'undefined' && location.href) {
-      var href = __global.location.href.split('#')[0].split('?')[0];
-      this.baseURL = href.substring(0, href.lastIndexOf('/') + 1);
+    if (isWorker) {
+      baseURL = __global.location.href;
+    }
+    else if (typeof document != 'undefined') {
+      baseURL = document.baseURI;
+
+      if (!baseURL) {
+        var bases = document.getElementsByTagName('base');
+        baseURL = bases[0] && bases[0].href || window.location.href;
+      }
+
+      // sanitize out the hash and querystring
+      // removes the username and password, which could be adjusted
+      baseURL = new URL(baseURL);
+      baseURL = baseURL.origin + baseURL.pathname.substr(0, baseURL.pathname.lastIndexOf('/') + 1);
     }
     else if (typeof process != 'undefined' && process.cwd) {
-      this.baseURL = 'file://' + (isWindows ? '/' : '') + process.cwd() + '/';
+      baseURL = 'file://' + (isWindows ? '/' : '') + process.cwd() + '/';
       if (isWindows)
-        this.baseURL = this.baseURL.replace(/\\/g, '/');
+        baseURL = baseURL.replace(/\\/g, '/');
     }
     else {
       throw new TypeError('No environment baseURL');
     }
+
+    this.baseURL = baseURL;
     this.paths = {};
   };
 
