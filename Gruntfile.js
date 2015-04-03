@@ -25,13 +25,7 @@ module.exports = function (grunt) {
             'src/polyfill-wrapper-start.js',
             'src/loader.js',
             'src/dynamic-only.js',
-            'src/system.js',
-            'src/polyfill-wrapper-end.js'
-          ],
-          'dist/<%= pkg.name %>-prod-sans-promises.src.js': [
-            'src/polyfill-wrapper-start.js',
-            'src/loader.js',
-            'src/dynamic-only.js',
+            'src/url.js',
             'src/system.js',
             'src/polyfill-wrapper-end.js'
           ],
@@ -41,15 +35,7 @@ module.exports = function (grunt) {
             'src/loader.js',
             'src/declarative.js',
             'src/transpiler.js',
-            'src/system.js',
-            'src/module-tag.js',
-            'src/polyfill-wrapper-end.js'
-          ],
-          'dist/<%= pkg.name %>-sans-promises.src.js': [
-            'src/polyfill-wrapper-start.js',
-            'src/loader.js',
-            'src/declarative.js',
-            'src/transpiler.js',
+            'src/url.js',
             'src/system.js',
             'src/module-tag.js',
             'src/polyfill-wrapper-end.js'
@@ -72,20 +58,12 @@ module.exports = function (grunt) {
         src: 'dist/<%= pkg.name %>.src.js',
         dest: 'dist/<%= pkg.name %>.js'
       },
-      distSansPromises: {
-        src: 'dist/<%= pkg.name %>-sans-promises.src.js',
-        dest: 'dist/<%= pkg.name %>-sans-promises.js'
-      },
       prodDist: {
         options: {
           banner: '<%= meta.banner %>\n'
         },
         src: 'dist/<%= pkg.name %>-prod.src.js',
         dest: 'dist/<%= pkg.name %>-prod.js'
-      },
-      prodDistSansPromises: {
-        src: 'dist/<%= pkg.name %>-prod-sans-promises.src.js',
-        dest: 'dist/<%= pkg.name %>-prod-sans-promises.js'
       }
     }
   });
