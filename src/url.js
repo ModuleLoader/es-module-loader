@@ -1,43 +1,67 @@
-  // Absolute URL parsing, from https://gist.github.com/Yaffle/1088850
-  function parseURI(url) {
-    var m = String(url).replace(/^\s+|\s+$/g, '').match(/^([^:\/?#]+:)?(\/\/(?:[^:@\/?#]*(?::[^:@\/?#]*)?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
-    // authority = '//' + user + ':' + pass '@' + hostname + ':' port
-    return (m ? {
-      href     : m[0] || '',
-      protocol : m[1] || '',
-      authority: m[2] || '',
-      host     : m[3] || '',
-      hostname : m[4] || '',
-      port     : m[5] || '',
-      pathname : m[6] || '',
-      search   : m[7] || '',
-      hash     : m[8] || ''
-    } : null);
-  }
-  function removeDotSegments(input) {
-    var output = [];
-    input.replace(/^(\.\.?(\/|$))+/, '')
-      .replace(/\/(\.(\/|$))+/g, '/')
-      .replace(/\/\.\.$/, '/../')
-      .replace(/\/?[^\/]*/g, function (p) {
-        if (p === '/..')
-          output.pop();
-        else
-          output.push(p);
-    });
-    return output.join('').replace(/^\//, input.charAt(0) === '/' ? '/' : '');
-  }
-  function toAbsoluteURL(base, href) {
+  // from https://gist.github.com/Yaffle/1088850
+  function URLUtils(url, baseURL) {
+    if (typeof url != 'string')
+      throw new TypeError('URL must be a string');
+    var m = String(url).replace(/^\s+|\s+$/g, "").match(/^([^:\/?#]+:)?(?:\/\/(?:([^:@\/?#]*)(?::([^:@\/?#]*))?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
+    if (!m) {
+      throw new RangeError();
+    }
+    var protocol = m[1] || "";
+    var username = m[2] || "";
+    var password = m[3] || "";
+    var host = m[4] || "";
+    var hostname = m[5] || "";
+    var port = m[6] || "";
+    var pathname = m[7] || "";
+    var search = m[8] || "";
+    var hash = m[9] || "";
+    if (baseURL !== undefined) {
+      var base = baseURL instanceof URLUtils ? baseURL : new URLUtils(baseURL);
+      var flag = protocol === "" && host === "" && username === "";
+      if (flag && pathname === "" && search === "") {
+        search = base.search;
+      }
+      if (flag && pathname.charAt(0) !== "/") {
+        pathname = (pathname !== "" ? (((base.host !== "" || base.username !== "") && base.pathname === "" ? "/" : "") + base.pathname.slice(0, base.pathname.lastIndexOf("/") + 1) + pathname) : base.pathname);
+      }
+      // dot segments removal
+      var output = [];
+      pathname.replace(/^(\.\.?(\/|$))+/, "")
+        .replace(/\/(\.(\/|$))+/g, "/")
+        .replace(/\/\.\.$/, "/../")
+        .replace(/\/?[^\/]*/g, function (p) {
+          if (p === "/..") {
+            output.pop();
+          } else {
+            output.push(p);
+          }
+        });
+      pathname = output.join("").replace(/^\//, pathname.charAt(0) === "/" ? "/" : "");
+      if (flag) {
+        port = base.port;
+        hostname = base.hostname;
+        host = base.host;
+        password = base.password;
+        username = base.username;
+      }
+      if (protocol === "") {
+        protocol = base.protocol;
+      }
+    }
 
-    if (isWindows)
-      href = href.replace(/\\/g, '/');
+    // convert windows file URLs to use /
+    if (protocol == 'file:')
+      pathname = pathname.replace(/\\/g, '/');
 
-    href = parseURI(href || '');
-    base = parseURI(base || '');
-
-    return !href || !base ? null : (href.protocol || base.protocol) +
-      (href.protocol || href.authority ? href.authority : base.authority) +
-      removeDotSegments(href.protocol || href.authority || href.pathname.charAt(0) === '/' ? href.pathname : (href.pathname ? ((base.authority && !base.pathname ? '/' : '') + base.pathname.slice(0, base.pathname.lastIndexOf('/') + 1) + href.pathname) : base.pathname)) +
-      (href.protocol || href.authority || href.pathname ? href.search : (href.search || base.search)) +
-      href.hash;
+    this.origin = protocol + (protocol !== "" || host !== "" ? "//" : "") + host;
+    this.href = protocol + (protocol !== "" || host !== "" ? "//" : "") + (username !== "" ? username + (password !== "" ? ":" + password : "") + "@" : "") + host + pathname + search + hash;
+    this.protocol = protocol;
+    this.username = username;
+    this.password = password;
+    this.host = host;
+    this.hostname = hostname;
+    this.port = port;
+    this.pathname = pathname;
+    this.search = search;
+    this.hash = hash;
   }

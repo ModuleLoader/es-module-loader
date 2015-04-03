@@ -10,11 +10,6 @@
 *********************************************************************************************
 */
 
-  var isWorker = typeof self !== 'undefined' && typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope;
-  var isBrowser = typeof window != 'undefined' && !isWorker;
-  var isWindows = typeof process != 'undefined' && !!process.platform.match(/^win/);
-  var Promise = __global.Promise || require('when/es6-shim/Promise');
-
   var fetchTextFromURL;
   if (typeof XMLHttpRequest != 'undefined') {
     fetchTextFromURL = function(url, fulfill, reject) {
@@ -63,24 +58,25 @@
         }, 0);
 
       xhr.send(null);
-    }
+    };
   }
   else if (typeof require != 'undefined') {
     var fs;
     fetchTextFromURL = function(url, fulfill, reject) {
-      if (url.substr(0, 5) != 'file:')
-        throw 'Only file URLs of the form file: allowed running in Node.';
+      if (url.substr(0, 8) != 'file:///')
+        throw 'Only file URLs of the form file:/// allowed running in Node.';
       fs = fs || require('fs');
-      url = url.substr(5);
       if (isWindows)
-        url = url.replace(/\//g, '\\');
+        url = url.replace(/\//g, '\\').substr(8);
+      else
+        url = url.substr(7);
       return fs.readFile(url, function(err, data) {
         if (err)
           return reject(err);
         else
           fulfill(data + '');
       });
-    }
+    };
   }
   else {
     throw new TypeError('No environment fetch API available.');
@@ -95,14 +91,14 @@
       this.baseURL = href.substring(0, href.lastIndexOf('/') + 1);
     }
     else if (typeof process != 'undefined' && process.cwd) {
-      this.baseURL = 'file:' + process.cwd() + '/';
+      this.baseURL = 'file://' + (isWindows ? '/' : '') + process.cwd() + '/';
       if (isWindows)
         this.baseURL = this.baseURL.replace(/\\/g, '/');
     }
     else {
       throw new TypeError('No environment baseURL');
     }
-    this.paths = { '*': '*.js' };
+    this.paths = {};
   };
 
   // inline Object.create-style class extension
@@ -110,16 +106,11 @@
   LoaderProto.prototype = Loader.prototype;
   SystemLoader.prototype = new LoaderProto();
 
-  SystemLoader.prototype.global = isBrowser ? window : (isWorker ? self : __global);
-
   SystemLoader.prototype.normalize = function(name, parentName, parentAddress) {
     if (typeof name != 'string')
       throw new TypeError('Module name must be a string');
 
     var segments = name.split('/');
-
-    if (segments.length == 0)
-      throw new TypeError('No module name provided');
 
     // current segment
     var i = 0;
@@ -129,25 +120,15 @@
     var dotdots = 0;
     if (segments[0] == '.') {
       i++;
-      if (i == segments.length)
-        throw new TypeError('Illegal module name "' + name + '"');
       rel = true;
     }
     else {
       while (segments[i] == '..') {
         i++;
-        if (i == segments.length)
-          throw new TypeError('Illegal module name "' + name + '"');
       }
       if (i)
         rel = true;
       dotdots = i;
-    }
-
-    for (var j = i; j < segments.length; j++) {
-      var segment = segments[j];
-      if (segment == '' || segment == '.' || segment == '..')
-        throw new TypeError('Illegal module name "' + name + '"');
     }
 
     if (!rel)
@@ -162,7 +143,9 @@
     normalizedParts = normalizedParts.concat(segments.splice(i, segments.length - i));
 
     return normalizedParts.join('/');
-  }
+  };
+
+  var baseURLCache = {};
 
   SystemLoader.prototype.locate = function(load) {
     var name = load.name;
@@ -195,7 +178,7 @@
       }
     }
 
-    var outPath = this.paths[pathMatch];
+    var outPath = this.paths[pathMatch] || name;
     if (wildcard)
       outPath = outPath.replace('*', wildcard);
 
@@ -206,22 +189,13 @@
     if (isBrowser)
       outPath = outPath.replace(/#/g, '%23');
 
-    return toAbsoluteURL(this.baseURL, outPath);
-  }
+    return new URLUtils(outPath, baseURLCache[this.baseURL] = baseURLCache[this.baseURL] || new URLUtils(this.baseURL)).href;
+  };
 
   SystemLoader.prototype.fetch = function(load) {
-    var self = this;
     return new Promise(function(resolve, reject) {
-      fetchTextFromURL(toAbsoluteURL(self.baseURL, load.address), function(source) {
-        resolve(source);
-      }, reject);
+      fetchTextFromURL(load.address, resolve, reject);
     });
-  }
+  };
 
   var System = new SystemLoader();
-
-  // note we have to export before runing "init" below
-  if (typeof exports === 'object')
-    module.exports = System;
-
-  __global.System = System;

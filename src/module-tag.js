@@ -32,8 +32,4 @@
       document.addEventListener('DOMContentLoaded', completed, false);
       window.addEventListener('load', completed, false);
     }
-
-    // run the data-init function on the script tag
-    if (curScript.getAttribute('data-init'))
-      window[curScript.getAttribute('data-init')]();
   }

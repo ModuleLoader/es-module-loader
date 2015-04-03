@@ -20,7 +20,7 @@
       return new Promise(function (resolve, reject) {
         if (name == 'asdfasdf') {
           return setTimeout(function () {
-            resolve('test/loader/async-norm');
+            resolve('test/loader/async-norm.js');
           }, 500);
         }
 
