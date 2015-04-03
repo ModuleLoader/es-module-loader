@@ -18,6 +18,39 @@
 *********************************************************************************************
 */
 
+function Module() {}
+function Loader(options) {
+  if (options.normalize)
+    this.normalize = options.normalize;
+  if (options.locate)
+    this.locate = options.locate;
+  if (options.fetch)
+    this.fetch = options.fetch;
+  if (options.translate)
+    this.translate = options.translate;
+  if (options.instantiate)
+    this.instantiate = options.instantiate;
+
+  this._loader = {
+    loaderObj: this,
+    loads: [],
+    modules: {},
+    importPromises: {},
+    moduleRecords: {}
+  };
+
+  // 26.3.3.6
+  defineProperty(this, 'global', {
+    get: function() {
+      return __global;
+    }
+  });
+
+  // 26.3.3.13 realm not implemented
+}
+
+(function() {
+  
 // Some Helpers
 
 // logs a linkset snapshot for debugging
@@ -576,37 +609,7 @@ function logloads(loads) {
   // 26.3 Loader
 
   // 26.3.1.1
-  function Loader(options) {
-    if (options.normalize)
-      this.normalize = options.normalize;
-    if (options.locate)
-      this.locate = options.locate;
-    if (options.fetch)
-      this.fetch = options.fetch;
-    if (options.translate)
-      this.translate = options.translate;
-    if (options.instantiate)
-      this.instantiate = options.instantiate;
-
-    this._loader = {
-      loaderObj: this,
-      loads: [],
-      modules: {},
-      importPromises: {},
-      moduleRecords: {}
-    };
-
-    // 26.3.3.6
-    defineProperty(this, 'global', {
-      get: function() {
-        return __global;
-      }
-    });
-
-    // 26.3.3.13 realm not implemented
-  }
-
-  function Module() {}
+  // defined at top
 
   // importPromises adds ability to import a module twice without error - https://bugs.ecmascript.org/show_bug.cgi?id=2601
   function createImportPromise(loader, name, promise) {

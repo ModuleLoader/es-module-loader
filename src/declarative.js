@@ -282,3 +282,4 @@
     module.execute = undefined;
     return err;
   }
+})();

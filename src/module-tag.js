@@ -1,3 +1,4 @@
+(function() {
   // <script type="module"> support
   // allow a data-init function callback once loaded
   if (isBrowser && typeof document.getElementsByTagName != 'undefined') {
@@ -33,3 +34,4 @@
       window.addEventListener('load', completed, false);
     }
   }
+})();

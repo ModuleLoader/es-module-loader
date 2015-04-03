@@ -1,7 +1,8 @@
 /*
  * Traceur and Babel transpile hook for Loader
  */
-
+var transpile = (function() {
+  
   function getTranspilerModule(loader, globalName) {
     return loader.newModule({ 'default': __global[globalName], __useDefault: true });
   }
@@ -97,3 +98,6 @@
 
     return babel.transform(load.source, options).code;
   }
+
+  return transpile;
+})();

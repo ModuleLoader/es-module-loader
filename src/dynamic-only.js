@@ -28,3 +28,5 @@
   function evaluateLoadedModule(loader, load) {
     return load.module.module;
   }
+
+})();
