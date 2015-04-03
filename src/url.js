@@ -48,6 +48,10 @@
         protocol = base.protocol;
       }
     }
+    // convert windows file URLs to use /
+    if (protocol == 'file:')
+      pathname = pathname.replace(/\\/g, '/');
+
     this.origin = protocol + (protocol !== "" || host !== "" ? "//" : "") + host;
     this.href = protocol + (protocol !== "" || host !== "" ? "//" : "") + (username !== "" ? username + (password !== "" ? ":" + password : "") + "@" : "") + host + pathname + search + hash;
     this.protocol = protocol;
@@ -59,9 +63,5 @@
     this.pathname = pathname;
     this.search = search;
     this.hash = hash;
-
-    // convert windows file URLs to use /
-    if (this.protocol == 'file')
-      this.pathname = this.pathname.replace(/\\/g, '/');
   }
   

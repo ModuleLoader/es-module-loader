@@ -24,7 +24,7 @@
 
   __global.base = typeof window != 'undefined'
     && (window.location.href.substr(0, window.location.href.lastIndexOf('/') + 1) + 'base/')
-    || ('file://' + process.cwd() + require('path').sep);
+    || ('file://' + (process.platform.match(/^win/) ? '/' : '') + process.cwd() + '/');
 
 }(typeof window != 'undefined' ? window : global));
 
