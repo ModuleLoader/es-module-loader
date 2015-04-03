@@ -1,10 +1,9 @@
 /*
  * Traceur and Babel transpile hook for Loader
  */
-  var g = __global;
 
   function getTranspilerModule(loader, globalName) {
-    return loader.newModule({ 'default': g[globalName], __useDefault: true });
+    return loader.newModule({ 'default': __global[globalName], __useDefault: true });
   }
   // NB this does not support sub-classing well
   var firstRun = true;
@@ -17,9 +16,9 @@
 
     // pick up Transpiler modules from existing globals on first run if set
     if (firstRun) {
-      if (g.traceur && !self.has('traceur'))
+      if (__global.traceur && !self.has('traceur'))
         self.set('traceur', getTranspilerModule(self, 'traceur'));
-      if (g.babel && !self.has('babel'))
+      if (__global.babel && !self.has('babel'))
         self.set('babel', getTranspilerModule(self, 'babel'));
       firstRun = false;
     }
@@ -40,12 +39,12 @@
         return {
           deps: [],
           execute: function() {
-            var curSystem = g.System;
-            var curLoader = g.Reflect.Loader;
+            var curSystem = __global.System;
+            var curLoader = __global.Reflect.Loader;
             // ensure not detected as CommonJS
-            __eval('(function(require,exports,module){' + load.source + '})();', g, load);
-            g.System = curSystem;
-            g.Reflect.Loader = curLoader;
+            __eval('(function(require,exports,module){' + load.source + '})();', __global, load);
+            __global.System = curSystem;
+            __global.Reflect.Loader = curLoader;
             return getTranspilerModule(self, load.name);
           }
         };

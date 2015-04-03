@@ -1,4 +1,4 @@
-export * from './export-star';
+export * from './export-star.js';
 export function foo() {
   
 }

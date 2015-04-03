@@ -100,35 +100,6 @@ function logloads(loads) {
     }
   }
 } */
-  var Promise = __global.Promise || require('when/es6-shim/Promise');
-  if (__global.console)
-    console.assert = console.assert || function() {};
-
-  // IE8 support
-  var indexOf = Array.prototype.indexOf || function(item) {
-    for (var i = 0, thisLen = this.length; i < thisLen; i++) {
-      if (this[i] === item) {
-        return i;
-      }
-    }
-    return -1;
-  };
-  
-  var defineProperty;
-  (function () {
-    try {
-      if (!!Object.defineProperty({}, 'a', {}))
-        defineProperty = Object.defineProperty;
-    }
-    catch (e) {
-      defineProperty = function(obj, prop, opt) {
-        try {
-          obj[prop] = opt.value || opt.get.call(obj);
-        }
-        catch(e) {}
-      }
-    }
-  })();
 
   // 15.2.3 - Runtime Semantics: Loader State
 
@@ -613,9 +584,6 @@ function logloads(loads) {
 
   // 26.3.1.1
   function Loader(options) {
-    if (typeof options != 'object')
-      throw new TypeError('Options must be an object');
-
     if (options.normalize)
       this.normalize = options.normalize;
     if (options.locate)
@@ -796,7 +764,6 @@ function logloads(loads) {
     },
     // 26.3.3.18.3
     fetch: function(load) {
-      throw new TypeError('Fetch not implemented');
     },
     // 26.3.3.18.4
     translate: function(load) {
@@ -808,12 +775,3 @@ function logloads(loads) {
   };
 
   var _newModule = Loader.prototype.newModule;
-
-  if (typeof exports === 'object')
-    module.exports = Loader;
-
-  __global.Reflect = __global.Reflect || {};
-  __global.Reflect.Loader = __global.Reflect.Loader || Loader;
-  __global.Reflect.global = __global.Reflect.global || __global;
-  __global.LoaderPolyfill = Loader;
-
