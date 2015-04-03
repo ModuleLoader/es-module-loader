@@ -1,6 +1,7 @@
+require('when');
+
 var System = require('./dist/es6-module-loader.src');
 
-System.transpiler = 'traceur';
 try {
   System.paths.traceur = 'file:' + require.resolve('traceur/bin/traceur.js');
 }
