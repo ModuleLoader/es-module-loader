@@ -4,7 +4,7 @@ _For upgrading to ES6 Module Loader 0.16, [read the release notes here](https://
 
 Dynamically loads ES6 modules in browsers and [NodeJS](#nodejs-use) with support for loading existing and custom module formats through loader hooks.
 
-This project implements dynamic module loading through `System` exactly to the previous ES6-specified loader API at [2014-08-24 ES6 Specification Draft Rev 27, Section 15](http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts#august_24_2014_draft_rev_27) and is being converted to track the newly redrafted specification at https://github.com/whatwg/loader (work in progress at https://github.com/ModuleLoader/es6-module-loader/pull/317).
+This project implements dynamic module loading through `System` exactly to the previous ES6-specified loader API at [2014-08-24 ES6 Specification Draft Rev 27, Section 15](http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts#august_24_2014_draft_rev_27). The new loader implementing the [WhatWG loader spec](https://github.com/whatwg/loader) is pending alpha release on the [1.0 branch](https://github.com/ModuleLoader/es6-module-loader/tree/1.0).
 
 * Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#getting-started).
 * Supports both [Traceur](https://github.com/google/traceur-compiler) and [Babel](http://babeljs.io/) for compiling ES6 modules and syntax into ES5 in the browser with source map support.
