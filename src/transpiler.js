@@ -26,7 +26,16 @@
     return self['import'](self.transpiler).then(function(transpiler) {
       if (transpiler.__useDefault)
         transpiler = transpiler['default'];
-      return 'var __moduleAddress = "' + load.address + '";' + (transpiler.Compiler ? traceurTranspile : babelTranspile).call(self, load, transpiler);
+
+      return 'var __moduleName = "' + load.name + '", __moduleAddress = "' + load.address + '";'
+          + (transpiler.Compiler ? traceurTranspile : babelTranspile).call(self, load, transpiler)
+          + '\n//# sourceURL=' + load.address + '!eval';
+
+      // sourceURL and sourceMappingURL:
+      //   Ideally we wouldn't need a sourceURL and would just use the sourceMap.
+      //   But without the sourceURL as well, line-by-line debugging doesn't work.
+      //   We thus need to ensure the sourceURL is a different name to the original
+      //   source, and hence the !eval suffix.
     });
   };
 
@@ -42,7 +51,7 @@
             var curSystem = __global.System;
             var curLoader = __global.Reflect.Loader;
             // ensure not detected as CommonJS
-            __eval('(function(require,exports,module){' + load.source + '})();', __global, load);
+            __eval('(function(require,exports,module){' + load.source + '})();', load.address, __global);
             __global.System = curSystem;
             __global.Reflect.Loader = curLoader;
             return getTranspilerModule(self, load.name);
@@ -62,11 +71,8 @@
     options.moduleName = false;
 
     var compiler = new traceur.Compiler(options);
-    var source = doTraceurCompile(load.source, compiler, options.filename);
 
-    // add "!eval" to end of Traceur sourceURL
-    // I believe this does something?
-    return source + '\n//# sourceURL=' + load.address + '!eval';
+    return doTraceurCompile(load.source, compiler, options.filename);
   }
   function doTraceurCompile(source, compiler, filename) {
     try {
@@ -89,9 +95,5 @@
     if (!options.blacklist)
       options.blacklist = ['react'];
 
-    var source = babel.transform(load.source, options).code;
-
-    // add "!eval" to end of Babel sourceURL
-    // I believe this does something?
-    return source + '\n//# sourceURL=' + load.address + '!eval';
+    return babel.transform(load.source, options).code;
   }
