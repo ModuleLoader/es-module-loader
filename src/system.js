@@ -10,6 +10,43 @@
 *********************************************************************************************
 */
 
+var System;
+
+function SystemLoader(options) {
+  Loader.call(this, options || {});
+
+  var baseURL;
+  // Set default baseURL and paths
+  if (isWorker) {
+    baseURL = __global.location.href;
+  }
+  else if (typeof document != 'undefined') {
+    baseURL = document.baseURI;
+
+    if (!baseURL) {
+      var bases = document.getElementsByTagName('base');
+      baseURL = bases[0] && bases[0].href || window.location.href;
+    }
+
+    // sanitize out the hash and querystring
+    // removes the username and password, which could be adjusted
+    baseURL = new URL(baseURL);
+    baseURL = baseURL.origin + baseURL.pathname.substr(0, baseURL.pathname.lastIndexOf('/') + 1);
+  }
+  else if (typeof process != 'undefined' && process.cwd) {
+    baseURL = 'file://' + (isWindows ? '/' : '') + process.cwd() + '/';
+    if (isWindows)
+      baseURL = baseURL.replace(/\\/g, '/');
+  }
+  else {
+    throw new TypeError('No environment baseURL');
+  }
+
+  this.baseURL = baseURL;
+  this.paths = {};
+}
+
+(function() {
   var fetchTextFromURL;
   if (typeof XMLHttpRequest != 'undefined') {
     fetchTextFromURL = function(url, fulfill, reject) {
@@ -81,40 +118,6 @@
   else {
     throw new TypeError('No environment fetch API available.');
   }
-
-  var SystemLoader = function(options) {
-    Loader.call(this, options || {});
-
-    var baseURL;
-    // Set default baseURL and paths
-    if (isWorker) {
-      baseURL = __global.location.href;
-    }
-    else if (typeof document != 'undefined') {
-      baseURL = document.baseURI;
-
-      if (!baseURL) {
-        var bases = document.getElementsByTagName('base');
-        baseURL = bases[0] && bases[0].href || window.location.href;
-      }
-
-      // sanitize out the hash and querystring
-      // removes the username and password, which could be adjusted
-      baseURL = new URL(baseURL);
-      baseURL = baseURL.origin + baseURL.pathname.substr(0, baseURL.pathname.lastIndexOf('/') + 1);
-    }
-    else if (typeof process != 'undefined' && process.cwd) {
-      baseURL = 'file://' + (isWindows ? '/' : '') + process.cwd() + '/';
-      if (isWindows)
-        baseURL = baseURL.replace(/\\/g, '/');
-    }
-    else {
-      throw new TypeError('No environment baseURL');
-    }
-
-    this.baseURL = baseURL;
-    this.paths = {};
-  };
 
   // inline Object.create-style class extension
   function LoaderProto() {}
@@ -213,4 +216,4 @@
     });
   };
 
-  var System = new SystemLoader();
+})();
