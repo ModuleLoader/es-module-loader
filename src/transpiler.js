@@ -1,12 +1,12 @@
-  // ---------- Transpiler Hooks ----------
+// ---------- Transpiler Hooks ----------
 
   // use Traceur by default
   Loader.prototype.transpiler = 'traceur';
 
   var transpilerName, transpilerModule, transpilerResolved;
 
-  var firstTranspile = true;
-  function checkTranspilerGlobals(loader) {
+  // pick up transpilers from globals on constructor
+  function setupTranspilers(loader) {
     try {
       if (__global.traceur)
         loader.install('traceur', new Module({ 'default': __global.traceur }));
@@ -17,11 +17,6 @@
   }
 
   function loadTranspiler(loader) {
-    if (firstTranspile) {
-      checkTranspilerGlobals(loader);
-      firstTranspile = false;
-    }
-
     var transpiler = loader.transpiler;
 
     if (transpiler === transpilerName && transpilerModule)
@@ -56,7 +51,7 @@
           var curSystem = __global.System;
           var curLoader = __global.Reflect.Loader;
           // load transpiler as a global, not detected as CommonJS
-          doEval(key, '~function(require,exports,module){' + source + '}()');
+          __eval('~function(require,exports,module){' + source + '}()', key, __global);
           __global.System = curSystem;
           __global.Reflect.Loader = curLoader;
           return new Module({ 'default': __global[loader.transpiler] });
@@ -75,11 +70,8 @@
     options.moduleName = false;
 
     var compiler = new traceur.Compiler(options);
-    var source = doTraceurCompile(source, compiler, options.filename);
 
-    // add "!eval" to end of Traceur sourceURL
-    // this way the source map can use the original name
-    return source + '!eval';
+    return doTraceurCompile(source, compiler, options.filename);
   }
   function doTraceurCompile(source, compiler, filename) {
     try {
@@ -103,10 +95,7 @@
     if (!options.blacklist)
       options.blacklist = ['react'];
 
-    var source = babel.transform(source, options).code;
-
-    // add "!eval" to end of Babel sourceURL
-    return source + '\n//# sourceURL=' + key + '!eval';
+    return babel.transform(source, options).code;
   }
 
   function evaluateSystemRegister(key, source) {
@@ -123,22 +112,13 @@
       };
     }
 
-    doEval(key, 'var __moduleURL = "' + key + '";' + source, {});
+    // use {} as this, closes to empty we can get
+    // add "!eval" to end of sourceURL so the source map
+    // can use the original name without conflict
+    __eval('var __moduleURL = "' + key + '";' + source
+        + '\n//# sourceURL=' + key + '!eval', key, {});
 
     curSystem .register = curRegister;
     // console.assert(registration);
     return registration;
   }
-
-  function doEval(key, source, self) {
-    try {
-      // self = {} closest we get to undefined this
-      new Function(source).call(self);
-    }
-    catch(e) {
-      if (e.name == 'SyntaxError' || e.name == 'TypeError')
-        e.message = 'Evaluating ' + key + '\n\t' + e.message;
-      throw e;
-    }
-  }
-

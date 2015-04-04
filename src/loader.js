@@ -1,5 +1,4 @@
-  // ---------- Loader ----------
-
+// ---------- Loader ----------
   /*
    * Spec Differences
    * - Added ensureRegistered entry cache argument to avoid repeated lookups
@@ -8,15 +7,6 @@
    */
 
   // 3. Loader Objects
-
-  // 3.1 Module Registry
-  // States
-  var FETCH = 0;
-  var TRANSLATE = 1;
-  var INSTANTIATE = 2;
-  var INSTANTIATE_ALL = 3;
-  var LINK = 4;
-  var READY = 5;
 
   // Loader class
   function Loader() {
@@ -32,6 +22,15 @@
       // Realm not implemented
     };
   }
+
+  // 3.1 Module Registry
+  // States
+  var FETCH = 0;
+  var TRANSLATE = 1;
+  var INSTANTIATE = 2;
+  var INSTANTIATE_ALL = 3;
+  var LINK = 4;
+  var READY = 5;
 
   // 4. Loading
 
@@ -374,20 +373,6 @@
     }
   }
 
-  function addToError(err, msg) {
-    var newErr;
-    if (err instanceof Error) {
-      var newErr = new err.constructor(err.message, err.fileName, err.lineNumber);
-      newErr.message = err.message + '\n  ' + msg
-      newErr.stack = err.stack;
-    }
-    else {
-      newErr = err + '\n  ' + msg;
-    }
-      
-    return newErr;
-  }
-
   // 6. API
 
   // 6.1.1
@@ -587,4 +572,3 @@
     for (var p in descriptors)
       this[p] = descriptors[p];
   }
-

@@ -1,7 +1,10 @@
 
   // ---------- Export Definitions ----------  
-  
+    
   var Reflect;
+
+  System = new SystemLoader();
+  System.constructor = SystemLoader;
 
   (function(exports) {
 

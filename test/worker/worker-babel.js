@@ -1,6 +1,5 @@
 importScripts("../../node_modules/when/es6-shim/Promise.js",
-             "../../dist/es6-module-loader-dev.src.js"
-             );
+             "../../dist/es6-module-loader-dev.src.js");
 
 System.transpiler = 'babel';
 System.site.set('babel', '../../node_modules/babel-core/browser.js');

@@ -1,10 +1,10 @@
-  // ---------- System Loader Definition ----------
+// ---------- System Loader Definition ----------
+
+  var System;
 
   /*
    * Corrsponds to section 8 of the specification
    */
-
-  var isWindows = typeof process != 'undefined' && !!process.platform.match(/^win/);
 
   // Fetch Implementation
   var fetchURI;
@@ -124,7 +124,7 @@
 
       // then do url normalization
       // NB for performance, test out a normalization cache here
-      return new URLUtils(sitesUrl || url, parentUrl).href;
+      return new URL(sitesUrl || url, parentUrl).href;
     });
 
     this.hook('fetch', function(url, metadata) {
@@ -139,6 +139,9 @@
 
     // defined in transpiler.js or dynamic-only.js
     this.hook('instantiate', systemInstantiate);
+
+    if (this.transpiler)
+      setupTranspilers(this);
   };
 
   // inline Object.create-style class extension
@@ -151,12 +154,12 @@
   if (typeof document != 'undefined' && document.baseURI) {
     base = document.baseURI;
   }
-  else if (typeof location != 'undefined' && location.href) {
-    base = location.href;
-  }
   else if (typeof document != 'undefined' && document.getElementsByTagName) {
     base = document.getElementsByTagName('base')[0];
     base = base && base.href;
+  }
+  else if (typeof location != 'undefined' && location.href) {
+    base = location.href;
   }
   if (base) {
     base = base.split('#')[0].split('?')[0];
@@ -167,7 +170,4 @@
     if (isWindows)
       base = base.replace(/\\/g, '/');
   }
-  base = new URLUtils(base);
-
-  var System = new SystemLoader();
-  System.constructor = SystemLoader;
+  base = new URL(base);

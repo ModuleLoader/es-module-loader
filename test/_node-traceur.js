@@ -4,8 +4,8 @@ global.expect = require('expect.js');
 
 require('./_helper');
 
-global.System = require('../lib/index-traceur').System;
-global.Reflect = require('../lib/index-traceur').Reflect;
+global.System = require('../index').System;
+global.Reflect = require('../index').Reflect;
 
 require('./system.normalize.spec');
 require('./system.spec');

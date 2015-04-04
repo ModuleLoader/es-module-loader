@@ -36,7 +36,7 @@ describe('Custom Loader', function () {
       it('should make the resolve throw', function (done) {
         customLoader.import(base + 'test/loader/error1-parent.js')
         .then(supposedToFail, function (e) {
-          expect(e).to.be('error1\n  Resolving error1.js, ' + base + 'test/loader/error1-parent.js\n  Instantiating ' + base + 'test/loader/error1-parent.js');
+          expect(e).to.be('error1\n\tResolving error1.js, ' + base + 'test/loader/error1-parent.js\n\tInstantiating ' + base + 'test/loader/error1-parent.js');
         })
         .then(done, done);
       });
@@ -44,7 +44,7 @@ describe('Custom Loader', function () {
       it('should make the fetch throw', function (done) {
         customLoader.import('error2')
         .then(supposedToFail, function (e) {
-          expect(e).to.be('error2\n  Fetching error2');
+          expect(e).to.be('error2\n\tFetching error2');
         })
         .then(done, done);
       });
@@ -52,7 +52,7 @@ describe('Custom Loader', function () {
       it('should make the translate throw', function (done) {
         customLoader.import('error3')
         .then(supposedToFail, function (e) {
-          expect(e).to.be('error3\n  Translating error3');
+          expect(e).to.be('error3\n\tTranslating error3');
         })
         .then(done, done);
       });
@@ -60,7 +60,7 @@ describe('Custom Loader', function () {
       it('should make the instantiate throw', function (done) {
         customLoader.import('error4')
         .then(supposedToFail, function (e) {
-          expect(e).to.be('error4\n  Instantiating error4');
+          expect(e).to.be('error4\n\tInstantiating error4');
         })
         .then(done, done);
       });

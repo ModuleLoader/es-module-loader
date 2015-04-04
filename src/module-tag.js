@@ -1,5 +1,5 @@
-  // <script type="module"> support
-  // allow a data-init function callback once loaded
+// <script type="module"> support
+
   if (typeof document != 'undefined' && document.getElementsByTagName) {
     var curScript = document.getElementsByTagName('script');
     curScript = curScript[curScript.length - 1];
@@ -40,8 +40,4 @@
       document.addEventListener('DOMContentLoaded', completed, false);
       window.addEventListener('load', completed, false);
     }
-
-    // run the data-init function on the script tag
-    if (curScript && curScript.getAttribute('data-init'))
-      window[curScript.getAttribute('data-init')]();
   }

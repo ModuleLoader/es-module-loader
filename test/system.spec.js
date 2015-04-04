@@ -179,7 +179,7 @@ describe('System', function () {
         .then(supposedToFail)
         .catch(function(e) {
           expect(e)
-            .to.be.equal('dep error\n  Error evaluating ' + base + 'test/loads/deperror.js\n  Error evaluating ' + base + 'test/loads/main.js');
+            .to.be.equal('dep error\n\tError evaluating ' + base + 'test/loads/deperror.js\n\tError evaluating ' + base + 'test/loads/main.js');
         })
         .then(done, done);
       });
@@ -189,7 +189,7 @@ describe('System', function () {
         .then(supposedToFail)
         .catch(function(e) {
           expect(e)
-            .to.be.equal('dep error\n  Error evaluating ' + base + 'test/loads/deperror.js');
+            .to.be.equal('dep error\n\tError evaluating ' + base + 'test/loads/deperror.js');
         })
         .then(done, done);
       });
@@ -207,7 +207,7 @@ describe('System', function () {
               e = e.substr(27);
           }
           expect(e.toString())
-            .to.be.equal((typeof window == 'undefined' ? ' open \'' : 'Error: GET ') + b + 'test/loads/non-existent.js' + (typeof window == 'undefined' ? '\'' : ' 404 (Not Found)') + '\n  Fetching ' + base + 'test/loads/non-existent.js\n  Loading ' + base + 'test/loads/load-non-existent.js');
+            .to.be.equal((typeof window == 'undefined' ? ' open \'' : 'Error: GET ') + b + 'test/loads/non-existent.js' + (typeof window == 'undefined' ? '\'' : ' 404 (Not Found)') + '\n\tFetching ' + base + 'test/loads/non-existent.js\n\tLoading ' + base + 'test/loads/load-non-existent.js');
         })
         .then(done, done);
       });
