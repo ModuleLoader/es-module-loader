@@ -6,7 +6,8 @@ require('./_helper');
 
 require('regenerator/runtime');
 
-global.System = require('../lib/index-babel').System;
+global.System = require('../index').System;
+global.System.transpiler = 'babel';
 
 require('./system.spec');
 
