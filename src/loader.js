@@ -660,12 +660,12 @@ function logloads(loads) {
       return !!this._loader.modules[name];
     },
     // 26.3.3.8
-    'import': function(name, options) {
+    'import': function(name, parentName) {
       // run normalize first
       var loaderObj = this;
 
       // added, see https://bugs.ecmascript.org/show_bug.cgi?id=2659
-      return Promise.resolve(loaderObj.normalize(name, options && options.name, options && options.address))
+      return Promise.resolve(loaderObj.normalize(name, parentName))
       .then(function(name) {
         var loader = loaderObj._loader;
 
@@ -675,7 +675,7 @@ function logloads(loads) {
         }
 
         return loader.importPromises[name] || createImportPromise(loaderObj, name,
-          loadModule(loader, name, options || {})
+          loadModule(loader, name, {})
           .then(function(load) {
             delete loader.importPromises[name];
             return evaluateLoadedModule(loader, load);
