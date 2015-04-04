@@ -29,9 +29,8 @@ function SystemLoader(options) {
     }
 
     // sanitize out the hash and querystring
-    // removes the username and password, which could be adjusted
-    baseURL = new URL(baseURL);
-    baseURL = baseURL.origin + baseURL.pathname.substr(0, baseURL.pathname.lastIndexOf('/') + 1);
+    baseURL = baseURL.split('#')[0].split('?')[0];
+    baseURL = baseURL.substr(0, baseURL.lastIndexOf('/') + 1);
   }
   else if (typeof process != 'undefined' && process.cwd) {
     baseURL = 'file://' + (isWindows ? '/' : '') + process.cwd() + '/';

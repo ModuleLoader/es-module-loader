@@ -34,11 +34,17 @@
   })();
 
   function addToError(err, msg) {
-    if (err instanceof Error)
-      err.message = err.message + '\n\t' + msg;
-    else
-      err = err + '\n\t' + msg;
-    return err;
+    var newErr;
+    if (err instanceof Error) {
+      var newErr = new err.constructor(err.message, err.fileName, err.lineNumber);
+      newErr.message = err.message + '\n\t' + msg;
+      newErr.stack = err.stack;
+    }
+    else {
+      newErr = err + '\n\t' + msg;
+    }
+      
+    return newErr;
   }
 
   function __eval(source, debugName, context) {
