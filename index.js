@@ -1,4 +1,5 @@
-require('when');
+if (typeof Promise === 'undefined')
+  require('when');
 
 var System = require('./dist/es6-module-loader.src');
 
