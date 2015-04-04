@@ -35,9 +35,9 @@
 
   function addToError(err, msg) {
     if (err instanceof Error)
-      err.message = msg + err.message;
+      err.message = err.message + '\n\t' + msg;
     else
-      err = msg + err;
+      err = err + '\n\t' + msg;
     return err;
   }
 
