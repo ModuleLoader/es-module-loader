@@ -100,6 +100,7 @@
           };
           load.status = 'linked';
         }
+
         finishLoad(loader, load);
       }
 
@@ -255,7 +256,7 @@
         err = ensureEvaluated(dep, seen, loader);
         // stop on error, see https://bugs.ecmascript.org/show_bug.cgi?id=2996
         if (err) {
-          err = addToError(err, 'Error evaluating ' + dep.name + '\n');
+          err = addToError(err, 'Error evaluating ' + dep.name);
           return err;
         }
       }

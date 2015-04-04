@@ -20,6 +20,8 @@
 
 function Module() {}
 function Loader(options) {
+  options = options || {};
+  
   if (options.normalize)
     this.normalize = options.normalize;
   if (options.locate)
@@ -47,6 +49,9 @@ function Loader(options) {
   });
 
   // 26.3.3.13 realm not implemented
+
+  if (this.transpiler)
+    setupTranspilers(this);
 }
 
 (function() {
@@ -529,11 +534,16 @@ function logloads(loads) {
   function linkSetFailed(linkSet, load, exc) {
     var loader = linkSet.loader;
 
-    if (load && linkSet.loads[0].name != load.name)
-      exc = addToError(exc, 'Error loading "' + load.name + '" from "' + linkSet.loads[0].name + '" at ' + (linkSet.loads[0].address || '<unknown>') + '\n');
+    if (load) {
+      if (linkSet.loads[0].name != load.name)
+        exc = addToError(exc, 'Error loading "' + load.name + '" from "' + linkSet.loads[0].name + '" at ' + (linkSet.loads[0].address || '<unknown>'));
 
-    if (load)
-      exc = addToError(exc, 'Error loading "' + load.name + '" at ' + (load.address || '<unknown>') + '\n');
+      exc = addToError(exc, 'Error loading "' + load.name + '" at ' + (load.address || '<unknown>'));
+    }
+    else {
+      exc = addToError(exc, 'Error linking "' + linkSet.loads[0].name + '" at ' + (linkSet.loads[0].address || '<unknwon>'));
+    }
+
 
     var loads = linkSet.loads.concat([]);
     for (var i = 0, l = loads.length; i < l; i++) {

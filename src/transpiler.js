@@ -1,28 +1,22 @@
 /*
  * Traceur and Babel transpile hook for Loader
  */
+
+function setupTranspilers(loader) {
+  // pick up Transpiler modules from existing globals on first run if set
+  if (__global.traceur && !loader.has('traceur'))
+    loader.set('traceur', loader.newModule({ 'default': __global.traceur, __useDefault: true }));
+  if (__global.babel && !loader.has('babel'))
+    loader.set('babel', loader.newModule({ 'default': __global.babel, __useDefault: true }));
+}
+
 var transpile = (function() {
-  
-  function getTranspilerModule(loader, globalName) {
-    return loader.newModule({ 'default': __global[globalName], __useDefault: true });
-  }
-  // NB this does not support sub-classing well
-  var firstRun = true;
 
   // use Traceur by default
   Loader.prototype.transpiler = 'traceur';
 
   function transpile(load) {
     var self = this;
-
-    // pick up Transpiler modules from existing globals on first run if set
-    if (firstRun) {
-      if (__global.traceur && !self.has('traceur'))
-        self.set('traceur', getTranspilerModule(self, 'traceur'));
-      if (__global.babel && !self.has('babel'))
-        self.set('babel', getTranspilerModule(self, 'babel'));
-      firstRun = false;
-    }
     
     return self['import'](self.transpiler).then(function(transpiler) {
       if (transpiler.__useDefault)
@@ -55,7 +49,7 @@ var transpile = (function() {
             __eval('(function(require,exports,module){' + load.source + '})();', load.address, __global);
             __global.System = curSystem;
             __global.Reflect.Loader = curLoader;
-            return getTranspilerModule(self, load.name);
+            return self.newModule({ 'default': __global[load.name], __useDefault: true });
           }
         };
       }

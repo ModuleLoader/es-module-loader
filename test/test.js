@@ -300,7 +300,7 @@ function runTests() {
     System['import']('loads/main.js').then(function(m) {
       assert(false, true);
     }, function(e) {
-      assert(e, 'Error evaluating loads/deperror.js\ndep error');
+      assert(e, 'dep error\n\tError evaluating loads/deperror.js');
     });
     // System['import']('loads/deperror');
   });
@@ -600,27 +600,27 @@ function runTests() {
   test('Custom loader hook - normalize error', function(assert) {
     customLoader['import']('loader/error1-parent.js').then(function(m) {
     })['catch'](function(e) {
-      assert(e.toString(), 'Error loading "loader/error1-parent.js" at ' + System.baseURL + 'loader/error1-parent.js\nerror1');
+      assert(e.toString(), 'error1\n\tError loading "loader/error1-parent.js" at ' + System.baseURL + 'loader/error1-parent.js');
     });
   });
   test('Custom loader hook - locate error', function(assert) {
     customLoader['import']('error2').then(function(m) {}, function(e) {
-      assert(e.toString(), 'Error loading "error2" at <unknown>\nerror2');
+      assert(e.toString(), 'error2\n\tError loading "error2" at <unknown>');
     });
   });
   test('Custom loader hook - fetch error', function(assert) {
     customLoader['import']('error3').then(function(m) {}, function(e) {
-      assert(e.toString(), 'Error loading "error3" at ' + System.baseURL + 'error3\nerror3');
+      assert(e.toString(), 'error3\n\tError loading "error3" at ' + System.baseURL + 'error3');
     });
   });
   test('Custom loader hook - translate error', function(assert) {
     customLoader['import']('error4').then(function(m) {}, function(e) {
-      assert(e.toString(), 'Error loading "error4" at ' + System.baseURL + 'error4\nerror4');
+      assert(e.toString(), 'error4\n\tError loading "error4" at ' + System.baseURL + 'error4');
     });
   });
   test('Custom loader hook - instantiate error', function(assert) {
     customLoader['import']('error5').then(function(m) {}, function(e) {
-      assert(e.toString(), 'Error loading "error5" at ' + System.baseURL + 'error5\nerror5');
+      assert(e.toString(), 'error5\n\tError loading "error5" at ' + System.baseURL + 'error5');
     });
   });
 

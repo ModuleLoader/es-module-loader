@@ -1,18 +1,18 @@
 /*
- * Dynamic-only Linking Code
+ * ES6 Module Declarative Linking Code - Dev Build Only
  */
-
-  // 15.2.5.4
-  // dynamic-only linking implementation
   function link(linkSet, linkError) {
-    
+
     var loader = linkSet.loader;
 
     if (!linkSet.loads.length)
       return;
 
-    for (var i = 0; i < linkSet.loads.length; i++) {
-      var load = linkSet.loads[i];
+    var loads = linkSet.loads.concat([]);
+
+    for (var i = 0; i < loads.length; i++) {
+      var load = loads[i];
+
       var module = doDynamicExecute(linkSet, load, linkError);
       if (!module)
         return;
@@ -21,12 +21,13 @@
         module: module
       };
       load.status = 'linked';
+
       finishLoad(loader, load);
     }
   }
 
   function evaluateLoadedModule(loader, load) {
+    console.assert(load.status == 'linked', 'is linked ' + load.name);
     return load.module.module;
   }
-
 })();
