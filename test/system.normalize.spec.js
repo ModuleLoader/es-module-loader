@@ -66,6 +66,10 @@ describe('System', function () {
 
     beforeEach(function () {
       System.baseURL = 'http://example.org/a/';
+      // required to stop paths leaking between tests (wrecks order for example)
+      delete System.paths['path/*'];
+      delete System.paths['path/specific/*'];
+      delete System.paths['path/best/*'];
     });
 
     it('should resolve paths', function () {
@@ -79,6 +83,21 @@ describe('System', function () {
       System.paths['path/*'] = '/test/*.js';
       expect(System.locate({name: 'path/test'}))
         .to.equal('http://example.org/test/test.js');
+    });
+
+    it('should show precedence to longer wilcard paths', function () {
+      // most specific path first to illustrate not last-case-wins
+      System.paths['path/specific/*'] = '/best/*.js';
+      System.paths['path/*'] = '/test/*.js';
+      expect(System.locate({name: 'path/specific/test'}))
+        .to.equal('http://example.org/best/test.js');
+    });
+
+    it('should show precedence to last wilcard path in case of tie', function () {
+      System.paths['path/*/test'] = '/test/*.js';
+      System.paths['path/best/*'] = '/best/*.js';
+      expect(System.locate({name: 'path/best/test'}))
+        .to.equal('http://example.org/best/test.js');
     });
 
   });
