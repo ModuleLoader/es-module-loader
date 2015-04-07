@@ -169,8 +169,8 @@ function SystemLoader(options) {
 
     // NB no specification provided for System.paths, used ideas discussed in https://github.com/jorendorff/js-loaders/issues/25
 
-    // most specific (longest) match wins
-    var pathMatch = '', wildcard;
+    // most specific (most number of slashes in path) match wins
+    var pathMatch = '', wildcard, maxSlashCount = 0;
 
     // check to see if we have a paths entry
     for (var p in this.paths) {
@@ -180,18 +180,21 @@ function SystemLoader(options) {
 
       // exact path match
       if (pathParts.length == 1) {
-        if (name == p && p.length > pathMatch.length) {
+        if (name == p) {
           pathMatch = p;
           break;
         }
       }
-
       // wildcard path match
       else {
-        if (name.substr(0, pathParts[0].length) == pathParts[0] && name.substr(name.length - pathParts[1].length) == pathParts[1]) {
-          pathMatch = p;
-          wildcard = name.substr(pathParts[0].length, name.length - pathParts[1].length - pathParts[0].length);
-        }
+        var slashCount = p.match(/\//g).length;
+        if (slashCount >= maxSlashCount &&
+            name.substr(0, pathParts[0].length) == pathParts[0] &&
+            name.substr(name.length - pathParts[1].length) == pathParts[1]) {
+              maxSlashCount = slashCount;
+              pathMatch = p;
+              wildcard = name.substr(pathParts[0].length, name.length - pathParts[1].length - pathParts[0].length);
+            }
       }
     }
 
@@ -201,7 +204,7 @@ function SystemLoader(options) {
 
     // percent encode just '#' in module names
     // according to https://github.com/jorendorff/js-loaders/blob/master/browser-loader.js#L238
-    // we should encode everything, but it breaks for servers that don't expect it 
+    // we should encode everything, but it breaks for servers that don't expect it
     // like in (https://github.com/systemjs/systemjs/issues/168)
     if (isBrowser)
       outPath = outPath.replace(/#/g, '%23');
