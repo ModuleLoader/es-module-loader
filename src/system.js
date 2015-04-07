@@ -204,7 +204,7 @@ function SystemLoader(options) {
 
     // percent encode just '#' in module names
     // according to https://github.com/jorendorff/js-loaders/blob/master/browser-loader.js#L238
-    // we should encode everything, but it breaks for servers that don't expect it 
+    // we should encode everything, but it breaks for servers that don't expect it
     // like in (https://github.com/systemjs/systemjs/issues/168)
     if (isBrowser)
       outPath = outPath.replace(/#/g, '%23');
