@@ -6,7 +6,7 @@ describe('Custom Loader', function () {
 
     describe('scripts', function () {
       it('should support ES6 scripts', function (done) {
-        customLoader.import('test/loader/test')
+        customLoader.import('test/loader/test.js')
           .then(function (m) {
             expect(m.loader).to.be.equal('custom');
           })
@@ -14,7 +14,7 @@ describe('Custom Loader', function () {
       });
 
       it('should support AMD scripts', function (done) {
-        customLoader.import('test/loader/amd')
+        customLoader.import('test/loader/amd.js')
           .then(function (m) {
             expect(m.format).to.be.equal('amd');
           })
@@ -25,7 +25,7 @@ describe('Custom Loader', function () {
     describe('special #locate path rule', function a() {
 
       it('should support special loading rules', function (done) {
-        customLoader.import('path/custom')
+        customLoader.import('path/custom.js')
           .then(function (m) {
             expect(m.path).to.be.ok();
           })
@@ -41,9 +41,9 @@ describe('Custom Loader', function () {
       }
 
       it('should make the normalize throw', function (done) {
-        customLoader.import('test/loader/error1-parent')
+        customLoader.import('test/loader/error1-parent.js')
           .then(supposeToFail, function (e) {
-            expect(e).to.be.match(/Error loading "test\/loader\/error1-parent" at \S+error1-parent\.js/);
+            expect(e).to.be.match(/Error loading "test\/loader\/error1-parent.js" at \S+error1-parent\.js/);
           })
           .then(done, done);
       });
@@ -51,7 +51,7 @@ describe('Custom Loader', function () {
       it('should make the locate throw', function (done) {
         customLoader.import('test/loader/error2')
           .then(supposeToFail, function (e) {
-            expect(e).to.be.match(/Error loading "test\/loader\/error2" at \S+test\/loader\/error2\.js/);
+            expect(e).to.be.match(/Error loading "test\/loader\/error2" at \S+test\/loader\/error2/);
           })
           .then(done, done);
       });
@@ -59,7 +59,7 @@ describe('Custom Loader', function () {
       it('should make the fetch throw', function (done) {
         customLoader.import('test/loader/error3')
           .then(supposeToFail, function (e) {
-            expect(e).to.be.match(/Error loading "test\/loader\/error3" at \S+test\/loader\/error3\.js/);
+            expect(e).to.be.match(/Error loading "test\/loader\/error3" at \S+test\/loader\/error3/);
           })
           .then(done, done);
       });
@@ -67,7 +67,7 @@ describe('Custom Loader', function () {
       it('should make the translate throw', function (done) {
         customLoader.import('test/loader/error4')
           .then(supposeToFail, function (e) {
-            expect(e).to.be.match(/Error loading "test\/loader\/error4" at \S+test\/loader\/error4\.js/);
+            expect(e).to.be.match(/Error loading "test\/loader\/error4" at \S+test\/loader\/error4/);
           })
           .then(done, done);
       });
@@ -75,7 +75,7 @@ describe('Custom Loader', function () {
       it('should make the instantiate throw', function (done) {
         customLoader.import('test/loader/error5')
           .then(supposeToFail, function (e) {
-            expect(e).to.be.match(/Error loading "test\/loader\/error5" at \S+test\/loader\/error5\.js/);
+            expect(e).to.be.match(/Error loading "test\/loader\/error5" at \S+test\/loader\/error5/);
           })
           .then(done, done);
       });

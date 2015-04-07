@@ -1,6 +1,8 @@
+if (typeof Promise === 'undefined')
+  require('when/es6-shim/Promise');
+
 var System = require('./dist/es6-module-loader.src');
 
-System.transpiler = 'traceur';
 try {
   System.paths.traceur = 'file:' + require.resolve('traceur/bin/traceur.js');
 }

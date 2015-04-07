@@ -41,22 +41,6 @@ describe('System', function () {
         expect(System.normalize('./a.js')).to.equal('a.js');
       });
 
-      it('should throw with an url as name', function () {
-        expect(function () { System.normalize('http://example.org/a/b.html'); })
-          .to.throwException(function (e) {
-            expect(e).to.be.a(TypeError);
-            expect(e.message).to.match(/Illegal module name "\S+"/);
-          });
-      });
-
-      it('should throw with embedded path', function () {
-        expect(function () { System.normalize('a/b/../c'); })
-          .to.throwException(function (e) {
-            expect(e).to.be.a(TypeError);
-            expect(e.message).to.match(/Illegal module name "\S+"/);
-          });
-      });
-
     });
 
     describe('when having two arguments', function () {
@@ -75,21 +59,6 @@ describe('System', function () {
         expect(System.normalize('./a/b', '../../c/d')).to.equal('../../c/a/b');
       });
 
-      it('should throw with embedded path', function () {
-
-        expect(function () { System.normalize('a/b/../c'); })
-          .to.throwException(function (e) {
-            expect(e).to.be.a(TypeError);
-            expect(e.message).to.match(/Illegal module name "\S+"/);
-          });
-
-        expect(function () { System.normalize('a/../b'); })
-          .to.throwException(function (e) {
-            expect(e).to.be.a(TypeError);
-            expect(e.message).to.match(/Illegal module name "\S+"/);
-          });
-
-      });
     });
   });
 
@@ -101,9 +70,9 @@ describe('System', function () {
 
     it('should resolve paths', function () {
       expect(System.locate({name: '@abc/def'}))
-        .to.equal('http://example.org/a/@abc/def.js');
+        .to.equal('http://example.org/a/@abc/def');
       expect(System.locate({name: ' abc/def'}))
-        .to.equal('http://example.org/a/abc/def.js');
+        .to.equal('http://example.org/a/abc/def');
     });
 
     it('should resolve paths with the existing config', function () {
