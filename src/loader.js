@@ -21,7 +21,7 @@
 function Module() {}
 function Loader(options) {
   options = options || {};
-  
+
   if (options.normalize)
     this.normalize = options.normalize;
   if (options.locate)
@@ -55,7 +55,7 @@ function Loader(options) {
 }
 
 (function() {
-  
+
 // Some Helpers
 
 // logs a linkset snapshot for debugging
@@ -281,7 +281,7 @@ function logloads(loads) {
               // store the deps as load.deps
               load.declare = declare;
               load.depsList = deps;
-            }            
+            }
             // empty {} context is closest to undefined 'this' we can get
             __eval(transpiled, load.address, {});
             curSystem.register = curRegister;
@@ -535,10 +535,11 @@ function logloads(loads) {
     var loader = linkSet.loader;
 
     if (load) {
-      if (linkSet.loads[0].name != load.name)
+      if (load && linkSet.loads[0].name != load.name)
         exc = addToError(exc, 'Error loading "' + load.name + '" from "' + linkSet.loads[0].name + '" at ' + (linkSet.loads[0].address || '<unknown>'));
 
-      exc = addToError(exc, 'Error loading "' + load.name + '" at ' + (load.address || '<unknown>'));
+      if (load)
+        exc = addToError(exc, 'Error loading "' + load.name + '" at ' + (load.address || '<unknown>'));
     }
     else {
       exc = addToError(exc, 'Error linking "' + linkSet.loads[0].name + '" at ' + (linkSet.loads[0].address || '<unknwon>'));
