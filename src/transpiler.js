@@ -66,9 +66,7 @@
 
     // add "!eval" to end of Traceur sourceURL
     // I believe this does something?
-    source += '!eval';
-
-    return source;
+    return source + '\n//# sourceURL=' + load.address + '!eval';
   }
   function doTraceurCompile(source, compiler, filename) {
     try {
