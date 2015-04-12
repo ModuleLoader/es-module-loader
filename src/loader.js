@@ -542,7 +542,7 @@ function logloads(loads) {
         exc = addToError(exc, 'Error loading "' + load.name + '" at ' + (load.address || '<unknown>'));
     }
     else {
-      exc = addToError(exc, 'Error linking "' + linkSet.loads[0].name + '" at ' + (linkSet.loads[0].address || '<unknwon>'));
+      exc = addToError(exc, 'Error linking "' + linkSet.loads[0].name + '" at ' + (linkSet.loads[0].address || '<unknown>'));
     }
 
 

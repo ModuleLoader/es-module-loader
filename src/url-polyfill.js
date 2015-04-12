@@ -1,4 +1,6 @@
-  // from https://gist.github.com/Yaffle/1088850
+// from https://gist.github.com/Yaffle/1088850
+if (typeof URL === 'undefined')
+URL = (function() {
   function URL(url, baseURL) {
     if (typeof url != 'string')
       throw new TypeError('URL must be a string');
@@ -65,3 +67,5 @@
     this.search = search;
     this.hash = hash;
   }
+  return URL;
+})();

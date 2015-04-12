@@ -30,4 +30,6 @@
     console.assert(load.status == 'linked', 'is linked ' + load.name);
     return load.module.module;
   }
+
+  function doEnsureEvaluated() {}
 })();
