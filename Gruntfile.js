@@ -20,7 +20,7 @@ module.exports = function (grunt) {
     concat: {
       dist: {
         files: {
-          'dist/<%= pkg.name %>-prod.src.js': [
+          'dist/<%= pkg.name %>.src.js': [
             'node_modules/when/es6-shim/Promise.js',
             'src/wrapper-start.js',
             'src/loader.js',
@@ -29,7 +29,7 @@ module.exports = function (grunt) {
             'src/system.js',
             'src/wrapper-end.js'
           ],
-          'dist/<%= pkg.name %>.src.js': [
+          'dist/<%= pkg.name %>-dev.src.js': [
             'node_modules/when/es6-shim/Promise.js',
             'src/wrapper-start.js',
             'src/loader.js',
@@ -58,12 +58,12 @@ module.exports = function (grunt) {
         src: 'dist/<%= pkg.name %>.src.js',
         dest: 'dist/<%= pkg.name %>.js'
       },
-      prodDist: {
+      devDist: {
         options: {
           banner: '<%= meta.banner %>\n'
         },
-        src: 'dist/<%= pkg.name %>-prod.src.js',
-        dest: 'dist/<%= pkg.name %>-prod.js'
+        src: 'dist/<%= pkg.name %>-dev.src.js',
+        dest: 'dist/<%= pkg.name %>-dev.js'
       }
     }
   });
