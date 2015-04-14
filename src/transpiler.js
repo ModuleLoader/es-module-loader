@@ -18,7 +18,7 @@ var transpile = (function() {
   function transpile(load) {
     var self = this;
     
-    return self['import'](self.transpiler).then(function(transpiler) {
+    return (self.pluginLoader || self)['import'](self.transpiler).then(function(transpiler) {
       if (transpiler.__useDefault)
         transpiler = transpiler['default'];
 
