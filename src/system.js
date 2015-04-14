@@ -102,17 +102,28 @@
     }
 
     function siteLookup(target) {
+      if (siteTable[target])
+        return siteTable[target];
+
+      // most specific wildcard wins, with specificity metric as "/" count in pattern
+      var curMatch, curMatchLen = 0;
       for (var p in siteTable) {
-        var wildcard = p.charAt(p.length - 1) === '*';
-        if (wildcard) {
-          if (target.substr(0, p.length - 1) === p.substr(0, p.length - 1))
-            return siteTable[p].replace('*', target.substr(p.length - 1, target.length - p.length + 1));
-        }
-        else {
-          if (target === p)
-            return siteTable[p];
+        var wildcardParts = p.split('*');
+        if (wildcardParts.length > 2)
+          throw new TypeError('Sites entry ' + p + ' contains multiple wildcards.');
+
+        if (wildcardParts.length == 1)
+          continue;
+        
+        if (p.split('/').length >= curMatchLen
+            && p.substr(0, wildcardParts[0].length) === target.substr(0, wildcardParts[0].length)
+            && p.substr(p.length - wildcardParts[1].length) === wildcardParts[1]) {
+          curMatch = siteTable[p].replace('*', target.substr(wildcardParts[0].length, target.length - p.length + 1));
+          curMatchLen = p.split('/').length;
         }
       }
+
+      return curMatch;
     }
 
     this.hook('resolve', function(url, parentUrl, metadata) {
