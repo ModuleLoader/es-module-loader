@@ -187,7 +187,7 @@ function SystemLoader(options) {
       }
       // wildcard path match
       else {
-        var slashCount = p.match(/\//g).length;
+        var slashCount = p.split('/').length;
         if (slashCount >= maxSlashCount &&
             name.substr(0, pathParts[0].length) == pathParts[0] &&
             name.substr(name.length - pathParts[1].length) == pathParts[1]) {
