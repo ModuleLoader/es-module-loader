@@ -86,9 +86,6 @@ var transpile = (function() {
     options.filename = load.address;
     options.code = true;
     options.ast = false;
-    
-    if (!options.blacklist)
-      options.blacklist = ['react'];
 
     return babel.transform(load.source, options).code;
   }
