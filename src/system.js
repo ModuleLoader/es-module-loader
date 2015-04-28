@@ -12,8 +12,7 @@
 
 (function() {
 
-  var isWorker = typeof self !== 'undefined' && typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope;
-  var isBrowser = typeof window != 'undefined' && !isWorker;
+  var isBrowser = typeof window != 'undefined' && typeof document != 'undefined';
   var isWindows = typeof process != 'undefined' && !!process.platform.match(/^win/);
   var Promise = __global.Promise || require('when/es6-shim/Promise');
 
@@ -155,7 +154,7 @@
     }
 
     get global() {
-      return isBrowser ? window : (isWorker ? self : __global);
+      return __global;
     }
    
     get strict() { return true; }
@@ -278,7 +277,7 @@
 
   // <script type="module"> support
   // allow a data-init function callback once loaded
-  if (isBrowser && typeof document.getElementsByTagName != 'undefined') {
+  if (isBrowser && document.getElementsByTagName) {
     var curScript = document.getElementsByTagName('script');
     curScript = curScript[curScript.length - 1];
 

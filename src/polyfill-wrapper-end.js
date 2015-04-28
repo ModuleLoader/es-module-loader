@@ -12,5 +12,4 @@ function __eval(__source, __global, __load) {
   }
 }
 
-})(typeof window != 'undefined' ? window : (typeof WorkerGlobalScope != 'undefined' ?
-                                           self : global));
+})(typeof window != 'undefined' ? window : (typeof global != 'undefined' ? global : self));
