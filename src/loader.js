@@ -1019,17 +1019,25 @@ function logloads(loads) {
       // by doing m instanceof Module
       var m = new Module();
 
-      for (var key in obj) {
-        (function (key) {
-          defineProperty(m, key, {
-            configurable: false,
-            enumerable: true,
-            get: function () {
-              return obj[key];
-            }
-          });
-        })(key);
+      var pNames;
+      if (Object.getOwnPropertyNames) {
+        pNames = Object.getOwnPropertyNames(obj);
       }
+      else {
+        pNames = [];
+        for (var key in obj)
+          pNames.push(key);
+      }
+
+      for (var i = 0; i < pNames.length; i++) (function(key) {
+        defineProperty(m, key, {
+          configurable: false,
+          enumerable: true,
+          get: function () {
+            return obj[key];
+          }
+        });
+      })(pNames[i]);
 
       if (Object.preventExtensions)
         Object.preventExtensions(m);
