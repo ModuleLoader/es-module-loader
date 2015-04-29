@@ -51,7 +51,7 @@ describe('System', function () {
       it('should support set, get and delete', function(done) {
 
         var testPath = System.baseURL + 'test/loader/module.js';
-  
+
         System.import(testPath).then(function(m) {
           expect(m.run).to.equal('first');
           System.delete(testPath);
@@ -88,7 +88,8 @@ describe('System', function () {
           .then(done, done);
       });
 
-      (ie ? it.skip : it)('should import an ES6 script with a generator', function (done) {
+      // typescript does not support generators yet
+      (ie || System.transpiler === 'typescript' ? it.skip : it)('should import an ES6 script with a generator', function (done) {
         System.import('test/syntax/es6-generator.js')
           .then(function (m) {
             expect(!!m.generator).to.be.ok();
@@ -395,7 +396,7 @@ describe('System', function () {
     });
 
   });
-  
+
   describe('#System.define', function () {
 
     it.skip('should load System.define', function(done) {
