@@ -30,14 +30,19 @@ if (options.saucelabs) {
 }
 
 ////
-
 module.exports = function(config) {
 
   var files = [
     'test/_helper.js',
     [options['babel'] ? 'node_modules/regenerator/runtime.js' : ''],
 
-    [!options.ie8 ? (!options['babel'] ? 'node_modules/traceur/bin/traceur.js' : 'node_modules/babel-core/browser.js') : ''],
+    [!options.ie8 
+        ? (options['babel'] 
+            ? 'node_modules/babel-core/browser.js' 
+            : options['typescript']  
+                ? 'node_modules/typescript/bin/typescript.js' 
+                : 'node_modules/traceur/bin/traceur.js') 
+        : ''],
 
     'dist/es6-module-loader' + (options.polyfill ? '' : '-sans-promises') + '.src.js',
 
@@ -50,10 +55,10 @@ module.exports = function(config) {
     {pattern: 'test/{loader,loads,syntax,worker}/**/*', included: false},
     {pattern: 'node_modules/traceur/bin/traceur.js', included: false},
     {pattern: 'node_modules/babel-core/browser.js', included: false},
+    {pattern: 'node_modules/typescript/bin/typescript.js', included: false},
     {pattern: 'node_modules/when/es6-shim/Promise.js', included: false},
     {pattern: 'dist/es6-module-loader*.js', included: false}
   ];
-
   // Default Config
   config.set({
     basePath: '',
@@ -67,7 +72,11 @@ module.exports = function(config) {
         timeout: 8000
       },
       system: {
-        transpiler: options.babel ? 'babel' : 'traceur'
+        transpiler: options.babel 
+            ? 'babel'
+            : options.typescript
+                ? 'typescript'
+                : 'traceur'
       }
     }
   });
