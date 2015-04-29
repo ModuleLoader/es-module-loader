@@ -1,7 +1,7 @@
 (function(__global) {
 
-  var isWorker = typeof self !== 'undefined' && typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope;
-  var isBrowser = typeof window != 'undefined' && !isWorker;
+  var isWorker = typeof window == 'undefined' && typeof self != 'undefined' && typeof importScripts != 'undefined';
+  var isBrowser = typeof window != 'undefined' && typeof document != 'undefined';
   var isWindows = typeof process != 'undefined' && !!process.platform.match(/^win/);
 
   if (__global.console)

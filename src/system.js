@@ -17,10 +17,7 @@ function SystemLoader(options) {
 
   var baseURL;
   // Set default baseURL and paths
-  if (isWorker) {
-    baseURL = __global.location.href;
-  }
-  else if (typeof document != 'undefined') {
+  if (typeof document != 'undefined' && document.getElementsByTagName) {
     baseURL = document.baseURI;
 
     if (!baseURL) {
@@ -36,6 +33,9 @@ function SystemLoader(options) {
     baseURL = 'file://' + (isWindows ? '/' : '') + process.cwd() + '/';
     if (isWindows)
       baseURL = baseURL.replace(/\\/g, '/');
+  }
+  else if (typeof location != 'undefined') {
+    baseURL = __global.location.href;
   }
   else {
     throw new TypeError('No environment baseURL');
