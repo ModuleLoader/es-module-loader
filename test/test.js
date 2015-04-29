@@ -222,11 +222,14 @@ function runTests() {
     }, err);
   });
 
-  test('Import ES6 Generator', function(assert, err) {
-    System['import']('syntax/es6-generator').then(function(m) {
-      assert(!!m.generator, true);
-    }, err);
-  });
+  // test not enabled for TypeScript
+  if (System.transpiler != 'typescript') {
+    test('Import ES6 Generator', function(assert, err) {
+      System['import']('syntax/es6-generator').then(function(m) {
+        assert(!!m.generator, true);
+      }, err);
+    });
+  }
 
   test('Direct import without bindings', function(assert, err) {
     System['import']('syntax/direct').then(function(m) {
