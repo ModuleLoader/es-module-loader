@@ -110,8 +110,10 @@
 
   function typescriptTranspile(load, ts) {
     var options = this.typescriptOptions || {};
-    options.module =ts.ModuleKind.System;
-    options.target = ts.ScriptTarget.ES5;
+    if (options.target === undefined) {
+      options.target = ts.ScriptTarget.ES5;
+    }
+    options.module = ts.ModuleKind.System;
     options.inlineSourceMap = true;
     options.inlineSources = true;
 
