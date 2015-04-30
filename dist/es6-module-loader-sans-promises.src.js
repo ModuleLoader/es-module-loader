@@ -761,11 +761,8 @@ function logloads(loads) {
       for (var i = 0, l = module.importers.length; i < l; i++) {
         var importerModule = module.importers[i];
         if (!importerModule.locked) {
-          for (var j = 0; j < importerModule.dependencies.length; ++j) {
-            if (importerModule.dependencies[j] === module) {
-              importerModule.setters[j](moduleObj);
-            }
-          }
+          var importerIndex = indexOf.call(importerModule.dependencies, module);
+          importerModule.setters[importerIndex](moduleObj);
         }
       }
 
@@ -1129,7 +1126,7 @@ function logloads(loads) {
 })();
 
 /*
- * Traceur, Babel and TypeScript transpile hook for Loader
+ * Traceur and Babel transpile hook for Loader
  */
 (function(Loader) {
   var g = __global;
@@ -1150,25 +1147,13 @@ function logloads(loads) {
         self.set('traceur', getTranspilerModule(self, 'traceur'));
       if (g.babel && !self.has('babel'))
         self.set('babel', getTranspilerModule(self, 'babel'));
-      if (g.ts && !self.has('typescript'))
-        self.set('typescript', getTranspilerModule(self, 'ts'));
       self.transpilerHasRun = true;
     }
     
     return self['import'](self.transpiler).then(function(transpiler) {
       if (transpiler.__useDefault)
         transpiler = transpiler['default'];
-      var transpileFunction;
-      if (transpiler.Compiler) {
-        transpileFunction = traceurTranspile;
-      }
-      else if (transpiler.createLanguageService) {
-        transpileFunction = typescriptTranspile;
-      }
-      else {
-        transpileFunction = babelTranspile;
-      }
-      return 'var __moduleAddress = "' + load.address + '";' + transpileFunction.call(self, load, transpiler);
+      return 'var __moduleAddress = "' + load.address + '";' + (transpiler.Compiler ? traceurTranspile : babelTranspile).call(self, load, transpiler);
     });
   };
 
@@ -1238,16 +1223,6 @@ function logloads(loads) {
     return source + '\n//# sourceURL=' + load.address + '!eval';
   }
 
-  function typescriptTranspile(load, ts) {
-    var options = this.typescriptOptions || {};
-    options.module =ts.ModuleKind.System;
-    options.target = ts.ScriptTarget.ES5;
-    options.inlineSourceMap = true;
-    options.inlineSources = true;
-
-    var source = ts.transpile(load.source, options);
-    return source + '\n//# sourceURL=' + load.address + '!eval';;
-  }
 
 })(__global.LoaderPolyfill);
 /*
@@ -1262,9 +1237,7 @@ function logloads(loads) {
 *********************************************************************************************
 */
 
-var $__Object$getPrototypeOf = Object.getPrototypeOf;
-var $__Object$defineProperty = Object.defineProperty;
-var $__Object$create = Object.create;
+
 
 (function() {
   var isBrowser = typeof window != 'undefined' && typeof document != 'undefined';
