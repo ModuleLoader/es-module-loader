@@ -2509,13 +2509,12 @@ function logloads(loads) {
   }
 
   function typescriptTranspile(load, ts) {
-    var options = {
-      module: ts.ModuleKind.System,
-      target: ts.ScriptTarget.ES5,
-      emitDecoratorMetadata: true,
-      inlineSourceMap: true,
-      inlineSources: true
-    };
+    var options = this.typescriptOptions || {};
+    options.module =ts.ModuleKind.System;
+    options.target = ts.ScriptTarget.ES5;
+    options.inlineSourceMap = true;
+    options.inlineSources = true;
+
     var source = ts.transpile(load.source, options);
     return source + '\n//# sourceURL=' + load.address + '!eval';;
   }
