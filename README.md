@@ -7,7 +7,7 @@ Dynamically loads ES6 modules in browsers and [NodeJS](#nodejs-use) with support
 This project implements dynamic module loading through `System` exactly to the previous ES6-specified loader API at [2014-08-24 ES6 Specification Draft Rev 27, Section 15](http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts#august_24_2014_draft_rev_27) and is being converted to track the newly redrafted specification at https://github.com/whatwg/loader (work in progress at https://github.com/ModuleLoader/es6-module-loader/pull/317).
 
 * Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#getting-started).
-* Supports both [Traceur](https://github.com/google/traceur-compiler) and [Babel](http://babeljs.io/) for compiling ES6 modules and syntax into ES5 in the browser with source map support.
+* Supports [Traceur](https://github.com/google/traceur-compiler), [Babel](http://babeljs.io/) and [TypeScript](https://github.com/Microsoft/TypeScript/) for compiling ES6 modules and syntax into ES5 in the browser with source map support.
 * Fully supports [ES6 circular references and live bindings](https://github.com/ModuleLoader/es6-module-loader/wiki/Circular-References-&-Bindings).
 * Includes [`baseURL` and `paths` implementations](https://github.com/ModuleLoader/es6-module-loader/wiki/Configuring-the-Loader).
 * Can be used as a [tracing tool](https://github.com/ModuleLoader/es6-module-loader/wiki/Tracing-API) for static analysis of modules.
@@ -30,7 +30,7 @@ For an example of a universal module loader based on this polyfill for loading A
 
 ### Getting Started
 
-If using ES6 syntax (optional), include `traceur.js` or `babel.js` in the page first then include `es6-module-loader.js`:
+If using ES6 syntax (optional), include `traceur.js`, `babel.js` or `typescript.js` in the page first then include `es6-module-loader.js`:
 
 ```html
   <script src="traceur.js"></script>
@@ -42,6 +42,14 @@ To use Babel, load Babel's `browser.js` instead and set the transpiler to `babel
 ```html
 <script>
   System.transpiler = 'babel';
+</script>
+```
+
+To use TypeScript, set the transpiler to `typescript` in the loader configuration:
+
+```html
+<script>
+  System.transpiler = 'typescript';
 </script>
 ```
 
@@ -76,10 +84,16 @@ If using Traceur, these can be set with:
 System.traceurOptions = {...};
 ```
 
-Or with Babel:
+With Babel:
 
 ```javascript
 System.babelOptions = {...};
+```
+
+With TypeScript:
+
+```javascript
+System.typescriptOptions = {...};
 ```
 
 #### Module Tag
@@ -102,10 +116,10 @@ See the [demo folder](https://github.com/ModuleLoader/es6-module-loader/blob/mas
 #### NodeJS Use
 
 ```
-  npm install es6-module-loader babel traceur
+  npm install es6-module-loader babel traceur typescript
 ```
 
-It is important that Babel or Traceur is installed into the path in order to be found, since these are no longer project dependencies.
+It is important that Babel, Traceur or TypeScript is installed into the path in order to be found, since these are no longer project dependencies.
 
 For use in NodeJS, the `Loader` and `System` globals are provided as exports:
 
@@ -115,7 +129,9 @@ index.js:
   /*  
    *  Include:
    *    System.transpiler = 'babel'; 
-   *  to use Babel instead of Traceur
+   *  to use Babel instead of Traceur or
+   *    System.transpiler = 'typescript';
+   *  to use TypeScript
    */
 
   System.import('some-module').then(function(m) {
@@ -142,8 +158,8 @@ _Also, please don't edit files in the "dist" subdirectory as they are generated 
 ## Testing
 
 - `npm run test:node` will use node to  to run the tests
-- `npm run test:browser` will run `npm run test:browser-babel` and `npm run test:browser-traceur`
-- `npm run test:browser-[transpiler]` use karma to run the tests with Traceur or Babel.
+- `npm run test:browser` will run `npm run test:browser-babel`, `npm run test:browser-traceur` and `npm run test:browser-typescript`
+- `npm run test:browser-[transpiler]` use karma to run the tests with Traceur, Babel or TypeScript.
 - `npm run test:browser:perf` will use karma to run benchmarks
 
 `npm run test:browser-[transpiler]` supports options after a double dash (`--`) :
