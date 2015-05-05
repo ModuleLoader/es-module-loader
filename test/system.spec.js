@@ -221,7 +221,7 @@ describe('System', function () {
           .then(done, done);
       });
 
-      it('should throw what the script throws', function (done) {
+      it.skip('should throw what the script throws', function (done) {
         System.import('test/loads/deperror.js')
           .then(supposedToFail)
           .then(done, done);
