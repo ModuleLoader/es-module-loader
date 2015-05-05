@@ -68,7 +68,7 @@
           return {
             deps: [],
             execute: function() {
-              return System.get(transpiler);
+              return System.get(System.normalize(transpiler));
             }
           };
         });
