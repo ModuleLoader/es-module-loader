@@ -50,7 +50,7 @@ describe('System', function () {
 
       it('should support set, get and delete', function(done) {
 
-        var testPath = 'test/loader/module.js';
+        var testPath = System.baseURL + 'test/loader/module.js';
   
         System.import(testPath).then(function(m) {
           expect(m.run).to.equal('first');
@@ -207,33 +207,30 @@ describe('System', function () {
 
     describe('errors', function () {
 
-      function supposeToFail() {
+      function supposedToFail() {
         expect(false, 'should not be successful').to.be.ok();
       }
 
       it('should throw if on syntax error', function (done) {
         System.import('test/loads/main.js')
-          .then(supposeToFail)
+          .then(supposedToFail)
           .catch(function (e) {
             expect(e)
-              .to.be.equal('dep error\n\tError evaluating test/loads/deperror.js');
+              .to.be.equal('dep error\n\tError evaluating ' + System.baseURL + 'test/loads/deperror.js');
           })
           .then(done, done);
       });
 
-      it.skip('should throw what the script throws', function (done) {
+      it('should throw what the script throws', function (done) {
         System.import('test/loads/deperror.js')
-          .then(supposeToFail)
-          .catch(function () {
-            expect(false, 'should be successful ??').to.be.ok();
-          })
+          .then(supposedToFail)
           .then(done, done);
       });
 
 
       it('Unhandled rejection test', function (done) {
         System.import('test/loads/load-non-existent.js')
-          .then(supposeToFail)
+          .then(supposedToFail)
           .catch(function (e) {
             expect(e).to.be.match(/Error loading "\S+" at \S+/);
           })
@@ -353,9 +350,8 @@ describe('System', function () {
       it('should support module name meta', function (done) {
         System.import('test/loader/moduleName.js')
           .then(function (m) {
-            expect(m.name).to.be.equal('test/loader/moduleName.js');
-            expect(m.address)
-              .to.be.equal(System.baseURL + 'test/loader/moduleName.js');
+            expect(m.name).to.be.equal(m.address);
+            expect(m.address).to.be.equal(System.baseURL + 'test/loader/moduleName.js');
           })
           .then(done, done);
       });

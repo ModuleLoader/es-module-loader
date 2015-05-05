@@ -45,6 +45,44 @@ function SystemLoader(options) {
   this.paths = {};
 }
 
+// NB no specification provided for System.paths, used ideas discussed in https://github.com/jorendorff/js-loaders/issues/25
+function applyPaths(loader, name) {
+  // most specific (most number of slashes in path) match wins
+  var pathMatch = '', wildcard, maxSlashCount = 0;
+
+  // check to see if we have a paths entry
+  for (var p in loader.paths) {
+    var pathParts = p.split('*');
+    if (pathParts.length > 2)
+      throw new TypeError('Only one wildcard in a path is permitted');
+
+    // exact path match
+    if (pathParts.length == 1) {
+      if (name == p) {
+        pathMatch = p;
+        break;
+      }
+    }
+    // wildcard path match
+    else {
+      var slashCount = p.split('/').length;
+      if (slashCount >= maxSlashCount &&
+          name.substr(0, pathParts[0].length) == pathParts[0] &&
+          name.substr(name.length - pathParts[1].length) == pathParts[1]) {
+            maxSlashCount = slashCount;
+            pathMatch = p;
+            wildcard = name.substr(pathParts[0].length, name.length - pathParts[1].length - pathParts[0].length);
+          }
+    }
+  }
+
+  var outPath = loader.paths[pathMatch] || name;
+  if (wildcard)
+    outPath = outPath.replace('*', wildcard);
+
+  return outPath;
+}
+
 (function() {
   var fetchTextFromURL;
   if (typeof XMLHttpRequest != 'undefined') {
@@ -122,95 +160,6 @@ function SystemLoader(options) {
   function LoaderProto() {}
   LoaderProto.prototype = Loader.prototype;
   SystemLoader.prototype = new LoaderProto();
-
-  SystemLoader.prototype.normalize = function(name, parentName, parentAddress) {
-    if (typeof name != 'string')
-      throw new TypeError('Module name must be a string');
-
-    var segments = name.split('/');
-
-    // current segment
-    var i = 0;
-    // is the module name relative
-    var rel = false;
-    // number of backtracking segments
-    var dotdots = 0;
-    if (segments[0] == '.') {
-      i++;
-      rel = true;
-    }
-    else {
-      while (segments[i] == '..') {
-        i++;
-      }
-      if (i)
-        rel = true;
-      dotdots = i;
-    }
-
-    if (!rel)
-      return name;
-
-    // build the full module name
-    var normalizedParts = [];
-    var parentParts = (parentName || '').split('/');
-    var normalizedLen = parentParts.length - 1 - dotdots;
-
-    normalizedParts = normalizedParts.concat(parentParts.splice(0, parentParts.length - 1 - dotdots));
-    normalizedParts = normalizedParts.concat(segments.splice(i, segments.length - i));
-
-    return normalizedParts.join('/');
-  };
-
-  var baseURLCache = {};
-
-  SystemLoader.prototype.locate = function(load) {
-    var name = load.name;
-
-    // NB no specification provided for System.paths, used ideas discussed in https://github.com/jorendorff/js-loaders/issues/25
-
-    // most specific (most number of slashes in path) match wins
-    var pathMatch = '', wildcard, maxSlashCount = 0;
-
-    // check to see if we have a paths entry
-    for (var p in this.paths) {
-      var pathParts = p.split('*');
-      if (pathParts.length > 2)
-        throw new TypeError('Only one wildcard in a path is permitted');
-
-      // exact path match
-      if (pathParts.length == 1) {
-        if (name == p) {
-          pathMatch = p;
-          break;
-        }
-      }
-      // wildcard path match
-      else {
-        var slashCount = p.split('/').length;
-        if (slashCount >= maxSlashCount &&
-            name.substr(0, pathParts[0].length) == pathParts[0] &&
-            name.substr(name.length - pathParts[1].length) == pathParts[1]) {
-              maxSlashCount = slashCount;
-              pathMatch = p;
-              wildcard = name.substr(pathParts[0].length, name.length - pathParts[1].length - pathParts[0].length);
-            }
-      }
-    }
-
-    var outPath = this.paths[pathMatch] || name;
-    if (wildcard)
-      outPath = outPath.replace('*', wildcard);
-
-    // percent encode just '#' in module names
-    // according to https://github.com/jorendorff/js-loaders/blob/master/browser-loader.js#L238
-    // we should encode everything, but it breaks for servers that don't expect it
-    // like in (https://github.com/systemjs/systemjs/issues/168)
-    if (isBrowser)
-      outPath = outPath.replace(/#/g, '%23');
-
-    return new URL(outPath, baseURLCache[this.baseURL] = baseURLCache[this.baseURL] || new URL(this.baseURL)).href;
-  };
 
   SystemLoader.prototype.fetch = function(load) {
     return new Promise(function(resolve, reject) {

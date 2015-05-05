@@ -39,7 +39,7 @@ var transpile = (function() {
     return Promise.resolve(self.normalize(self.transpiler))
     .then(function(transpilerNormalized) {
       // load transpiler as a global (avoiding System clobbering)
-      if (load.name === transpilerNormalized) {
+      if (load.address === transpilerNormalized) {
         return {
           deps: [],
           execute: function() {
@@ -49,7 +49,7 @@ var transpile = (function() {
             __eval('(function(require,exports,module){' + load.source + '})();', load.address, __global);
             __global.System = curSystem;
             __global.Reflect.Loader = curLoader;
-            return self.newModule({ 'default': __global[load.name], __useDefault: true });
+            return self.newModule({ 'default': __global[self.transpiler], __useDefault: true });
           }
         };
       }

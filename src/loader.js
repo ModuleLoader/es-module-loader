@@ -671,7 +671,7 @@ function logloads(loads) {
       return !!this._loader.modules[name];
     },
     // 26.3.3.8
-    'import': function(name, parentName) {
+    'import': function(name, parentName, parentAddress) {
       // run normalize first
       var loaderObj = this;
 

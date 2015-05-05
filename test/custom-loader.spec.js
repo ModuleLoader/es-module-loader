@@ -39,11 +39,12 @@ describe('Custom Loader', function () {
       function supposeToFail() {
         expect(false, 'should not be successful').to.be.ok();
       }
+      var base = System.baseURL + 'test/loader/';
 
       it('should make the normalize throw', function (done) {
         customLoader.import('test/loader/error1-parent.js')
           .then(supposeToFail, function (e) {
-            expect(e).to.be.match(/Error loading "test\/loader\/error1-parent.js" at \S+error1-parent\.js/);
+            expect(e).to.contain('Error loading "' + base + 'error1-parent.js" at ' + base + 'error1-parent\.js');
           })
           .then(done, done);
       });
@@ -51,7 +52,7 @@ describe('Custom Loader', function () {
       it('should make the locate throw', function (done) {
         customLoader.import('test/loader/error2')
           .then(supposeToFail, function (e) {
-            expect(e).to.be.match(/Error loading "test\/loader\/error2" at \S+test\/loader\/error2/);
+            expect(e).to.be.contain('Error loading "' + base + 'error2" at ' + base + 'error2');
           })
           .then(done, done);
       });
@@ -59,7 +60,7 @@ describe('Custom Loader', function () {
       it('should make the fetch throw', function (done) {
         customLoader.import('test/loader/error3')
           .then(supposeToFail, function (e) {
-            expect(e).to.be.match(/Error loading "test\/loader\/error3" at \S+test\/loader\/error3/);
+            expect(e).to.be.contain('Error loading "' + base + 'error3" at ' + base + 'error3');
           })
           .then(done, done);
       });
@@ -67,7 +68,7 @@ describe('Custom Loader', function () {
       it('should make the translate throw', function (done) {
         customLoader.import('test/loader/error4')
           .then(supposeToFail, function (e) {
-            expect(e).to.be.match(/Error loading "test\/loader\/error4" at \S+test\/loader\/error4/);
+            expect(e).to.be.contain('Error loading "' + base + 'error4" at ' + base + 'error4');
           })
           .then(done, done);
       });
@@ -75,7 +76,7 @@ describe('Custom Loader', function () {
       it('should make the instantiate throw', function (done) {
         customLoader.import('test/loader/error5')
           .then(supposeToFail, function (e) {
-            expect(e).to.be.match(/Error loading "test\/loader\/error5" at \S+test\/loader\/error5/);
+            expect(e).to.be.contain('Error loading "' + base + 'error5" at ' + base + 'error5');
           })
           .then(done, done);
       });

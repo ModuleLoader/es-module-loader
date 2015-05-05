@@ -27,6 +27,7 @@ module.exports = function (grunt) {
             'src/dynamic-only.js',
             'src/url-polyfill.js',
             'src/system.js',
+            'src/system-resolve.js',
             'src/wrapper-end.js'
           ],
           'dist/<%= pkg.name %>-dev.src.js': [
@@ -37,6 +38,7 @@ module.exports = function (grunt) {
             'src/transpiler.js',
             'src/url-polyfill.js',
             'src/system.js',
+            'src/system-resolve.js',
             'src/module-tag.js',
             'src/wrapper-end.js'
           ]

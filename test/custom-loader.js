@@ -17,7 +17,7 @@
 
   var customLoader = new Reflect.Loader({
     normalize: function (name, parentName, parentAddress) {
-      return new Promise(function (resolve, reject) {
+      return new Promise(function(resolve, reject) {
         if (name == 'asdfasdf') {
           return setTimeout(function () {
             resolve('test/loader/async-norm.js');
@@ -39,9 +39,9 @@
         });
       }
 
-      if (load.name.substr(0, 5) == 'path/') {
-        load.name = 'test/loader/' + load.name.substr(5);
-      }
+      if (load.name.match(/path\//))
+        load.name = load.name.replace(/path\//, 'test/loader/');
+
       return System.locate(load);
     },
     fetch: function (load) {
@@ -62,7 +62,7 @@
       return System.translate.apply(this, arguments);
     },
     instantiate: function (load) {
-      if (load.name == this.transpiler) {
+      if (load.name.match(/(traceur|babel.+\/browser).js$/)) {
         var transpiler = this.transpiler;
         return System.import(transpiler).then(function() {
           return {
@@ -96,7 +96,7 @@
       // normalize all dependencies now
       var normalizePromises = [];
       for (var i = 0; i < deps.length; i++) {
-        normalizePromises.push(Promise.resolve(System.normalize(deps[i], load.name)));
+        normalizePromises.push(Promise.resolve(System.normalize(deps[i], load.name, load.address)));
       }
 
       return Promise.all(normalizePromises).then(function (resolvedDeps) {
