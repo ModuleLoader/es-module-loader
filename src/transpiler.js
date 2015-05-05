@@ -115,9 +115,8 @@
     }
     options.module = ts.ModuleKind.System;
     options.inlineSourceMap = true;
-    options.inlineSources = true;
 
-    var source = ts.transpile(load.source, options);
+    var source = ts.transpile(load.source, options, load.address);
     return source + '\n//# sourceURL=' + load.address + '!eval';;
   }
 
