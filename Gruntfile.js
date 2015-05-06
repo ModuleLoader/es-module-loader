@@ -28,6 +28,7 @@ module.exports = function (grunt) {
             'src/url-polyfill.js',
             'src/system.js',
             'src/system-resolve.js',
+            'src/system-fetch.js',
             'src/wrapper-end.js'
           ],
           'dist/<%= pkg.name %>-dev.src.js': [
@@ -39,6 +40,7 @@ module.exports = function (grunt) {
             'src/url-polyfill.js',
             'src/system.js',
             'src/system-resolve.js',
+            'src/system-fetch.js',
             'src/module-tag.js',
             'src/wrapper-end.js'
           ]
