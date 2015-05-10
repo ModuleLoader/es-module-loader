@@ -1,5 +1,5 @@
 /*
- * Traceur and Babel transpile hook for Loader
+ * Traceur, Babel and TypeScript transpile hook for Loader
  */
 (function(Loader) {
   var g = __global;
@@ -20,13 +20,25 @@
         self.set('traceur', getTranspilerModule(self, 'traceur'));
       if (g.babel && !self.has('babel'))
         self.set('babel', getTranspilerModule(self, 'babel'));
+      if (g.ts && !self.has('typescript'))
+        self.set('typescript', getTranspilerModule(self, 'ts'));
       self.transpilerHasRun = true;
     }
     
     return self['import'](self.transpiler).then(function(transpiler) {
       if (transpiler.__useDefault)
         transpiler = transpiler['default'];
-      return 'var __moduleAddress = "' + load.address + '";' + (transpiler.Compiler ? traceurTranspile : babelTranspile).call(self, load, transpiler);
+      var transpileFunction;
+      if (transpiler.Compiler) {
+        transpileFunction = traceurTranspile;
+      }
+      else if (transpiler.createLanguageService) {
+        transpileFunction = typescriptTranspile;
+      }
+      else {
+        transpileFunction = babelTranspile;
+      }
+      return 'var __moduleAddress = "' + load.address + '";' + transpileFunction.call(self, load, transpiler);
     });
   };
 
@@ -96,5 +108,16 @@
     return source + '\n//# sourceURL=' + load.address + '!eval';
   }
 
+  function typescriptTranspile(load, ts) {
+    var options = this.typescriptOptions || {};
+    if (options.target === undefined) {
+      options.target = ts.ScriptTarget.ES5;
+    }
+    options.module = ts.ModuleKind.System;
+    options.inlineSourceMap = true;
+
+    var source = ts.transpile(load.source, options, load.address);
+    return source + '\n//# sourceURL=' + load.address + '!eval';;
+  }
 
 })(__global.LoaderPolyfill);

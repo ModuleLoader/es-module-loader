@@ -13,6 +13,10 @@ try {
   System.paths.babel = System.paths.babel || 'file:' + require.resolve('babel/browser.js');
 }
 catch(e) {}
+try {
+  System.paths.typescript = 'file:' + require.resolve('typescript/bin/typescript.js');
+}
+catch(e) { }
 
 module.exports = {
   Loader: global.LoaderPolyfill,

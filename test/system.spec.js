@@ -88,7 +88,8 @@ describe('System', function () {
           .then(done, done);
       });
 
-      (ie ? it.skip : it)('should import an ES6 script with a generator', function (done) {
+      // typescript does not support generators yet 
+      (ie || System.transpiler === 'typescript' ? it.skip : it)('should import an ES6 script with a generator', function (done) {
         System.import('test/syntax/es6-generator')
           .then(function (m) {
             expect(!!m.generator).to.be.ok();

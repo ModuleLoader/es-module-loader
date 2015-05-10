@@ -44,7 +44,8 @@
     "minimist": "^1.1.0",
     "mocha": "^2.0.1",
     "regenerator": "^0.8.9",
-    "traceur": "0.0.87"
+    "traceur": "0.0.87",
+    "typescript": "mhegazy/typescript#v1.5-beta2"
   },
   "keywords": [
     "script",
@@ -57,10 +58,11 @@
   },
   "scripts": {
     "test": "npm run test:node && npm run test:browser",
-    "test:node": "mocha test/_node-traceur.js && mocha test/_node-babel.js",
-    "test:browser": "npm run test:browser-traceur && npm run test:browser-babel",
+    "test:node": "mocha test/_node-traceur.js && mocha test/_node-babel.js && mocha test/_node-typescript.js",
+    "test:browser": "npm run test:browser-traceur && npm run test:browser-babel && npm run test:browser-typescript",
     "test:browser-traceur": "karma start --single-run",
     "test:browser-babel": "karma start --single-run --babel",
+    "test:browser-typescript": "karma start --single-run --typescript",
     "test:browser:perf": "karma start karma-benchmark.conf.js --single-run"
   },
   "dependencies": {
