@@ -18,4 +18,4 @@
 
   __global.System = System;
 
-})(typeof window != 'undefined' ? window : (typeof global != 'undefined' ? global : self));
+})(typeof self != 'undefined' ? self : global);

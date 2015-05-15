@@ -55,3 +55,5 @@
       throw addToError(e, 'Evaluating ' + debugName);
     }
   }
+
+  var URL = __global.URL || URLPolyfill;

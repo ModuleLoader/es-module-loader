@@ -21,7 +21,6 @@ module.exports = function (grunt) {
       dist: {
         files: {
           'dist/<%= pkg.name %>.src.js': [
-            'node_modules/when/es6-shim/Promise.js',
             'src/wrapper-start.js',
             'src/loader.js',
             'src/dynamic-only.js',
@@ -32,7 +31,6 @@ module.exports = function (grunt) {
             'src/wrapper-end.js'
           ],
           'dist/<%= pkg.name %>-dev.src.js': [
-            'node_modules/when/es6-shim/Promise.js',
             'src/wrapper-start.js',
             'src/loader.js',
             'src/declarative.js',

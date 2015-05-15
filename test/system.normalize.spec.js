@@ -47,11 +47,11 @@ describe('System', function () {
 
     describe('when having two arguments', function () {
 
-      var refererAddress = '/dir/file';
+      var refererAddress = 'http://parent.com/dir/file';
 
       it('should normalize relative paths against the parent address', function () {
-        expect(System.normalize('./d/e/f', null, refererAddress)).to.equal('/dir/d/e/f');
-        expect(System.normalize('../e/f', null, refererAddress)).to.equal('/e/f');
+        expect(System.normalize('./d/e/f', null, refererAddress)).to.equal('http://parent.com/dir/d/e/f');
+        expect(System.normalize('../e/f', null, refererAddress)).to.equal('http://parent.com/e/f');
       });
 
     });
