@@ -20,19 +20,6 @@
 
 function Module() {}
 function Loader(options) {
-  options = options || {};
-
-  if (options.normalize)
-    this.normalize = options.normalize;
-  if (options.locate)
-    this.locate = options.locate;
-  if (options.fetch)
-    this.fetch = options.fetch;
-  if (options.translate)
-    this.translate = options.translate;
-  if (options.instantiate)
-    this.instantiate = options.instantiate;
-
   this._loader = {
     loaderObj: this,
     loads: [],

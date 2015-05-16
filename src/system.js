@@ -12,34 +12,10 @@
 
 var System;
 
-function SystemLoader(options) {
-  Loader.call(this, options || {});
+function SystemLoader(baseURL) {
+  Loader.call(this);
 
-  var baseURL;
-  // Set default baseURL and paths
-  if (typeof document != 'undefined' && document.getElementsByTagName) {
-    baseURL = document.baseURI;
-
-    if (!baseURL) {
-      var bases = document.getElementsByTagName('base');
-      baseURL = bases[0] && bases[0].href || window.location.href;
-    }
-
-    // sanitize out the hash and querystring
-    baseURL = baseURL.split('#')[0].split('?')[0];
-    baseURL = baseURL.substr(0, baseURL.lastIndexOf('/') + 1);
-  }
-  else if (typeof process != 'undefined' && process.cwd) {
-    baseURL = 'file://' + (isWindows ? '/' : '') + process.cwd() + '/';
-    if (isWindows)
-      baseURL = baseURL.replace(/\\/g, '/');
-  }
-  else if (typeof location != 'undefined') {
-    baseURL = __global.location.href;
-  }
-  else {
-    throw new TypeError('No environment baseURL');
-  }
+  baseURL = baseURL || baseURI;
 
   this.baseURL = baseURL;
   this.paths = {};
