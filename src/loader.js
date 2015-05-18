@@ -659,6 +659,9 @@ function logloads(loads) {
     },
     // 26.3.3.8
     'import': function(name, parentName, parentAddress) {
+      if (typeof parentName == 'object')
+        parentName = parentName.name;
+
       // run normalize first
       var loaderObj = this;
 
