@@ -9,6 +9,7 @@ require('regenerator/runtime');
 global.System = require('../index').System;
 global.System.transpiler = 'babel';
 
+require('./system.normalize.spec');
 require('./system.spec');
 
 require('./custom-loader');
