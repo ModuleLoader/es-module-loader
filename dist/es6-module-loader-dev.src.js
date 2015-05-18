@@ -959,7 +959,6 @@ function logloads(loads) {
           };
           load.status = 'linked';
         }
-
         finishLoad(loader, load);
       }
 
@@ -999,8 +998,11 @@ function logloads(loads) {
       for (var i = 0, l = module.importers.length; i < l; i++) {
         var importerModule = module.importers[i];
         if (!importerModule.locked) {
-          var importerIndex = indexOf.call(importerModule.dependencies, module);
-          importerModule.setters[importerIndex](moduleObj);
+          for (var j = 0; j < importerModule.dependencies.length; ++j) {
+            if (importerModule.dependencies[j] === module) {
+              importerModule.setters[j](moduleObj);
+            }
+          }
         }
       }
 
@@ -1143,8 +1145,9 @@ function logloads(loads) {
     return err;
   }
 })();
+
 /*
- * Traceur and Babel transpile hook for Loader
+ * Traceur, Babel and TypeScript transpile hook for Loader
  */
 
 function setupTranspilers(loader) {
@@ -1153,6 +1156,8 @@ function setupTranspilers(loader) {
     loader.set('traceur', loader.newModule({ 'default': __global.traceur, __useDefault: true }));
   if (__global.babel && !loader.has('babel'))
     loader.set('babel', loader.newModule({ 'default': __global.babel, __useDefault: true }));
+  if (__global.ts && !loader.has('typescript'))
+    loader.set('typescript', loader.newModule({ 'default': __global.ts, __useDefault: true }));
 }
 
 var transpile = (function() {
@@ -1162,13 +1167,24 @@ var transpile = (function() {
 
   function transpile(load) {
     var self = this;
-    
+
     return (self.pluginLoader || self)['import'](self.transpiler).then(function(transpiler) {
       if (transpiler.__useDefault)
         transpiler = transpiler['default'];
 
+      var transpileFunction;
+      if (transpiler.Compiler) {
+        transpileFunction = traceurTranspile;
+      }
+      else if (transpiler.createLanguageService) {
+        transpileFunction = typescriptTranspile;
+      }
+      else {
+        transpileFunction = babelTranspile;
+      }
+
       return 'var __moduleName = "' + load.name + '", __moduleAddress = "' + load.address + '";'
-          + (transpiler.Compiler ? traceurTranspile : babelTranspile).call(self, load, transpiler)
+          + transpileFunction.call(self, load, transpiler)
           + '\n//# sourceURL=' + load.address + '!eval';
 
       // sourceURL and sourceMappingURL:
@@ -1235,8 +1251,21 @@ var transpile = (function() {
     return babel.transform(load.source, options).code;
   }
 
+  function typescriptTranspile(load, ts) {
+    var options = this.typescriptOptions || {};
+    if (options.target === undefined) {
+      options.target = ts.ScriptTarget.ES5;
+    }
+    options.module = ts.ModuleKind.System;
+    options.inlineSourceMap = true;
+
+    var source = ts.transpile(load.source, options, load.address);
+    return source + '\n//# sourceURL=' + load.address + '!eval';;
+  }
+
   return transpile;
 })();
+
 // from https://gist.github.com/Yaffle/1088850
 function URLPolyfill(url, baseURL) {
   if (typeof url != 'string')
