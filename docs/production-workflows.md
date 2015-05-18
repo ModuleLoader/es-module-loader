@@ -9,7 +9,7 @@ from [SystemJS](https://github.com/systemjs/systemjs).
 
 The benefit of this output is that it provides full support for circular references and live module bindings.
 
-This output format is explained here - https://github.com/ModuleLoader/es6-module-loader/wiki/System.register-Explained.
+[This output format is explained here](system-register.md)
 
 A basic example of using this extension with a Traceur build would be the following (although the related similar workflow would apply for Babel):
 
