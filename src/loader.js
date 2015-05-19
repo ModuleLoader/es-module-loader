@@ -36,9 +36,6 @@ function Loader(options) {
   });
 
   // 26.3.3.13 realm not implemented
-
-  if (this.transpiler)
-    setupTranspilers(this);
 }
 
 (function() {
