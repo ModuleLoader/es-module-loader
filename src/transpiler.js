@@ -1,17 +1,6 @@
 /*
  * Traceur, Babel and TypeScript transpile hook for Loader
  */
-
-function setupTranspilers(loader) {
-  // pick up Transpiler modules from existing globals on first run if set
-  if (__global.traceur && !loader.has('traceur'))
-    loader.set('traceur', loader.newModule({ 'default': __global.traceur, __useDefault: true }));
-  if (__global.babel && !loader.has('babel'))
-    loader.set('babel', loader.newModule({ 'default': __global.babel, __useDefault: true }));
-  if (__global.ts && !loader.has('typescript'))
-    loader.set('typescript', loader.newModule({ 'default': __global.ts, __useDefault: true }));
-}
-
 var transpile = (function() {
 
   // use Traceur by default
@@ -20,20 +9,19 @@ var transpile = (function() {
   function transpile(load) {
     var self = this;
 
-    return (self.pluginLoader || self)['import'](self.transpiler).then(function(transpiler) {
+    return Promise.resolve(__global[self.transpiler == 'typescript' ? 'ts' : self.transpiler] 
+        || (self.pluginLoader || self)['import'](self.transpiler))
+    .then(function(transpiler) {
       if (transpiler.__useDefault)
         transpiler = transpiler['default'];
 
       var transpileFunction;
-      if (transpiler.Compiler) {
+      if (transpiler.Compiler)
         transpileFunction = traceurTranspile;
-      }
-      else if (transpiler.createLanguageService) {
+      else if (transpiler.createLanguageService)
         transpileFunction = typescriptTranspile;
-      }
-      else {
+      else
         transpileFunction = babelTranspile;
-      }
 
       return 'var __moduleName = "' + load.name + '", __moduleAddress = "' + load.address + '";'
           + transpileFunction.call(self, load, transpiler)
@@ -62,7 +50,7 @@ var transpile = (function() {
             __eval('(function(require,exports,module){' + load.source + '})();', load.address, __global);
             __global.System = curSystem;
             __global.Reflect.Loader = curLoader;
-            return self.newModule({ 'default': __global[self.transpiler == 'typescript' ? 'ts' : self.transpiler], __useDefault: true });
+            return self.newModule({ 'default': __global[self.transpiler], __useDefault: true });
           }
         };
       }
