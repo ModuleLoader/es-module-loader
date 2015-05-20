@@ -36,7 +36,7 @@
   function addToError(err, msg) {
     var newErr;
     if (err instanceof Error) {
-      var newErr = new err.constructor(err.message, err.fileName, err.lineNumber);
+      var newErr = new Error(err.message, err.fileName, err.lineNumber);
       newErr.message = err.message + '\n\t' + msg;
       newErr.stack = err.stack;
     }
@@ -123,9 +123,6 @@ function Loader(options) {
   });
 
   // 26.3.3.13 realm not implemented
-
-  if (this.transpiler)
-    setupTranspilers(this);
 }
 
 (function() {
@@ -1035,19 +1032,16 @@ var absURLRegEx = /^([^\/]+:\/\/|\/)/;
 
 // Normalization with module names as absolute URLs
 SystemLoader.prototype.normalize = function(name, parentName, parentAddress) {
-  // ensure we have the baseURL URL object
-  var baseURL = baseURLCache[this.baseURL] = baseURLCache[this.baseURL] || new URL(this.baseURL);
-
   // NB does `import 'file.js'` import relative to the parent name or baseURL?
   //    have assumed that it is baseURL-relative here, but spec may well align with URLs to be the latter
   //    safe option for users is to always use "./file.js" for relative
 
   // not absolute or relative -> apply paths (what will be sites)
   if (!name.match(absURLRegEx) && name[0] != '.')
-    name = new URL(applyPaths(this, name), baseURL).href;
+    name = new URL(applyPaths(this, name), this.baseURL).href;
   // apply parent-relative normalization, parentAddress is already normalized
   else
-    name = new URL(name, parentAddress || baseURL).href;
+    name = new URL(name, parentAddress || this.baseURL).href;
 
   return name;
 };
@@ -1058,6 +1052,13 @@ SystemLoader.prototype.locate = function(load) {
   var fetchTextFromURL;
   if (typeof XMLHttpRequest != 'undefined') {
     fetchTextFromURL = function(url, fulfill, reject) {
+      // percent encode just '#' in urls
+      // according to https://github.com/jorendorff/js-loaders/blob/master/browser-loader.js#L238
+      // we should encode everything, but it breaks for servers that don't expect it
+      // like in (https://github.com/systemjs/systemjs/issues/168)
+      if (isBrowser)
+        url = url.replace(/#/g, '%23');
+
       var xhr = new XMLHttpRequest();
       var sameDomain = true;
       var doTimeout = false;

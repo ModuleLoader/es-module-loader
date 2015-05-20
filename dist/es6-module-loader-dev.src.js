@@ -36,7 +36,7 @@
   function addToError(err, msg) {
     var newErr;
     if (err instanceof Error) {
-      var newErr = new err.constructor(err.message, err.fileName, err.lineNumber);
+      var newErr = new Error(err.message, err.fileName, err.lineNumber);
       newErr.message = err.message + '\n\t' + msg;
       newErr.stack = err.stack;
     }
@@ -123,9 +123,6 @@ function Loader(options) {
   });
 
   // 26.3.3.13 realm not implemented
-
-  if (this.transpiler)
-    setupTranspilers(this);
 }
 
 (function() {
@@ -962,7 +959,6 @@ function logloads(loads) {
           };
           load.status = 'linked';
         }
-
         finishLoad(loader, load);
       }
 
@@ -1002,8 +998,11 @@ function logloads(loads) {
       for (var i = 0, l = module.importers.length; i < l; i++) {
         var importerModule = module.importers[i];
         if (!importerModule.locked) {
-          var importerIndex = indexOf.call(importerModule.dependencies, module);
-          importerModule.setters[importerIndex](moduleObj);
+          for (var j = 0; j < importerModule.dependencies.length; ++j) {
+            if (importerModule.dependencies[j] === module) {
+              importerModule.setters[j](moduleObj);
+            }
+          }
         }
       }
 
@@ -1146,18 +1145,10 @@ function logloads(loads) {
     return err;
   }
 })();
+
 /*
- * Traceur and Babel transpile hook for Loader
+ * Traceur, Babel and TypeScript transpile hook for Loader
  */
-
-function setupTranspilers(loader) {
-  // pick up Transpiler modules from existing globals on first run if set
-  if (__global.traceur && !loader.has('traceur'))
-    loader.set('traceur', loader.newModule({ 'default': __global.traceur, __useDefault: true }));
-  if (__global.babel && !loader.has('babel'))
-    loader.set('babel', loader.newModule({ 'default': __global.babel, __useDefault: true }));
-}
-
 var transpile = (function() {
 
   // use Traceur by default
@@ -1165,13 +1156,23 @@ var transpile = (function() {
 
   function transpile(load) {
     var self = this;
-    
-    return (self.pluginLoader || self)['import'](self.transpiler).then(function(transpiler) {
+
+    return Promise.resolve(__global[self.transpiler == 'typescript' ? 'ts' : self.transpiler] 
+        || (self.pluginLoader || self)['import'](self.transpiler))
+    .then(function(transpiler) {
       if (transpiler.__useDefault)
         transpiler = transpiler['default'];
 
+      var transpileFunction;
+      if (transpiler.Compiler)
+        transpileFunction = traceurTranspile;
+      else if (transpiler.createLanguageService)
+        transpileFunction = typescriptTranspile;
+      else
+        transpileFunction = babelTranspile;
+
       return 'var __moduleName = "' + load.name + '", __moduleAddress = "' + load.address + '";'
-          + (transpiler.Compiler ? traceurTranspile : babelTranspile).call(self, load, transpiler)
+          + transpileFunction.call(self, load, transpiler)
           + '\n//# sourceURL=' + load.address + '!eval';
 
       // sourceURL and sourceMappingURL:
@@ -1238,8 +1239,21 @@ var transpile = (function() {
     return babel.transform(load.source, options).code;
   }
 
+  function typescriptTranspile(load, ts) {
+    var options = this.typescriptOptions || {};
+    if (options.target === undefined) {
+      options.target = ts.ScriptTarget.ES5;
+    }
+    options.module = ts.ModuleKind.System;
+    options.inlineSourceMap = true;
+
+    var source = ts.transpile(load.source, options, load.address);
+    return source + '\n//# sourceURL=' + load.address + '!eval';;
+  }
+
   return transpile;
 })();
+
 // from https://gist.github.com/Yaffle/1088850
 function URLPolyfill(url, baseURL) {
   if (typeof url != 'string')
@@ -1380,19 +1394,16 @@ var absURLRegEx = /^([^\/]+:\/\/|\/)/;
 
 // Normalization with module names as absolute URLs
 SystemLoader.prototype.normalize = function(name, parentName, parentAddress) {
-  // ensure we have the baseURL URL object
-  var baseURL = baseURLCache[this.baseURL] = baseURLCache[this.baseURL] || new URL(this.baseURL);
-
   // NB does `import 'file.js'` import relative to the parent name or baseURL?
   //    have assumed that it is baseURL-relative here, but spec may well align with URLs to be the latter
   //    safe option for users is to always use "./file.js" for relative
 
   // not absolute or relative -> apply paths (what will be sites)
   if (!name.match(absURLRegEx) && name[0] != '.')
-    name = new URL(applyPaths(this, name), baseURL).href;
+    name = new URL(applyPaths(this, name), this.baseURL).href;
   // apply parent-relative normalization, parentAddress is already normalized
   else
-    name = new URL(name, parentAddress || baseURL).href;
+    name = new URL(name, parentAddress || this.baseURL).href;
 
   return name;
 };
@@ -1403,6 +1414,13 @@ SystemLoader.prototype.locate = function(load) {
   var fetchTextFromURL;
   if (typeof XMLHttpRequest != 'undefined') {
     fetchTextFromURL = function(url, fulfill, reject) {
+      // percent encode just '#' in urls
+      // according to https://github.com/jorendorff/js-loaders/blob/master/browser-loader.js#L238
+      // we should encode everything, but it breaks for servers that don't expect it
+      // like in (https://github.com/systemjs/systemjs/issues/168)
+      if (isBrowser)
+        url = url.replace(/#/g, '%23');
+
       var xhr = new XMLHttpRequest();
       var sameDomain = true;
       var doTimeout = false;
