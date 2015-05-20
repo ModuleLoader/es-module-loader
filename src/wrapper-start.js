@@ -36,7 +36,7 @@
   function addToError(err, msg) {
     var newErr;
     if (err instanceof Error) {
-      var newErr = new err.constructor(err.message, err.fileName, err.lineNumber);
+      var newErr = new Error(err.message, err.fileName, err.lineNumber);
       newErr.message = err.message + '\n\t' + msg;
       newErr.stack = err.stack;
     }
