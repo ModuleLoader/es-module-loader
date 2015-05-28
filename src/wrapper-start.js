@@ -4,9 +4,10 @@
   var isBrowser = typeof window != 'undefined' && typeof document != 'undefined';
   var isWindows = typeof process != 'undefined' && !!process.platform.match(/^win/);
 
-  if (__global.console)
-    console.assert = console.assert || function() {};
-
+  if (!__global.console) {
+      __global.console = { assert: function() {} };
+  }
+  
   // IE8 support
   var indexOf = Array.prototype.indexOf || function(item) {
     for (var i = 0, thisLen = this.length; i < thisLen; i++) {
