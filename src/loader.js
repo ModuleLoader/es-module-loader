@@ -520,13 +520,13 @@ function logloads(loads) {
 
     if (load) {
       if (load && linkSet.loads[0].name != load.name)
-        exc = addToError(exc, 'Error loading "' + load.name + '" from "' + linkSet.loads[0].name + '" at ' + (linkSet.loads[0].address || '<unknown>'));
+        exc = addToError(exc, 'Error loading ' + load.name + ' from ' + linkSet.loads[0].name);
 
       if (load)
-        exc = addToError(exc, 'Error loading "' + load.name + '" at ' + (load.address || '<unknown>'));
+        exc = addToError(exc, 'Error loading ' + load.name);
     }
     else {
-      exc = addToError(exc, 'Error linking "' + linkSet.loads[0].name + '" at ' + (linkSet.loads[0].address || '<unknown>'));
+      exc = addToError(exc, 'Error linking ' + linkSet.loads[0].name);
     }
 
 
