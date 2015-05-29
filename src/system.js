@@ -12,12 +12,10 @@
 
 var System;
 
-function SystemLoader(baseURL) {
+function SystemLoader() {
   Loader.call(this);
 
-  baseURL = baseURL || baseURI;
-
-  this.baseURL = baseURL;
+  this.baseURL = baseURI;
   this.paths = {};
 }
 
