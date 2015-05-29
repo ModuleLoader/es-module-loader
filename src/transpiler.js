@@ -9,7 +9,7 @@ var transpile = (function() {
   function transpile(load) {
     var self = this;
 
-    return Promise.resolve(__global[self.transpiler == 'typescript' ? 'ts' : self.transpiler] 
+    return Promise.resolve(__global[self.transpiler == 'typescript' ? 'ts' : self.transpiler]
         || (self.pluginLoader || self)['import'](self.transpiler))
     .then(function(transpiler) {
       if (transpiler.__useDefault)
@@ -24,14 +24,7 @@ var transpile = (function() {
         transpileFunction = babelTranspile;
 
       return 'var __moduleName = "' + load.name + '", __moduleAddress = "' + load.address + '";'
-          + transpileFunction.call(self, load, transpiler)
-          + '\n//# sourceURL=' + load.address + '!eval';
-
-      // sourceURL and sourceMappingURL:
-      //   Ideally we wouldn't need a sourceURL and would just use the sourceMap.
-      //   But without the sourceURL as well, line-by-line debugging doesn't work.
-      //   We thus need to ensure the sourceURL is a different name to the original
-      //   source, and hence the !eval suffix.
+          + transpileFunction.call(self, load, transpiler);
     });
   };
 
@@ -62,7 +55,7 @@ var transpile = (function() {
     options.modules = 'instantiate';
     options.script = false;
     options.sourceMaps = 'inline';
-    options.filename = load.address;
+    options.filename = load.address + '!eval';
     options.inputSourceMap = load.metadata.sourceMap;
     options.moduleName = false;
 
@@ -84,7 +77,7 @@ var transpile = (function() {
     var options = this.babelOptions || {};
     options.modules = 'system';
     options.sourceMap = 'inline';
-    options.filename = load.address;
+    options.filename = load.address + '!eval';
     options.code = true;
     options.ast = false;
 
