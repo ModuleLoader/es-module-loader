@@ -39,7 +39,7 @@ describe('Custom Loader', function () {
       function supposeToFail() {
         expect(false, 'should not be successful').to.be.ok();
       }
-      var base = System.baseURL + 'test/loader/';
+      var base = baseURL + 'test/loader/';
 
       it('should make the normalize throw', function (done) {
         customLoader.import('test/loader/error1-parent.js')

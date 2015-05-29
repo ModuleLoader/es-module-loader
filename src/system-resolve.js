@@ -10,10 +10,10 @@ SystemLoader.prototype.normalize = function(name, parentName, parentAddress) {
 
   // not absolute or relative -> apply paths (what will be sites)
   if (!name.match(absURLRegEx) && name[0] != '.')
-    name = new URL(applyPaths(this, name), this.baseURL).href;
+    name = new URL(applyPaths(this, name), baseURI).href;
   // apply parent-relative normalization, parentAddress is already normalized
   else
-    name = new URL(name, parentAddress || this.baseURL).href;
+    name = new URL(name, parentName || baseURI).href;
 
   return name;
 };

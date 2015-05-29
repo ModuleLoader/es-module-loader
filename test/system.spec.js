@@ -7,12 +7,6 @@ var ie = typeof window != 'undefined' && window.navigator.userAgent.match(/Tride
 
 describe('System', function () {
 
-  var originBaseUrl = System.baseURL;
-
-  afterEach(function () {
-    System.baseURL = originBaseUrl;
-  });
-
   describe('prerequisite', function () {
 
     it('should be a instance of Loader', function () {
@@ -50,7 +44,7 @@ describe('System', function () {
 
       it('should support set, get and delete', function(done) {
 
-        var testPath = System.baseURL + 'test/loader/module.js';
+        var testPath = baseURL + 'test/loader/module.js';
 
         System.import(testPath).then(function(m) {
           expect(m.run).to.equal('first');
@@ -217,7 +211,7 @@ describe('System', function () {
           .then(supposedToFail)
           .catch(function (e) {
             expect(e)
-              .to.be.equal('dep error\n\tError evaluating ' + System.baseURL + 'test/loads/deperror.js');
+              .to.be.equal('dep error\n\tError evaluating ' + baseURL + 'test/loads/deperror.js');
           })
           .then(done, done);
       });
@@ -352,7 +346,7 @@ describe('System', function () {
         System.import('test/loader/moduleName.js')
           .then(function (m) {
             expect(m.name).to.be.equal(m.address);
-            expect(m.address).to.be.equal(System.baseURL + 'test/loader/moduleName.js');
+            expect(m.address).to.be.equal(baseURL + 'test/loader/moduleName.js');
           })
           .then(done, done);
       });
@@ -363,7 +357,7 @@ describe('System', function () {
   describe('#paths', function () {
 
     it('should support custom paths', function (done) {
-      System.paths['bar'] = 'test/loader/custom-path.js';
+      System.paths['bar'] = baseURL + 'test/loader/custom-path.js';
       System.import('bar')
         .then(function (m) {
           expect(m.bar).to.be.equal('bar');
@@ -374,7 +368,7 @@ describe('System', function () {
 
 
     it('should support path wildcard', function (done) {
-      System.paths['bar/*'] = 'test/loader/custom-folder/*.js';
+      System.paths['bar/*'] = baseURL + 'test/loader/custom-folder/*.js';
       System.import('bar/path')
         .then(function (m) {
           expect(m.bar).to.be.equal('baa');
@@ -384,8 +378,8 @@ describe('System', function () {
     });
 
     it('should support most specific paths', function (done) {
-      System.paths['bar/bar'] = 'test/loader/specific-path.js';
-      System.paths['bar/*'] = 'test/loader/custom-folder/*.js';
+      System.paths['bar/bar'] = baseURL + 'test/loader/specific-path.js';
+      System.paths['bar/*'] = baseURL + 'test/loader/custom-folder/*.js';
       System.import('bar/bar')
         .then(function (m) {
           expect(m.path).to.be.ok();
@@ -431,7 +425,7 @@ describe('System', function () {
     typeof window != 'undefined' && window.Worker,
     'with Web Worker', function () {
       (ie ? it.skip : it)('should loading inside of a Web Worker', function (done) {
-        var worker = new Worker(System.baseURL + 'test/worker/worker-' + System.transpiler + '.js');
+        var worker = new Worker(baseURL + 'test/worker/worker-' + System.transpiler + '.js');
 
         worker.onmessage = function (e) {
           expect(e.data).to.be.equal('p');
