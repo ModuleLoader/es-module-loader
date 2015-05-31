@@ -23,8 +23,9 @@ var transpile = (function() {
       else
         transpileFunction = babelTranspile;
 
-      return 'var __moduleName = "' + load.name + '", __moduleAddress = "' + load.address + '";'
+      return '(function(__moduleName, __moduleAddress) {'
           + transpileFunction.call(self, load, transpiler)
+          + '\n}).call({}, "' + load.name + '", "' + load.address + '");'
           + '\n//# sourceURL=' + load.address + '!eval';
 
       // sourceURL and sourceMappingURL:
