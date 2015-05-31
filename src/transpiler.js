@@ -9,7 +9,7 @@ var transpile = (function() {
   function transpile(load) {
     var self = this;
 
-    return Promise.resolve(__global[self.transpiler == 'typescript' ? 'ts' : self.transpiler] 
+    return Promise.resolve(__global[self.transpiler == 'typescript' ? 'ts' : self.transpiler]
         || (self.pluginLoader || self)['import'](self.transpiler))
     .then(function(transpiler) {
       if (transpiler.__useDefault)
@@ -33,28 +33,6 @@ var transpile = (function() {
       //   But without the sourceURL as well, line-by-line debugging doesn't work.
       //   We thus need to ensure the sourceURL is a different name to the original
       //   source, and hence the !eval suffix.
-    });
-  };
-
-  Loader.prototype.instantiate = function(load) {
-    var self = this;
-    return Promise.resolve(self.normalize(self.transpiler))
-    .then(function(transpilerNormalized) {
-      // load transpiler as a global (avoiding System clobbering)
-      if (load.address === transpilerNormalized) {
-        return {
-          deps: [],
-          execute: function() {
-            var curSystem = __global.System;
-            var curLoader = __global.Reflect.Loader;
-            // ensure not detected as CommonJS
-            __eval('(function(require,exports,module){' + load.source + '})();', load.address, __global);
-            __global.System = curSystem;
-            __global.Reflect.Loader = curLoader;
-            return self.newModule({ 'default': __global[self.transpiler], __useDefault: true });
-          }
-        };
-      }
     });
   };
 
