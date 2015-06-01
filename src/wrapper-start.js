@@ -4,8 +4,8 @@
   var isBrowser = typeof window != 'undefined' && typeof document != 'undefined';
   var isWindows = typeof process != 'undefined' && !!process.platform.match(/^win/);
 
-  if (__global.console)
-    console.assert = console.assert || function() {};
+  if (!__global.console)
+    __global.console = { assert: function() {} };
 
   // IE8 support
   var indexOf = Array.prototype.indexOf || function(item) {
@@ -82,4 +82,4 @@
     throw new TypeError('No environment baseURI');
   }
 
-  var URL = __global.URL || URLPolyfill;
+  var URL = typeof __global.URL == 'function' && __global.URL || URLPolyfill;

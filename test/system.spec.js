@@ -345,7 +345,7 @@ describe('System', function () {
       it('should support module name meta', function (done) {
         System.import('test/loader/moduleName.js')
           .then(function (m) {
-            expect(m.name).to.be.equal(m.address);
+            expect(m.name).to.be.equal(m.name);
           })
           .then(done, done);
       });

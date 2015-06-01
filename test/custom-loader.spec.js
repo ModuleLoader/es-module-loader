@@ -5,7 +5,7 @@ describe('Custom Loader', function () {
   describe('#import', function () {
 
     describe('scripts', function () {
-      if (!__karma__.config.system.ie8)
+      if (typeof __karma__ == 'undefined' || __karma__.config.system.ie8)
         it('should support ES6 scripts', function (done) {
           customLoader['import']('test/loader/test.js')
             .then(function (m) {
@@ -25,7 +25,7 @@ describe('Custom Loader', function () {
 
     describe('special #locate path rule', function a() {
 
-      if (!__karma__.config.system.ie8)
+      if (typeof __karma__ == 'undefined' || !__karma__.config.system.ie8)
         it('should support special loading rules', function (done) {
           customLoader['import']('path/custom.js')
             .then(function (m) {
