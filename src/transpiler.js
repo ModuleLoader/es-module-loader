@@ -23,16 +23,8 @@ var transpile = (function() {
       else
         transpileFunction = babelTranspile;
 
-      return '(function(__moduleName, __moduleAddress) {'
-          + transpileFunction.call(self, load, transpiler)
-          + '\n}).call({}, "' + load.name + '", "' + load.address + '");'
-          + '\n//# sourceURL=' + load.address + '!transpiled';
-
-      // sourceURL and sourceMappingURL:
-      //   Ideally we wouldn't need a sourceURL and would just use the sourceMap.
-      //   But without the sourceURL as well, line-by-line debugging doesn't work.
-      //   We thus need to ensure the sourceURL is a different name to the original
-      //   source, and hence the !transpiled suffix.
+      // note __moduleName will be part of the transformer meta in future when we have the spec for this
+      return 'var __moduleName = "' + load.name + '";' + transpileFunction.call(self, load, transpiler) + '\n//# sourceURL=' + load.address + '!transpiled';
     });
   };
 
@@ -78,8 +70,7 @@ var transpile = (function() {
     options.module = ts.ModuleKind.System;
     options.inlineSourceMap = true;
 
-    var source = ts.transpile(load.source, options, load.address);
-    return source + '\n//# sourceURL=' + load.address + '!eval';;
+    return ts.transpile(load.source, options, load.address);
   }
 
   return transpile;
