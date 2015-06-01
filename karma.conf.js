@@ -44,14 +44,14 @@ module.exports = function(config) {
                 : 'node_modules/traceur/bin/traceur.js') 
         : ''],
 
-    [options.polyfill ? 'node_modules/when/es6-shim/Promise' : ''],
+    [options.polyfill ? 'node_modules/when/es6-shim/Promise.js' : ''],
     'dist/es6-module-loader-dev.src.js',
 
     'test/_browser.js',
     'test/browser-script-type-module.js',
     'test/custom-loader.js',
 
-    [!options.ie8 ? 'test/*.spec.js' : 'test/*.normalize.spec.js'],
+    [!options.ie8 ? 'test/*.spec.js' : ['test/system.normalize.spec.js', 'test/custom-loader.spec.js']],
 
     {pattern: 'test/{loader,loads,syntax,worker}/**/*', included: false},
     {pattern: 'node_modules/traceur/bin/traceur.js', included: false},
@@ -73,7 +73,8 @@ module.exports = function(config) {
         timeout: 8000
       },
       system: {
-        transpiler: options.babel 
+        ie8: options.ie8,
+        transpiler: options.babel
             ? 'babel'
             : options.typescript
                 ? 'typescript'

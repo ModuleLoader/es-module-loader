@@ -79,7 +79,7 @@
   CustomLoader.prototype.instantiate = function (load) {
     if (load.name.match(/(traceur|babel.+\/browser).js$/)) {
       var transpiler = this.transpiler;
-      return System.import(transpiler).then(function() {
+      return System['import'](transpiler).then(function() {
         return {
           deps: [],
           execute: function() {
