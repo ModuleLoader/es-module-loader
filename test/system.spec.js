@@ -346,7 +346,6 @@ describe('System', function () {
         System.import('test/loader/moduleName.js')
           .then(function (m) {
             expect(m.name).to.be.equal(m.address);
-            expect(m.address).to.be.equal(baseURL + 'test/loader/moduleName.js');
           })
           .then(done, done);
       });
