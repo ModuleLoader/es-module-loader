@@ -26,13 +26,13 @@ var transpile = (function() {
       return '(function(__moduleName, __moduleAddress) {'
           + transpileFunction.call(self, load, transpiler)
           + '\n}).call({}, "' + load.name + '", "' + load.address + '");'
-          + '\n//# sourceURL=' + load.address + '!eval';
+          + '\n//# sourceURL=' + load.address + '!transpiled';
 
       // sourceURL and sourceMappingURL:
       //   Ideally we wouldn't need a sourceURL and would just use the sourceMap.
       //   But without the sourceURL as well, line-by-line debugging doesn't work.
       //   We thus need to ensure the sourceURL is a different name to the original
-      //   source, and hence the !eval suffix.
+      //   source, and hence the !transpiled suffix.
     });
   };
 
