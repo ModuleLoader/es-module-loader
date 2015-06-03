@@ -1,4 +1,5 @@
-This is not in the specification, but is provided since it is such a natural extension of loading and not much code at all.
+This is not in the specification, but is provided since it is such a natural extension of loading 
+and not much code at all.
 
 Enable tracing and start importing modules:
 
@@ -31,4 +32,5 @@ Enable tracing and start importing modules:
   });
 ```
 
-So tracing can be done by importing a module, then reading its normalized name off of `loader.loads` (it is probably advisable to separately call `loader.normalize` to determine this).
+So tracing can be done by importing a module, then reading its normalized name off of `loader.loads` 
+(it is probably advisable to separately call `loader.normalize` to determine this).

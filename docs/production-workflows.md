@@ -4,12 +4,12 @@ When in production, it is not suitable to load ES6 modules and syntax in the bro
 
 #### System.register Output
 
-There is a `modules=instantiate` build output in Traceur and `modules=system` output in Babel that can be used with the ES6 Module Loader, provided it has the [System.register extension](https://github.com/systemjs/systemjs/blob/master/lib/extension-register.js)
-from [SystemJS](https://github.com/systemjs/systemjs).
+There is a `modules=instantiate` build output in Traceur and `modules=system` output in Babel and TypeScript that can be used with the ES6 Module Loader, 
+provided it has been extended with support for the System.register format.
 
-The benefit of this output is that it provides full support for circular references and live module bindings.
+This is available from the [system-register-only](https://github.com/systemjs/systemjs/tree/v0.17.0/dist) SystemJS build of the loader.
 
-[This output format is explained here](system-register.md)
+The benefit of the [System.register output format](system-register.md) is that it provides [full support for circular references and live module bindings](circular-references-bindings.md).
 
 A basic example of using this extension with a Traceur build would be the following (although the related similar workflow would apply for Babel):
 
@@ -23,19 +23,7 @@ A basic example of using this extension with a Traceur build would be the follow
 
   ```html
     <script src="traceur-runtime.js"></script>
-    <script src="es6-module-loader.js"></script>
-    <script>
-      /*
-       * This should be a separate external script
-       * Register function is included from https://github.com/systemjs/systemjs/blob/master/lib/extension-register.js
-       */
-      function register(loader) { 
-        // ...
-      }
-
-      // this needs to be added to apply the extension
-      register(System);
-    </script>
+    <script src="system-register-only.js"></script>
 
     <!-- now include the bundle -->
     <script src="app-build.js"></script>
@@ -57,10 +45,10 @@ We can also build separate files with:
   traceur --dir app app-build --modules=instantiate
 ```
 
-With the above, we can load from the separate files identical to loading ES6.
+With the above, we can load from the separate files identical to loading ES6, but with full CSP compatibility.
 
 #### Building across module formats
 
 If using a loader like [SystemJS](https://github.com/systemjs/systemjs) to load different module formats, then a build can also be performed across module formats as well.
 
-See [SystemJS builder](https://github.com/systemjs/builder) for this combined approach.
+See [SystemJS builder](https://github.com/systemjs/builder) for a combined approach.

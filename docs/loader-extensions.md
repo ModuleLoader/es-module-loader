@@ -1,9 +1,9 @@
 ### Extending the ES6 Loader
 
-The ES6 specification defines a loader through five hooks:
+The loader pipeline is based on the following hooks:
 
-* Normalize: Given the import name, provide the canonical module name.
-* Locate: Given a canonical module name, provide the URL for the resource.
+* Normalize: Given the import name, provide the normalized name for the resource.
+* Locate: Given a normalized module name, provide the URL for the resource.
 * Fetch: Given a URL for a resource, fetch its content.
 * Translate: Given module source, make any source modifications.
 * Instantiate: Given module source, determine its dependencies, and how to execute it.
@@ -123,6 +123,5 @@ function instantiate(load) {
 
 For a more in-depth overview of creating with custom loaders, some resources are provided below:
 
-* The [System Loader implementation](https://github.com/ModuleLoader/es6-module-loader/blob/master/src/loader.js#L867)
 * [ES6 Loader API guide](https://gist.github.com/dherman/7568080)
 * [Yehuda Katz's essay](https://gist.github.com/wycats/51c96e3adcdb3a68cbc3) (outdated)

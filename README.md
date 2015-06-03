@@ -1,6 +1,6 @@
 # ES6 Module Loader Polyfill [![Build Status][travis-image]][travis-url]
 
-_For upgrading to ES6 Module Loader 0.16, [read the release notes here](https://github.com/ModuleLoader/es6-module-loader/releases/tag/v0.16.0)._
+_For upgrading to ES6 Module Loader 0.17, [read the release notes here](https://github.com/ModuleLoader/es6-module-loader/releases/tag/v0.17.0)._
 
 Dynamically loads ES6 modules in browsers and [NodeJS](#nodejs-use) with support for loading existing and custom module formats through loader hooks.
 
@@ -8,25 +8,23 @@ This project implements dynamic module loading through `System` exactly to the p
 
 * Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#getting-started).
 * Supports [Traceur](https://github.com/google/traceur-compiler), [Babel](http://babeljs.io/) and [TypeScript](https://github.com/Microsoft/TypeScript/) for compiling ES6 modules and syntax into ES5 in the browser with source map support.
-* Fully supports [ES6 circular references and live bindings](https://github.com/ModuleLoader/es6-module-loader/wiki/Circular-References-&-Bindings).
-* Includes [`baseURL` and `paths` implementations](https://github.com/ModuleLoader/es6-module-loader/wiki/Configuring-the-Loader).
-* Can be used as a [tracing tool](https://github.com/ModuleLoader/es6-module-loader/wiki/Tracing-API) for static analysis of modules.
-* Polyfills ES6 Promises in the browser with an optionally bundled ES6 promise implementation.
+* Fully supports [ES6 circular references and live bindings](docs/circular-references-bindings.md).
+* Includes [`baseURL` and `paths` implementations](docs/Configuring-the-Loader.md).
+* Can be used as a [tracing tool](docs/tracing-api.md) for static analysis of modules.
 * Supports IE8+, with IE9+ support for ES6 development without pre-compilation.
-* The complete combined polyfill, including ES6 promises, comes to 9KB minified and gzipped, making it suitable for production use, provided that modules are [built into ES5 making them independent of Traceur](https://github.com/ModuleLoader/es6-module-loader/wiki/Production-Workflows).
+* The minified production loader is under 5KB minified and gzipped, making it suitable for production use, provided that modules are [built into ES5 making them independent of Traceur](docs/production-workflows.md).
 
-For an overview of build workflows, [see the production guide](https://github.com/ModuleLoader/es6-module-loader/wiki/Production-Workflows).
+For an overview of build workflows, [see the production guide](docs/production-workflows.md).
 
 For an example of a universal module loader based on this polyfill for loading AMD, CommonJS and globals, see [SystemJS](https://github.com/systemjs/systemjs).
 
 ### Documentation
 
-* [A brief overview of ES6 module syntax](https://github.com/ModuleLoader/es6-module-loader/wiki/Brief-Overview-of-ES6-Module-syntax)
-* [Configuring the loader](https://github.com/ModuleLoader/es6-module-loader/wiki/Configuring-the-Loader)
-* [Production workflows](https://github.com/ModuleLoader/es6-module-loader/wiki/Production-Workflows)
-* [Circular References &amp; Bindings](https://github.com/ModuleLoader/es6-module-loader/wiki/Circular-References-&-Bindings)
-* [Extending the loader through loader hooks](https://github.com/ModuleLoader/es6-module-loader/wiki/Extending-the-ES6-Loader)
-* [Tracing API](https://github.com/ModuleLoader/es6-module-loader/wiki/Tracing-API)
+* [Configuring the loader](docs/loader-config.md)
+* [Production workflows](docs/production-workflows.md)
+* [Circular References &amp; Bindings](docs/circular-references-bindings.md)
+* [Extending the loader through loader hooks](docs/loader-extensions.md)
+* [Tracing API](docs/tracing-api.md)
 
 ### Getting Started
 

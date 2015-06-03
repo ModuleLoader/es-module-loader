@@ -1,16 +1,3 @@
-### baseURL
-
-All modules are loaded relative to the `baseURL`, which by default is set to the current page path.
-
-We can alter this with:
-
-```javascript
-  System.baseURL = '/js/lib/';
-  System.import('module'); // now loads "/js/lib/module.js"
-```
-
-> Note that using `System.import` to load URLs is not currently supported, instead use paths for this as documented below.
-
 ### Paths Implementation
 
 The System loader provides paths rules used by the standard `locate` function.
@@ -25,8 +12,6 @@ For example, we might want to load `jquery` from a CDN location. For this we can
 ```
 
 Any reference to `jquery` in other modules will also use this same version.
-
-**Be careful**：When developing, System loader uses xhr method to load script from CDN site, so there might be some Cross-Origin problems.
 
 It is also possible to define wildcard paths rules. The most specific rule will be used:
 
@@ -53,12 +38,18 @@ or if using Babel:
 System.babelOptions = { experimental: true };
 ```
 
+or TypeScript:
+
+```javascript
+System.typescriptOptions = {};
+```
+
 ### Finding the Transpiler
 
 For Babel use the `browser.js` file contained in the `babel-core` npm module. For Traceur use the `traceur.js` file contained in the `traceur` npm module bin folder.
 
 The transpiler is loaded as a module itself, so will follow normal paths rules.
-
+> 
 To set custom paths to Babel or Traceur use paths configuration:
 
 ```javascript
@@ -71,3 +62,5 @@ Alternatively if you know that the transpiler will be needed, it will be detecte
 <script src="traceur.js"></script>
 <script src="es6-module-loader.js"></script>
 ```
+
+> TypeScript can be loaded in the browser, but in Node, must already be defined as a global before loading an ES6 file.
