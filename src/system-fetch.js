@@ -71,9 +71,8 @@
         else {
           // Strip Byte Order Mark out if it's the leading char
           var dataString = data + '';
-          if (dataString[0] === '\ufeff') {
-            dataString = dataString.length === 1 ? '' : dataString.substr(1);
-          }
+          if (dataString[0] === '\ufeff')
+            dataString = dataString.substr(1);
 
           fulfill(dataString);
         }
