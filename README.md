@@ -28,11 +28,11 @@ For an example of a universal module loader based on this polyfill for loading A
 
 ### Getting Started
 
-If using ES6 syntax (optional), include `traceur.js`, `babel.js` or `typescript.js` in the page first then include `es6-module-loader.js`:
+If using ES6 syntax (optional), include `traceur.js`, `babel.js` or `typescript.js` in the page first then include `es6-module-loader-dev.js`:
 
 ```html
   <script src="traceur.js"></script>
-  <script src="es6-module-loader.js"></script>
+  <script src="es6-module-loader-dev.js"></script>
 ```
 
 To use Babel, load Babel's `browser.js` instead and set the transpiler to `babel` with the loader configuration:

@@ -1,7 +1,7 @@
 {
   "name": "es6-module-loader",
   "description": "An ES6 Module Loader shim",
-  "version": "0.16.6",
+  "version": "0.17.0",
   "homepage": "https://github.com/ModuleLoader/es6-module-loader",
   "author": {
     "name": "Guy Bedford, Luke Hoban, Addy Osmani",
@@ -29,7 +29,7 @@
     "grunt-contrib-concat": "^0.5.0",
     "grunt-contrib-jshint": "~0.6.0",
     "grunt-contrib-uglify": "~0.6.0",
-    "karma": "^0.12.28",
+    "karma": "^0.12.35",
     "karma-benchmark": "^0.4.0",
     "karma-benchmark-reporter": "^0.1.1",
     "karma-chrome-launcher": "^0.1.7",

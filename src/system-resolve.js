@@ -1,5 +1,3 @@
-var baseURLCache = {};
-
 var absURLRegEx = /^([^\/]+:\/\/|\/)/;
 
 // Normalization with module names as absolute URLs
