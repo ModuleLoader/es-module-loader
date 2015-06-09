@@ -9,7 +9,7 @@ This project implements dynamic module loading through `System` exactly to the p
 * Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#getting-started).
 * Supports [Traceur](https://github.com/google/traceur-compiler), [Babel](http://babeljs.io/) and [TypeScript](https://github.com/Microsoft/TypeScript/) for compiling ES6 modules and syntax into ES5 in the browser with source map support.
 * Fully supports [ES6 circular references and live bindings](docs/circular-references-bindings.md).
-* Includes [`baseURL` and `paths` implementations](docs/loader-config.md).
+* Includes [`paths` implementation](docs/loader-config.md).
 * Can be used as a [tracing tool](docs/tracing-api.md) for static analysis of modules.
 * Supports IE8+, with IE9+ support for ES6 development without pre-compilation.
 * The minified production loader is under 5KB minified and gzipped, making it suitable for production use, provided that modules are [built into ES5 making them independent of Traceur](docs/production-workflows.md).
