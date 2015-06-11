@@ -13,6 +13,7 @@ This project implements dynamic module loading through `System` exactly to the p
 * Can be used as a [tracing tool](docs/tracing-api.md) for static analysis of modules.
 * Supports IE8+, with IE9+ support for ES6 development without pre-compilation.
 * The minified production loader is under 5KB minified and gzipped, making it suitable for production use, provided that modules are [built into ES5 making them independent of Traceur](docs/production-workflows.md).
+* Supports declaring modules with `<script type="module">`, the precursor of the proposed [`<module>` tag](https://github.com/dherman/module-tag/).
 
 For an overview of build workflows, [see the production guide](docs/production-workflows.md).
 
@@ -74,6 +75,10 @@ and load the module dynamically in the browser
 
 The dynamic loader returns a `Module` object, which contains getters for the named exports (in this case, `q`).
 
+See the [demo folder](https://github.com/ModuleLoader/es6-module-loader/blob/master/demo/index.html) in this repo for a working example demonstrating module loading in the browser both with `System.import` and with the module-type script tag.
+
+Although `System.import()` does not support the import of multiple modules defined in an array, because `System.import()` returns a Promise, this can be achieved by creating an array of `System.import`s and using `Promise.all()`.
+
 #### Setting transpilation options
 
 If using Traceur, these can be set with:
@@ -108,8 +113,6 @@ As well as defining `window.System`, this polyfill provides support for the `<sc
 ```
 
 Because it is only possible to load ES6 modules with this tag, it is not suitable for production use in this way.
-
-See the [demo folder](https://github.com/ModuleLoader/es6-module-loader/blob/master/demo/index.html) in this repo for a working example demonstrating module loading in the browser both with `System.import` and with the module-type script tag.
 
 #### NodeJS Use
 
