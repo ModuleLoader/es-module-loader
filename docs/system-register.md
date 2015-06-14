@@ -76,6 +76,16 @@ Then we separately run all the execution functions left to right from the bottom
 In this way we get the live binding and circular reference support exactly as expected by the spec, 
 while supporting ES3 environments for the module syntax conversion.
 
+#### Bulk exports
+
+The `$__export` function above can also be used to export multiple exports at the same time:
+
+```javascript
+$__export({ key: 'value', another: 'value' });
+```
+
+This is useful for performance of deep re-exports where unnecessary setter operations can be avoided.
+
 #### Metadata
 
 The next iteration of this format will include support for ES6 module meta information through a new 
