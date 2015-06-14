@@ -992,7 +992,16 @@ function logloads(loads) {
       //    By disaling this module write-protection we gain performance.
       //    It could be useful to allow an option to enable or disable this.
       module.locked = true;
-      moduleObj[name] = value;
+
+      // export({name: value})
+      if (typeof name == 'object') {
+        for (var p in name)
+          moduleObj[p] = name[p];
+      }
+      // export(name, value)
+      else {
+        moduleObj[name] = value;
+      }
 
       for (var i = 0, l = module.importers.length; i < l; i++) {
         var importerModule = module.importers[i];
@@ -1312,12 +1321,12 @@ function SystemLoader() {
 }
 
 // NB no specification provided for System.paths, used ideas discussed in https://github.com/jorendorff/js-loaders/issues/25
-function applyPaths(loader, name) {
+function applyPaths(paths, name) {
   // most specific (most number of slashes in path) match wins
   var pathMatch = '', wildcard, maxSlashCount = 0;
 
   // check to see if we have a paths entry
-  for (var p in loader.paths) {
+  for (var p in paths) {
     var pathParts = p.split('*');
     if (pathParts.length > 2)
       throw new TypeError('Only one wildcard in a path is permitted');
@@ -1342,7 +1351,7 @@ function applyPaths(loader, name) {
     }
   }
 
-  var outPath = loader.paths[pathMatch] || name;
+  var outPath = paths[pathMatch] || name;
   if (wildcard)
     outPath = outPath.replace('*', wildcard);
 
@@ -1354,8 +1363,6 @@ function LoaderProto() {}
 LoaderProto.prototype = Loader.prototype;
 SystemLoader.prototype = new LoaderProto();
 
-var baseURLCache = {};
-
 var absURLRegEx = /^([^\/]+:\/\/|\/)/;
 
 // Normalization with module names as absolute URLs
@@ -1366,7 +1373,7 @@ SystemLoader.prototype.normalize = function(name, parentName, parentAddress) {
 
   // not absolute or relative -> apply paths (what will be sites)
   if (!name.match(absURLRegEx) && name[0] != '.')
-    name = new URL(applyPaths(this, name), baseURI).href;
+    name = new URL(applyPaths(this.paths, name), baseURI).href;
   // apply parent-relative normalization, parentAddress is already normalized
   else
     name = new URL(name, parentName || baseURI).href;
