@@ -17,9 +17,9 @@
     <p>Check the console in your browser developer tools! This code is currently loaded in the page:</p>
     <pre>
   &lt;script src="../node_modules/traceur/bin/traceur.js">&lt;/script>
-  &lt;script src="../dist/es6-module-loader.js">&lt;/script>
+  &lt;script src="../dist/es6-module-loader-dev.js">&lt;/script>
   &lt;script type="module">
-    import { hello } from 'test1';
+    import { hello } from 'test1.js';
     console.log(hello); // -> world
 
     // es6 syntax
@@ -33,7 +33,7 @@
   &lt;script>
     function buttonClick() {
       // dynamic loading API
-      System.import('test2').then(function(module) {
+      System.import('test2.js').then(function(module) {
         new module.Foo();
       });
     }
@@ -46,9 +46,9 @@
   </footer>
 
   <script src="../node_modules/traceur/bin/traceur.js"></script>
-  <script src="../dist/es6-module-loader.js"></script>
+  <script src="../dist/es6-module-loader-dev.js"></script>
   <script type="module">
-    import { hello } from 'test1';
+    import { hello } from 'test1.js';
     console.log(hello); // -> world
 
     // es6 syntax
@@ -59,7 +59,7 @@
   <script>
     function buttonClick() {
       // dynamic loading API
-      System.import('test2').then(function(module) {
+      System.import('test2.js').then(function(module) {
         new module.Foo();
       });
     }
