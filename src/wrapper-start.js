@@ -82,4 +82,9 @@
     throw new TypeError('No environment baseURI');
   }
 
-  var URL = typeof __global.URL == 'function' && __global.URL || URLPolyfill;
+  try {
+    var URL = typeof __global.URL != 'undefined' && new URL('test:///').protocol == 'test:' && URL;
+  }
+  catch(e) {}
+
+  URL = URL || URLPolyfill;
