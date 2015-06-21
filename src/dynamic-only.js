@@ -32,4 +32,8 @@
   }
 
   function doEnsureEvaluated() {}
+
+  function transpile() {
+    throw new TypeError('ES6 transpilation is only provided in the dev module loader build.');
+  }
 })();
