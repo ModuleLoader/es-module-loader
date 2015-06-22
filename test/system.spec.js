@@ -227,7 +227,7 @@ describe('System', function () {
         System.import('test/loads/load-non-existent.js')
           .then(supposedToFail)
           .catch(function (e) {
-            expect(e).to.be.match(/Error loading \S+/);
+            expect(typeof window != 'undefined' ? e.toString() : e.stack).to.be.match(/Error loading \S+/);
           })
           .then(done, done);
       });
