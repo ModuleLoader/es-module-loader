@@ -16,7 +16,7 @@
     }
     return -1;
   };
-
+  
   var defineProperty;
   (function () {
     try {
@@ -43,7 +43,7 @@
     else {
       newErr = msg + '\n\t' + err;
     }
-
+      
     return newErr;
   }
 
