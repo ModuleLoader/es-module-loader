@@ -191,6 +191,10 @@ function logloads(loads) {
       }
 
       load = createLoad(name);
+      if(!load.requests)
+        load.requests = [];
+
+      load.requests.unshift({as: request, from: refererName});
       loader.loads.push(load);
 
       proceedToLocate(loader, load);
@@ -519,10 +523,14 @@ function logloads(loads) {
     var loader = linkSet.loader;
 
     if (load) {
-      if (load && linkSet.loads[0].name != load.name)
-        exc = addToError(exc, 'Error loading ' + load.name + ' from ' + linkSet.loads[0].name);
-
-      if (load)
+      if (linkSet.loads[0].name != load.name) {
+        if (load.requests[0]) {
+          var req = load.requests[0];
+          exc = addToError(exc, 'Error loading ' + load.name + ' as "' + req.as + '" from ' + req.from);
+        } else
+          exc = addToError(exc, 'Error loading ' + load.name + ' from ' + linkSet.loads[0].name);
+      }
+      else
         exc = addToError(exc, 'Error loading ' + load.name);
     }
     else {

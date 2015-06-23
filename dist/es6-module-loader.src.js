@@ -37,11 +37,11 @@
     var newErr;
     if (err instanceof Error) {
       var newErr = new Error(err.message, err.fileName, err.lineNumber);
-      newErr.message = err.message + '\n\t' + msg;
+      newErr.message = msg + '\n\t' + err.message;
       newErr.stack = err.stack;
     }
     else {
-      newErr = err + '\n\t' + msg;
+      newErr = msg + '\n\t' + err;
     }
 
     return newErr;
@@ -283,6 +283,10 @@ function logloads(loads) {
       }
 
       load = createLoad(name);
+      if(!load.requests)
+        load.requests = [];
+
+      load.requests.unshift({as: request, from: refererName});
       loader.loads.push(load);
 
       proceedToLocate(loader, load);
@@ -422,7 +426,6 @@ function logloads(loads) {
     })
     // 15.2.4.5.4 LoadFailed
     ['catch'](function(exc) {
-
       load.status = 'failed';
       load.exception = exc;
 
@@ -612,10 +615,14 @@ function logloads(loads) {
     var loader = linkSet.loader;
 
     if (load) {
-      if (load && linkSet.loads[0].name != load.name)
-        exc = addToError(exc, 'Error loading ' + load.name + ' from ' + linkSet.loads[0].name);
-
-      if (load)
+      if (linkSet.loads[0].name != load.name) {
+        if (load.requests[0]) {
+          var req = load.requests[0];
+          exc = addToError(exc, 'Error loading ' + load.name + ' as "' + req.as + '" from ' + req.from);
+        } else
+          exc = addToError(exc, 'Error loading ' + load.name + ' from ' + linkSet.loads[0].name);
+      }
+      else
         exc = addToError(exc, 'Error loading ' + load.name);
     }
     else {

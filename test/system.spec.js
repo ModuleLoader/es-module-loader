@@ -211,7 +211,7 @@ describe('System', function () {
           .then(supposedToFail)
           .catch(function (e) {
             expect(e)
-              .to.be.equal('dep error\n\tError evaluating ' + baseURL + 'test/loads/deperror.js');
+              .to.be.equal('Error evaluating ' + baseURL + 'test/loads/deperror.js\n\tdep error');
           })
           .then(done, done);
       });
@@ -222,6 +222,20 @@ describe('System', function () {
           .catch(function(e) {
             expect(e).to.be.an(Error);
             expect(e.stack).not.to.be.an(Error);
+          })
+          .then(done, done);
+
+      });
+
+      it('should provide useful information when file missing', function(done) {
+        System.paths['non-existent'] = baseURL + 'test/loader/still-doesnt-exist.js';
+        System.import('test/loads/indirect-load.js')
+          .then(supposedToFail)
+          .catch(function(e) {
+            expect(e).to.be.an(Error);
+            expect(e.message).to.match(/test\/loader\/still-doesnt-exist\.js/);
+            expect(e.message).to.match(/non-existent/);
+            expect(e.message).to.match(/test\/loads\/load-non-existent\.js/);
           })
           .then(done, done);
 
