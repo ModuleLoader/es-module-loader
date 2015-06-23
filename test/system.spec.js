@@ -216,6 +216,17 @@ describe('System', function () {
           .then(done, done);
       });
 
+      it('should throw an ENOENT with a stack', function(done) {
+        System.import('test/loads/noent.js')
+          .then(supposedToFail)
+          .catch(function(e) {
+            expect(e).to.be.an(Error);
+            expect(e.stack).not.to.be.an(Error);
+          })
+          .then(done, done);
+
+      });
+
       it.skip('should throw what the script throws', function (done) {
         System.import('test/loads/deperror.js')
           .then(supposedToFail)

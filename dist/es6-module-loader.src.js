@@ -16,7 +16,7 @@
     }
     return -1;
   };
-  
+
   var defineProperty;
   (function () {
     try {
@@ -43,7 +43,7 @@
     else {
       newErr = err + '\n\t' + msg;
     }
-      
+
     return newErr;
   }
 
@@ -82,7 +82,13 @@
     throw new TypeError('No environment baseURI');
   }
 
-  var URL = typeof __global.URL == 'function' && __global.URL || URLPolyfill;
+  var URL = __global.URL;
+  try {
+    new URL('test:///').protocol == 'test:';
+  }
+  catch(e) {
+    URL = URLPolyfill;
+  }
 
 /*
 *********************************************************************************************
@@ -416,6 +422,7 @@ function logloads(loads) {
     })
     // 15.2.4.5.4 LoadFailed
     ['catch'](function(exc) {
+
       load.status = 'failed';
       load.exception = exc;
 
@@ -890,6 +897,10 @@ function logloads(loads) {
   }
 
   function doEnsureEvaluated() {}
+
+  function transpile() {
+    throw new TypeError('ES6 transpilation is only provided in the dev module loader build.');
+  }
 })();
 // from https://gist.github.com/Yaffle/1088850
 function URLPolyfill(url, baseURL) {
@@ -1101,7 +1112,7 @@ SystemLoader.prototype.instantiate = function(load) {
         fulfill(xhr.responseText);
       }
       function error() {
-        reject(xhr.statusText + ': ' + url || 'XHR error');
+        reject(new Error(xhr.statusText + ': ' + url || 'XHR error'));
       }
 
       xhr.onreadystatechange = function () {
@@ -1134,9 +1145,13 @@ SystemLoader.prototype.instantiate = function(load) {
       else
         url = url.substr(7);
       return fs.readFile(url, function(err, data) {
-        if (err)
-          return reject(err);
-        else {
+        if (err) {
+          if (err.errno == 34) {
+            return reject(new Error(err.message));
+          } else {
+            return reject(err);
+          }
+        } else {
           // Strip Byte Order Mark out if it's the leading char
           var dataString = data + '';
           if (dataString[0] === '\ufeff')
@@ -1156,6 +1171,7 @@ SystemLoader.prototype.instantiate = function(load) {
       fetchTextFromURL(load.address, resolve, reject);
     });
   };
+
   // -- exporting --
 
   if (typeof exports === 'object')
