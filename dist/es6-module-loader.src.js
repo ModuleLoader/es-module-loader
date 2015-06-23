@@ -37,18 +37,11 @@
     var newErr;
     if (err instanceof Error) {
       var newErr = new Error(err.message, err.fileName, err.lineNumber);
-      if (isBrowser) {
-        newErr.message = err.message + '\n\t' + msg;
-        newErr.stack = err.stack;
-      }
-      else {
-        // node errors only look correct with the stack modified
-        newErr.message = err.message;
-        newErr.stack = err.stack + '\n\t' + msg;
-      }
+      newErr.message = msg + '\n\t' + err.message;
+      newErr.stack = err.stack;
     }
     else {
-      newErr = err + '\n\t' + msg;
+      newErr = msg + '\n\t' + err;
     }
       
     return newErr;
@@ -290,6 +283,10 @@ function logloads(loads) {
       }
 
       load = createLoad(name);
+      if(!load.requests)
+        load.requests = [];
+
+      load.requests.unshift({as: request, from: refererName});
       loader.loads.push(load);
 
       proceedToLocate(loader, load);
@@ -618,10 +615,14 @@ function logloads(loads) {
     var loader = linkSet.loader;
 
     if (load) {
-      if (load && linkSet.loads[0].name != load.name)
-        exc = addToError(exc, 'Error loading ' + load.name + ' from ' + linkSet.loads[0].name);
-
-      if (load)
+      if (linkSet.loads[0].name != load.name) {
+        if (load.requests[0]) {
+          var req = load.requests[0];
+          exc = addToError(exc, 'Error loading ' + load.name + ' as "' + req.as + '" from ' + req.from);
+        } else
+          exc = addToError(exc, 'Error loading ' + load.name + ' from ' + linkSet.loads[0].name);
+      }
+      else
         exc = addToError(exc, 'Error loading ' + load.name);
     }
     else {
@@ -1118,7 +1119,7 @@ SystemLoader.prototype.instantiate = function(load) {
         fulfill(xhr.responseText);
       }
       function error() {
-        reject(xhr.statusText + ': ' + url || 'XHR error');
+        reject(new Error(xhr.statusText + ': ' + url || 'XHR error'));
       }
 
       xhr.onreadystatechange = function () {
@@ -1151,9 +1152,13 @@ SystemLoader.prototype.instantiate = function(load) {
       else
         url = url.substr(7);
       return fs.readFile(url, function(err, data) {
-        if (err)
-          return reject(err);
-        else {
+        if (err) {
+          if (err.errno == 34) {
+            return reject(new Error(err.message));
+          } else {
+            return reject(err);
+          }
+        } else {
           // Strip Byte Order Mark out if it's the leading char
           var dataString = data + '';
           if (dataString[0] === '\ufeff')
@@ -1173,6 +1178,7 @@ SystemLoader.prototype.instantiate = function(load) {
       fetchTextFromURL(load.address, resolve, reject);
     });
   };
+
   // -- exporting --
 
   if (typeof exports === 'object')
