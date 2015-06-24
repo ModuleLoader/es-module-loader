@@ -1,4 +1,5 @@
 // from https://gist.github.com/Yaffle/1088850
+(function(global) {
 function URLPolyfill(url, baseURL) {
   if (typeof url != 'string')
     throw new TypeError('URL must be a string');
@@ -65,4 +66,5 @@ function URLPolyfill(url, baseURL) {
   this.search = search;
   this.hash = hash;
 }
-(typeof self != 'undefined' ? self : global).URLPolyfill = URLPolyfill;
+global.URLPolyfill = URLPolyfill;
+})(typeof self != 'undefined' ? self : global);
