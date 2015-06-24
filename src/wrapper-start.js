@@ -91,7 +91,8 @@
 
   var URL = __global.URL;
   try {
-    new URL('test:///').protocol == 'test:';
+    if (new URL('test:///').protocol != 'test:')
+      URL = URLPolyfill;
   }
   catch(e) {
     URL = URLPolyfill;
