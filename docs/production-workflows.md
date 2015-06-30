@@ -7,7 +7,7 @@ When in production, it is not suitable to load ES6 modules and syntax in the bro
 There is a `modules=instantiate` build output in Traceur and `modules=system` output in Babel and TypeScript that can be used with the ES6 Module Loader, 
 provided it has been extended with support for the System.register format.
 
-This is available from the [system-register-only](https://github.com/systemjs/systemjs/tree/v0.17.0/dist) SystemJS build of the loader.
+This is available from the [system-register-only](https://github.com/systemjs/systemjs/tree/0.17.0/dist) SystemJS build of the loader.
 
 The benefit of the [System.register output format](system-register.md) is that it provides [full support for circular references and live module bindings](circular-references-bindings.md).
 
