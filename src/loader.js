@@ -683,11 +683,17 @@ function logloads(loads) {
     // 26.3.3.9 keys not implemented
     // 26.3.3.10
     load: function(name, options) {
-      if (this._loader.modules[name]) {
-        doEnsureEvaluated(this._loader.modules[name], [], this._loader);
-        return Promise.resolve(this._loader.modules[name].module);
+      var loader = this._loader;
+      if (loader.modules[name]) {
+        doEnsureEvaluated(loader.modules[name], [], loader);
+        return Promise.resolve(loader.modules[name].module);
       }
-      return this._loader.importPromises[name] || createImportPromise(this, name, loadModule(this._loader, name, {}));
+      return loader.importPromises[name] || createImportPromise(this, name,
+        loadModule(loader, name, {})
+        .then(function(load) {
+          delete loader.importPromises[name];
+          return evaluateLoadedModule(loader, load);
+        }));
     },
     // 26.3.3.11
     module: function(source, options) {
