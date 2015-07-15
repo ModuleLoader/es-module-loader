@@ -79,6 +79,8 @@ See the [demo folder](https://github.com/ModuleLoader/es6-module-loader/blob/mas
 
 Although `System.import()` does not support the import of multiple modules defined in an array, because `System.import()` returns a Promise, this can be achieved by creating an array of `System.import`s and using `Promise.all()`.
 
+External scripts loaded through `<script src=""></script>` can't currenly be transpiled, which means you can't simply load a script that uses ES6's `import`. Which is why it usually start's with an inline `System.import()`.
+
 #### Setting transpilation options
 
 If using Traceur, these can be set with:
