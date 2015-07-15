@@ -101,7 +101,9 @@ System.typescriptOptions = {...};
 
 #### Module Tag
 
-As well as defining `window.System`, this polyfill provides support for the `<script type="module">` tag:
+The module tag is specified to provide a new entry point for using module syntax in browsers. This is because normal `<script>` tags must remain backwards-compatible so won't support this new mechanism.
+
+This polyfill provides simple support for the `<script type="module">` tag via:
 
 ```html
 <script type="module">
