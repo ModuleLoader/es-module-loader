@@ -16,7 +16,7 @@
     }
     return -1;
   };
-  
+
   var defineProperty;
   (function () {
     try {
@@ -37,13 +37,13 @@
     var newErr;
     if (err instanceof Error) {
       var newErr = new Error(err.message, err.fileName, err.lineNumber);
-      newErr.message = msg + '\n\t' + err.message;
+      newErr.message = err.message + '\n\t' + msg;
       newErr.stack = err.stack;
     }
     else {
       newErr = msg + '\n\t' + err;
     }
-      
+
     return newErr;
   }
 

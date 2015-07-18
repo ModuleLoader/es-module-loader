@@ -191,10 +191,6 @@ function logloads(loads) {
       }
 
       load = createLoad(name);
-      if(!load.requests)
-        load.requests = [];
-
-      load.requests.unshift({as: request, from: refererName});
       loader.loads.push(load);
 
       proceedToLocate(loader, load);
@@ -520,12 +516,27 @@ function logloads(loads) {
 
   // 15.2.5.2.4
   function linkSetFailed(linkSet, load, exc) {
+    function requestsForLoad(){
+      var reqs = [];
+      linkSet.loads.forEach(function(aLoad){
+        aLoad.dependencies.forEach(function(dep){
+          if (dep.value == load.name) {
+            reqs.push({as: dep.key, from: aLoad.name});
+          }
+        });
+      });
+      return reqs;
+    }
+
     var loader = linkSet.loader;
+    var requests;
 
     if (load) {
       if (linkSet.loads[0].name != load.name) {
-        if (load.requests[0]) {
-          var req = load.requests[0];
+        requests = requestsForLoad();
+
+        if (requests[0]) {
+          var req = requests[0];
           exc = addToError(exc, 'Error loading ' + load.name + ' as "' + req.as + '" from ' + req.from);
         } else
           exc = addToError(exc, 'Error loading ' + load.name + ' from ' + linkSet.loads[0].name);

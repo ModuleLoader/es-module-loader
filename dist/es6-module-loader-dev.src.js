@@ -86,7 +86,7 @@ global.URLPolyfill = URLPolyfill;
     }
     return -1;
   };
-  
+
   var defineProperty;
   (function () {
     try {
@@ -107,13 +107,13 @@ global.URLPolyfill = URLPolyfill;
     var newErr;
     if (err instanceof Error) {
       var newErr = new Error(err.message, err.fileName, err.lineNumber);
-      newErr.message = msg + '\n\t' + err.message;
+      newErr.message = err.message + '\n\t' + msg;
       newErr.stack = err.stack;
     }
     else {
       newErr = msg + '\n\t' + err;
     }
-      
+
     return newErr;
   }
 
@@ -347,10 +347,6 @@ function logloads(loads) {
       }
 
       load = createLoad(name);
-      if(!load.requests)
-        load.requests = [];
-
-      load.requests.unshift({as: request, from: refererName});
       loader.loads.push(load);
 
       proceedToLocate(loader, load);
@@ -676,12 +672,28 @@ function logloads(loads) {
 
   // 15.2.5.2.4
   function linkSetFailed(linkSet, load, exc) {
+    function requestsForLoad(){
+      var reqs = [];
+      linkSet.loads.forEach(function(aLoad){
+        aLoad.dependencies.forEach(function(dep){
+          if (dep.value == load.name) {
+            reqs.push({as: dep.key, from: aLoad.name});
+          }
+        });
+      });
+      return reqs;
+    }
+
     var loader = linkSet.loader;
+    var requests;
 
     if (load) {
       if (linkSet.loads[0].name != load.name) {
-        if (load.requests[0]) {
-          var req = load.requests[0];
+        requests = requestsForLoad();
+
+        if (requests[0]) { // what if requests.length > 0
+          console.log("src/loader.js:539", "requests.length", requests.length);
+          var req = requests[0];
           exc = addToError(exc, 'Error loading ' + load.name + ' as "' + req.as + '" from ' + req.from);
         } else
           exc = addToError(exc, 'Error loading ' + load.name + ' from ' + linkSet.loads[0].name);
@@ -847,11 +859,17 @@ function logloads(loads) {
     // 26.3.3.9 keys not implemented
     // 26.3.3.10
     load: function(name, options) {
-      if (this._loader.modules[name]) {
-        doEnsureEvaluated(this._loader.modules[name], [], this._loader);
-        return Promise.resolve(this._loader.modules[name].module);
+      var loader = this._loader;
+      if (loader.modules[name]) {
+        doEnsureEvaluated(loader.modules[name], [], loader);
+        return Promise.resolve(loader.modules[name].module);
       }
-      return this._loader.importPromises[name] || createImportPromise(this, name, loadModule(this._loader, name, {}));
+      return loader.importPromises[name] || createImportPromise(this, name,
+        loadModule(loader, name, {})
+        .then(function(load) {
+          delete loader.importPromises[name];
+          return evaluateLoadedModule(loader, load);
+        }));
     },
     // 26.3.3.11
     module: function(source, options) {
@@ -1258,7 +1276,7 @@ var transpile = (function() {
         transpileFunction = babelTranspile;
 
       // note __moduleName will be part of the transformer meta in future when we have the spec for this
-      return 'var __moduleName = "' + load.name + '";' + transpileFunction.call(self, load, transpiler) + '\n//# sourceURL=' + load.address + '!transpiled';
+      return '(function(__moduleName){' + transpileFunction.call(self, load, transpiler) + '\n})("' + load.name + '");\n//# sourceURL=' + load.address + '!transpiled';
     });
   };
 
