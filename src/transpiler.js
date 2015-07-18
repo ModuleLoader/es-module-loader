@@ -24,7 +24,7 @@ var transpile = (function() {
         transpileFunction = babelTranspile;
 
       // note __moduleName will be part of the transformer meta in future when we have the spec for this
-      return 'var __moduleName = "' + load.name + '";' + transpileFunction.call(self, load, transpiler) + '\n//# sourceURL=' + load.address + '!transpiled';
+      return '(function(__moduleName){' + transpileFunction.call(self, load, transpiler) + '\n})("' + load.name + '");\n//# sourceURL=' + load.address + '!transpiled';
     });
   };
 
