@@ -43,7 +43,7 @@
     "mocha": "^2.0.1",
     "regenerator": "^0.8.9",
     "traceur": "0.0.87",
-    "typescript": "mhegazy/typescript#v1.5-beta2"
+    "typescript": "1.5.3"
   },
   "keywords": [
     "script",
