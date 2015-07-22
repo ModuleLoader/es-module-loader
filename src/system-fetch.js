@@ -67,11 +67,7 @@
         url = url.substr(7);
       return fs.readFile(url, function(err, data) {
         if (err) {
-          if (err.errno == 34) {
-            return reject(new Error(err.message));
-          } else {
-            return reject(err);
-          }
+          return reject(err);
         } else {
           // Strip Byte Order Mark out if it's the leading char
           var dataString = data + '';
