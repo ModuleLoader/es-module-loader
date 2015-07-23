@@ -59,7 +59,7 @@
     var fs;
     fetchTextFromURL = function(url, fulfill, reject) {
       if (url.substr(0, 8) != 'file:///')
-        throw 'Only file URLs of the form file:/// allowed running in Node.';
+        throw new Error('Unable to fetch "' + url + '". Only file URLs of the form file:/// allowed running in Node.');
       fs = fs || require('fs');
       if (isWindows)
         url = url.replace(/\//g, '\\').substr(8);
