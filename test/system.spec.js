@@ -211,7 +211,7 @@ describe('System', function () {
           .then(supposedToFail)
           .catch(function (e) {
             expect(e)
-              .to.be.equal('Error evaluating ' + baseURL + 'test/loads/deperror.js\n\tdep error');
+              .to.be.equal('dep error\n\tError evaluating ' + baseURL + 'test/loads/deperror.js');
           })
           .then(done, done);
       });

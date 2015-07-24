@@ -41,7 +41,7 @@
       newErr.stack = err.stack;
     }
     else {
-      newErr = msg + '\n\t' + err;
+      newErr = err + '\n\t' + msg;
     }
 
     return newErr;

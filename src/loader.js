@@ -516,7 +516,7 @@ function logloads(loads) {
 
   // 15.2.5.2.4
   function linkSetFailed(linkSet, load, exc) {
-    function requestsForLoad(){
+    function requestsForLoad() {
       var reqs = [];
       linkSet.loads.forEach(function(aLoad){
         aLoad.dependencies.forEach(function(dep){
@@ -538,11 +538,13 @@ function logloads(loads) {
         if (requests[0]) {
           var req = requests[0];
           exc = addToError(exc, 'Error loading ' + load.name + ' as "' + req.as + '" from ' + req.from);
-        } else
+        } else {
           exc = addToError(exc, 'Error loading ' + load.name + ' from ' + linkSet.loads[0].name);
+        }
       }
-      else
+      else {
         exc = addToError(exc, 'Error loading ' + load.name);
+      }
     }
     else {
       exc = addToError(exc, 'Error linking ' + linkSet.loads[0].name);
