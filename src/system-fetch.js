@@ -47,6 +47,8 @@
       };
       xhr.open("GET", url, true);
 
+      xhr.setRequestHeader('Accept', 'module/x-module-loader-module */*');
+
       if (doTimeout)
         setTimeout(function() {
           xhr.send();
