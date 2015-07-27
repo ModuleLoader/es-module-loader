@@ -47,7 +47,7 @@
       };
       xhr.open("GET", url, true);
 
-      xhr.setRequestHeader('Accept', 'module/x-es-module */*');
+      xhr.setRequestHeader('Accept', 'application/x-es-module */*');
 
       if (doTimeout)
         setTimeout(function() {
