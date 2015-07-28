@@ -16,7 +16,7 @@
     }
     return -1;
   };
-
+  
   var defineProperty;
   (function () {
     try {
@@ -37,13 +37,20 @@
     var newErr;
     if (err instanceof Error) {
       var newErr = new Error(err.message, err.fileName, err.lineNumber);
-      newErr.message = err.message + '\n\t' + msg;
-      newErr.stack = err.stack;
+      if (isBrowser) {
+        newErr.message = err.message + '\n\t' + msg;
+        newErr.stack = err.stack;
+      }
+      else {
+        // node errors only look correct with the stack modified
+        newErr.message = err.message;
+        newErr.stack = err.stack + '\n\t' + msg;
+      }
     }
     else {
       newErr = err + '\n\t' + msg;
     }
-
+      
     return newErr;
   }
 

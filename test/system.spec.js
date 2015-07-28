@@ -226,13 +226,10 @@ describe('System', function () {
       });
 
 
-      it.only('Unhandled rejection test', function (done) {
+      it('Unhandled rejection test', function (done) {
         System.import('test/loads/load-non-existent.js')
           .then(supposedToFail)
           .catch(function (e) {
-            console.log("test/system.spec.js:233", "e", e);
-            console.log("test/system.spec.js:234", "typeof window", typeof window);
-            console.log("test/system.spec.js:235", "e.stack", e.stack);
             expect(typeof window != 'undefined' ? e.toString() : e.stack).to.be.match(/Error loading \S+/);
           })
           .then(done, done);

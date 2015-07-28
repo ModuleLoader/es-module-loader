@@ -54,7 +54,7 @@ describe('Custom Loader', function () {
       it('should make the locate throw', function(done) {
         customLoader['import']('test/loader/error2')
         .then(supposeToFail, function(e) {
-          expect(typeof window != 'undefined' ? e.toString() : e.message).to.be.contain('Error loading ' + base + 'error2');
+          expect(typeof window != 'undefined' ? e.toString() : e.stack).to.be.contain('Error loading ' + base + 'error2');
         })
         .then(done, done);
       });
@@ -62,7 +62,7 @@ describe('Custom Loader', function () {
       it('should make the fetch throw', function(done) {
         customLoader['import']('test/loader/error3')
         .then(supposeToFail, function(e) {
-          expect(typeof window != 'undefined' ? e.toString() : e.message).to.be.contain('Error loading ' + base + 'error3');
+          expect(typeof window != 'undefined' ? e.toString() : e.stack).to.be.contain('Error loading ' + base + 'error3');
         })
         .then(done, done);
       });
@@ -70,7 +70,7 @@ describe('Custom Loader', function () {
       it('should make the translate throw', function(done) {
         customLoader['import']('test/loader/error4')
         .then(supposeToFail, function(e) {
-          expect(typeof window != 'undefined' ? e.toString() : e.message).to.be.contain('Error loading ' + base + 'error4');
+          expect(typeof window != 'undefined' ? e.toString() : e.stack).to.be.contain('Error loading ' + base + 'error4');
         })
         .then(done, done);
       });
@@ -78,7 +78,7 @@ describe('Custom Loader', function () {
       it('should make the instantiate throw', function(done) {
         customLoader['import']('test/loader/error5')
         .then(supposeToFail, function(e) {
-          expect(typeof window != 'undefined' ? e.toString() : e.message).to.be.contain('Error loading ' + base + 'error5');
+          expect(typeof window != 'undefined' ? e.toString() : e.stack).to.be.contain('Error loading ' + base + 'error5');
         })
         .then(done, done);
       });
