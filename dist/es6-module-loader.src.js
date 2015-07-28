@@ -1,3 +1,73 @@
+// from https://gist.github.com/Yaffle/1088850
+(function(global) {
+function URLPolyfill(url, baseURL) {
+  if (typeof url != 'string')
+    throw new TypeError('URL must be a string');
+  var m = String(url).replace(/^\s+|\s+$/g, "").match(/^([^:\/?#]+:)?(?:\/\/(?:([^:@\/?#]*)(?::([^:@\/?#]*))?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
+  if (!m) {
+    throw new RangeError();
+  }
+  var protocol = m[1] || "";
+  var username = m[2] || "";
+  var password = m[3] || "";
+  var host = m[4] || "";
+  var hostname = m[5] || "";
+  var port = m[6] || "";
+  var pathname = m[7] || "";
+  var search = m[8] || "";
+  var hash = m[9] || "";
+  if (baseURL !== undefined) {
+    var base = baseURL instanceof URLPolyfill ? baseURL : new URLPolyfill(baseURL);
+    var flag = protocol === "" && host === "" && username === "";
+    if (flag && pathname === "" && search === "") {
+      search = base.search;
+    }
+    if (flag && pathname.charAt(0) !== "/") {
+      pathname = (pathname !== "" ? (((base.host !== "" || base.username !== "") && base.pathname === "" ? "/" : "") + base.pathname.slice(0, base.pathname.lastIndexOf("/") + 1) + pathname) : base.pathname);
+    }
+    // dot segments removal
+    var output = [];
+    pathname.replace(/^(\.\.?(\/|$))+/, "")
+      .replace(/\/(\.(\/|$))+/g, "/")
+      .replace(/\/\.\.$/, "/../")
+      .replace(/\/?[^\/]*/g, function (p) {
+        if (p === "/..") {
+          output.pop();
+        } else {
+          output.push(p);
+        }
+      });
+    pathname = output.join("").replace(/^\//, pathname.charAt(0) === "/" ? "/" : "");
+    if (flag) {
+      port = base.port;
+      hostname = base.hostname;
+      host = base.host;
+      password = base.password;
+      username = base.username;
+    }
+    if (protocol === "") {
+      protocol = base.protocol;
+    }
+  }
+
+  // convert windows file URLs to use /
+  if (protocol == 'file:')
+    pathname = pathname.replace(/\\/g, '/');
+
+  this.origin = protocol + (protocol !== "" || host !== "" ? "//" : "") + host;
+  this.href = protocol + (protocol !== "" || host !== "" ? "//" : "") + (username !== "" ? username + (password !== "" ? ":" + password : "") + "@" : "") + host + pathname + search + hash;
+  this.protocol = protocol;
+  this.username = username;
+  this.password = password;
+  this.host = host;
+  this.hostname = hostname;
+  this.port = port;
+  this.pathname = pathname;
+  this.search = search;
+  this.hash = hash;
+}
+global.URLPolyfill = URLPolyfill;
+})(typeof self != 'undefined' ? self : global);
 (function(__global) {
 
   var isWorker = typeof window == 'undefined' && typeof self != 'undefined' && typeof importScripts != 'undefined';
@@ -16,7 +86,7 @@
     }
     return -1;
   };
-  
+
   var defineProperty;
   (function () {
     try {
@@ -43,7 +113,7 @@
     else {
       newErr = err + '\n\t' + msg;
     }
-      
+
     return newErr;
   }
 
@@ -82,7 +152,7 @@
     throw new TypeError('No environment baseURI');
   }
 
-  var URL = typeof __global.URL == 'function' && __global.URL || URLPolyfill;
+  var URL = __global.URLPolyfill || __global.URL;
 
 /*
 *********************************************************************************************
@@ -602,14 +672,35 @@ function logloads(loads) {
 
   // 15.2.5.2.4
   function linkSetFailed(linkSet, load, exc) {
+    function requestsForLoad() {
+      var reqs = [];
+      linkSet.loads.forEach(function(aLoad){
+        aLoad.dependencies.forEach(function(dep){
+          if (dep.value == load.name) {
+            reqs.push({as: dep.key, from: aLoad.name});
+          }
+        });
+      });
+      return reqs;
+    }
+
     var loader = linkSet.loader;
+    var requests;
 
     if (load) {
-      if (load && linkSet.loads[0].name != load.name)
-        exc = addToError(exc, 'Error loading ' + load.name + ' from ' + linkSet.loads[0].name);
+      if (linkSet.loads[0].name != load.name) {
+        requests = requestsForLoad();
 
-      if (load)
+        if (requests[0]) {
+          var req = requests[0];
+          exc = addToError(exc, 'Error loading ' + load.name + ' as "' + req.as + '" from ' + req.from);
+        } else {
+          exc = addToError(exc, 'Error loading ' + load.name + ' from ' + linkSet.loads[0].name);
+        }
+      }
+      else {
         exc = addToError(exc, 'Error loading ' + load.name);
+      }
     }
     else {
       exc = addToError(exc, 'Error linking ' + linkSet.loads[0].name);
@@ -769,11 +860,17 @@ function logloads(loads) {
     // 26.3.3.9 keys not implemented
     // 26.3.3.10
     load: function(name, options) {
-      if (this._loader.modules[name]) {
-        doEnsureEvaluated(this._loader.modules[name], [], this._loader);
-        return Promise.resolve(this._loader.modules[name].module);
+      var loader = this._loader;
+      if (loader.modules[name]) {
+        doEnsureEvaluated(loader.modules[name], [], loader);
+        return Promise.resolve(loader.modules[name].module);
       }
-      return this._loader.importPromises[name] || createImportPromise(this, name, loadModule(this._loader, name, {}));
+      return loader.importPromises[name] || createImportPromise(this, name,
+        loadModule(loader, name, {})
+        .then(function(load) {
+          delete loader.importPromises[name];
+          return evaluateLoadedModule(loader, load);
+        }));
     },
     // 26.3.3.11
     module: function(source, options) {
@@ -890,75 +987,11 @@ function logloads(loads) {
   }
 
   function doEnsureEvaluated() {}
+
+  function transpile() {
+    throw new TypeError('ES6 transpilation is only provided in the dev module loader build.');
+  }
 })();
-// from https://gist.github.com/Yaffle/1088850
-function URLPolyfill(url, baseURL) {
-  if (typeof url != 'string')
-    throw new TypeError('URL must be a string');
-  var m = String(url).replace(/^\s+|\s+$/g, "").match(/^([^:\/?#]+:)?(?:\/\/(?:([^:@\/?#]*)(?::([^:@\/?#]*))?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
-  if (!m) {
-    throw new RangeError();
-  }
-  var protocol = m[1] || "";
-  var username = m[2] || "";
-  var password = m[3] || "";
-  var host = m[4] || "";
-  var hostname = m[5] || "";
-  var port = m[6] || "";
-  var pathname = m[7] || "";
-  var search = m[8] || "";
-  var hash = m[9] || "";
-  if (baseURL !== undefined) {
-    var base = baseURL instanceof URLPolyfill ? baseURL : new URLPolyfill(baseURL);
-    var flag = protocol === "" && host === "" && username === "";
-    if (flag && pathname === "" && search === "") {
-      search = base.search;
-    }
-    if (flag && pathname.charAt(0) !== "/") {
-      pathname = (pathname !== "" ? (((base.host !== "" || base.username !== "") && base.pathname === "" ? "/" : "") + base.pathname.slice(0, base.pathname.lastIndexOf("/") + 1) + pathname) : base.pathname);
-    }
-    // dot segments removal
-    var output = [];
-    pathname.replace(/^(\.\.?(\/|$))+/, "")
-      .replace(/\/(\.(\/|$))+/g, "/")
-      .replace(/\/\.\.$/, "/../")
-      .replace(/\/?[^\/]*/g, function (p) {
-        if (p === "/..") {
-          output.pop();
-        } else {
-          output.push(p);
-        }
-      });
-    pathname = output.join("").replace(/^\//, pathname.charAt(0) === "/" ? "/" : "");
-    if (flag) {
-      port = base.port;
-      hostname = base.hostname;
-      host = base.host;
-      password = base.password;
-      username = base.username;
-    }
-    if (protocol === "") {
-      protocol = base.protocol;
-    }
-  }
-
-  // convert windows file URLs to use /
-  if (protocol == 'file:')
-    pathname = pathname.replace(/\\/g, '/');
-
-  this.origin = protocol + (protocol !== "" || host !== "" ? "//" : "") + host;
-  this.href = protocol + (protocol !== "" || host !== "" ? "//" : "") + (username !== "" ? username + (password !== "" ? ":" + password : "") + "@" : "") + host + pathname + search + hash;
-  this.protocol = protocol;
-  this.username = username;
-  this.password = password;
-  this.host = host;
-  this.hostname = hostname;
-  this.port = port;
-  this.pathname = pathname;
-  this.search = search;
-  this.hash = hash;
-}
-(typeof self != 'undefined' ? self : global).URLPolyfill = URLPolyfill;
 /*
 *********************************************************************************************
 
@@ -1101,7 +1134,7 @@ SystemLoader.prototype.instantiate = function(load) {
         fulfill(xhr.responseText);
       }
       function error() {
-        reject(xhr.statusText + ': ' + url || 'XHR error');
+        reject(new Error(xhr.statusText + ': ' + url || 'XHR error'));
       }
 
       xhr.onreadystatechange = function () {
@@ -1115,6 +1148,8 @@ SystemLoader.prototype.instantiate = function(load) {
       };
       xhr.open("GET", url, true);
 
+      xhr.setRequestHeader('Accept', 'application/x-es-module */*');
+
       if (doTimeout)
         setTimeout(function() {
           xhr.send();
@@ -1127,16 +1162,16 @@ SystemLoader.prototype.instantiate = function(load) {
     var fs;
     fetchTextFromURL = function(url, fulfill, reject) {
       if (url.substr(0, 8) != 'file:///')
-        throw 'Only file URLs of the form file:/// allowed running in Node.';
+        throw new Error('Unable to fetch "' + url + '". Only file URLs of the form file:/// allowed running in Node.');
       fs = fs || require('fs');
       if (isWindows)
         url = url.replace(/\//g, '\\').substr(8);
       else
         url = url.substr(7);
       return fs.readFile(url, function(err, data) {
-        if (err)
+        if (err) {
           return reject(err);
-        else {
+        } else {
           // Strip Byte Order Mark out if it's the leading char
           var dataString = data + '';
           if (dataString[0] === '\ufeff')
@@ -1156,6 +1191,7 @@ SystemLoader.prototype.instantiate = function(load) {
       fetchTextFromURL(load.address, resolve, reject);
     });
   };
+
   // -- exporting --
 
   if (typeof exports === 'object')

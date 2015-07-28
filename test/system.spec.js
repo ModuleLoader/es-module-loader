@@ -216,43 +216,24 @@ describe('System', function () {
           .then(done, done);
       });
 
-      it('should throw an ENOENT with a stack', function(done) {
-        System.import('test/loads/noent.js')
-          .then(supposedToFail)
-          .catch(function(e) {
-            expect(e).to.be.an(Error);
-            expect(e.stack).not.to.be.an(Error);
-          })
-          .then(done, done);
-
-      });
-
-      it('should provide useful information when file missing', function(done) {
-        System.paths['non-existent'] = baseURL + 'test/loader/still-doesnt-exist.js';
-        System.import('test/loads/indirect-load.js')
-          .then(supposedToFail)
-          .catch(function(e) {
-            expect(e).to.be.an(Error);
-            expect(e.message).to.match(/test\/loader\/still-doesnt-exist\.js/);
-            expect(e.message).to.match(/non-existent/);
-            expect(e.message).to.match(/test\/loads\/load-non-existent\.js/);
-          })
-          .then(done, done);
-
-      });
-
-      it.skip('should throw what the script throws', function (done) {
+      it('should throw what the script throws', function (done) {
         System.import('test/loads/deperror.js')
           .then(supposedToFail)
+          .catch(function(e) {
+            expect(e == 'dep error');
+          })
           .then(done, done);
       });
 
 
-      it('Unhandled rejection test', function (done) {
+      it.only('Unhandled rejection test', function (done) {
         System.import('test/loads/load-non-existent.js')
           .then(supposedToFail)
           .catch(function (e) {
-            expect(e).to.be.match(/Error loading \S+/);
+            console.log("test/system.spec.js:233", "e", e);
+            console.log("test/system.spec.js:234", "typeof window", typeof window);
+            console.log("test/system.spec.js:235", "e.stack", e.stack);
+            expect(typeof window != 'undefined' ? e.toString() : e.stack).to.be.match(/Error loading \S+/);
           })
           .then(done, done);
       });
