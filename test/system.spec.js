@@ -216,9 +216,12 @@ describe('System', function () {
           .then(done, done);
       });
 
-      it.skip('should throw what the script throws', function (done) {
+      it('should throw what the script throws', function (done) {
         System.import('test/loads/deperror.js')
           .then(supposedToFail)
+          .catch(function(e) {
+            expect(e == 'dep error');
+          })
           .then(done, done);
       });
 
