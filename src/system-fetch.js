@@ -70,7 +70,8 @@
       return fs.readFile(url, function(err, data) {
         if (err) {
           return reject(err);
-        } else {
+        }
+        else {
           // Strip Byte Order Mark out if it's the leading char
           var dataString = data + '';
           if (dataString[0] === '\ufeff')

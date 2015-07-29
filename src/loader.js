@@ -516,34 +516,26 @@ function logloads(loads) {
 
   // 15.2.5.2.4
   function linkSetFailed(linkSet, load, exc) {
-    function requestsForLoad() {
-      var reqs = [];
-      linkSet.loads.forEach(function(aLoad){
-        aLoad.dependencies.forEach(function(dep){
-          if (dep.value == load.name) {
-            reqs.push({as: dep.key, from: aLoad.name});
-          }
-        });
-      });
-      return reqs;
-    }
-
     var loader = linkSet.loader;
     var requests;
 
+    checkError: 
     if (load) {
-      if (linkSet.loads[0].name != load.name) {
-        requests = requestsForLoad();
-
-        if (requests[0]) {
-          var req = requests[0];
-          exc = addToError(exc, 'Error loading ' + load.name + ' as "' + req.as + '" from ' + req.from);
-        } else {
-          exc = addToError(exc, 'Error loading ' + load.name + ' from ' + linkSet.loads[0].name);
-        }
+      if (linkSet.loads[0].name == load.name) {
+        exc = addToError(exc, 'Error loading ' + load.name);
       }
       else {
-        exc = addToError(exc, 'Error loading ' + load.name);
+        for (var i = 0; i < linkSet.loads.length; i++) {
+          var pLoad = linkSet.loads[i];
+          for (var j = 0; j < pLoad.dependencies.length; j++) {
+            var dep = pLoad.dependencies[j];
+            if (dep.value == load.name) {
+              exc = addToError(exc, 'Error loading ' + load.name + ' as "' + dep.key + '" from ' + pLoad.name);
+              break checkError;
+            }
+          }
+        }
+        exc = addToError(exc, 'Error loading ' + load.name + ' from ' + linkSet.loads[0].name);
       }
     }
     else {
