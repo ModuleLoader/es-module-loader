@@ -33,7 +33,7 @@
         fulfill(xhr.responseText);
       }
       function error() {
-        reject(xhr.statusText + ': ' + url || 'XHR error');
+        reject(new Error(xhr.statusText + ': ' + url || 'XHR error'));
       }
 
       xhr.onreadystatechange = function () {
@@ -68,9 +68,9 @@
       else
         url = url.substr(7);
       return fs.readFile(url, function(err, data) {
-        if (err)
+        if (err) {
           return reject(err);
-        else {
+        } else {
           // Strip Byte Order Mark out if it's the leading char
           var dataString = data + '';
           if (dataString[0] === '\ufeff')
