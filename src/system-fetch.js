@@ -33,7 +33,7 @@
         fulfill(xhr.responseText);
       }
       function error() {
-        reject(new Error('XHR error: status ' + xhr.status + ' "' + xhr.statusText + '": ' + url));
+        reject(new Error('XHR error' + (xhr.status ? ' (' + xhr.status + (xhr.statusText ? ' ' + xhr.statusText  : '') + ')' : '') + ' loading ' + url));
       }
 
       xhr.onreadystatechange = function () {
