@@ -19,6 +19,12 @@
 */
 
 function Module() {}
+// http://www.ecma-international.org/ecma-262/6.0/#sec-@@tostringtag
+defineProperty(Module.prototype, 'toString', {
+  value: function() {
+    return 'Module';
+  }
+});
 function Loader(options) {
   this._loader = {
     loaderObj: this,

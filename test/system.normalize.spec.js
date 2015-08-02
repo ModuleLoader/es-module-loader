@@ -1,6 +1,13 @@
 //
 
 describe('System', function () {
+
+  describe('#toString', function() {
+    it('Module toString is "Module"', function() {
+      expect(System.newModule({}).toString()).to.equal('Module');
+    });
+  });
+
   describe('#normalize', function () {
 
     describe('when having no argument', function () {
