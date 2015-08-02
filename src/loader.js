@@ -417,6 +417,9 @@ function logloads(loads) {
   }
   // 15.2.5.2.2
   function addLoadToLinkSet(linkSet, load) {
+    if (load.status == 'failed')
+      return;
+
     console.assert(load.status == 'loading' || load.status == 'loaded', 'loading or loaded on link set');
 
     for (var i = 0, l = linkSet.loads.length; i < l; i++)
@@ -434,6 +437,9 @@ function logloads(loads) {
     var loader = linkSet.loader;
 
     for (var i = 0, l = load.dependencies.length; i < l; i++) {
+      if (!load.dependencies[i])
+        continue;
+
       var name = load.dependencies[i].value;
 
       if (loader.modules[name])
