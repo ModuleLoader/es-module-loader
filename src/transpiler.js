@@ -32,7 +32,8 @@ var transpile = (function() {
     var options = this.traceurOptions || {};
     options.modules = 'instantiate';
     options.script = false;
-    options.sourceMaps = 'inline';
+    if (options.sourceMaps === undefined)
+      options.sourceMaps = 'inline';
     options.filename = load.address;
     options.inputSourceMap = load.metadata.sourceMap;
     options.moduleName = false;
@@ -54,7 +55,8 @@ var transpile = (function() {
   function babelTranspile(load, babel) {
     var options = this.babelOptions || {};
     options.modules = 'system';
-    options.sourceMap = 'inline';
+    if (options.sourceMap === undefined)
+      options.sourceMap = 'inline';
     options.inputSourceMap = load.metadata.sourceMap;
     options.filename = load.address;
     options.code = true;
@@ -65,11 +67,13 @@ var transpile = (function() {
 
   function typescriptTranspile(load, ts) {
     var options = this.typescriptOptions || {};
-    if (options.target === undefined) {
-      options.target = ts.ScriptTarget.ES5;
-    }
+    options.target = options.target || ts.ScriptTarget.ES5;
+    if (options.sourceMap === undefined)
+      options.sourceMap = true;
+    if (options.sourceMap)
+      options.inlineSourceMap = true;
+
     options.module = ts.ModuleKind.System;
-    options.inlineSourceMap = true;
 
     return ts.transpile(load.source, options, load.address);
   }
