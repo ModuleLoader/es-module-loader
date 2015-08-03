@@ -5,7 +5,7 @@ describe('Custom Loader', function () {
   describe('#import', function () {
 
     describe('scripts', function () {
-      if (typeof __karma__ == 'undefined' || __karma__.config.system.ie8)
+      if (typeof __karma__ == 'undefined' || !__karma__.config.system.ie8)
         it('should support ES6 scripts', function(done) {
         customLoader['import']('test/loader/test.js')
           .then(function (m) {

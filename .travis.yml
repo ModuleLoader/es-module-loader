@@ -6,7 +6,7 @@ node_js:
   - '0.10'
   - '0.11'
   - '0.12'
-#  - 'iojs'
+  - 'iojs'
 env:
   global:
     - SAUCE_LABS=false PARSER=false OPTIONS=""
@@ -22,10 +22,10 @@ matrix:
       env: SAUCE_LABS=true PARSER="babel"
     - node_js: "0.10"
       env: SAUCE_LABS=true PARSER="typescript"
-#    - node_js: "0.10"
-#      env: SAUCE_LABS=true PARSER="traceur" OPTIONS="--ie8"
-#    - node_js: "0.10"
-#      env: SAUCE_LABS=true PARSER="babel" OPTIONS="--ie8"
+    - node_js: "0.10"
+      env: SAUCE_LABS=true PARSER="traceur" OPTIONS="--ie8"
+    - node_js: "0.10"
+      env: SAUCE_LABS=true PARSER="babel" OPTIONS="--ie8"
 before_install:
   - export CHROME_BIN=chromium-browser
   - export DISPLAY=:99.0
