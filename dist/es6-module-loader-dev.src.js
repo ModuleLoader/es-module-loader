@@ -182,6 +182,12 @@ global.URLPolyfill = URLPolyfill;
 */
 
 function Module() {}
+// http://www.ecma-international.org/ecma-262/6.0/#sec-@@tostringtag
+defineProperty(Module.prototype, 'toString', {
+  value: function() {
+    return 'Module';
+  }
+});
 function Loader(options) {
   this._loader = {
     loaderObj: this,
@@ -580,6 +586,9 @@ function logloads(loads) {
   }
   // 15.2.5.2.2
   function addLoadToLinkSet(linkSet, load) {
+    if (load.status == 'failed')
+      return;
+
     console.assert(load.status == 'loading' || load.status == 'loaded', 'loading or loaded on link set');
 
     for (var i = 0, l = linkSet.loads.length; i < l; i++)
@@ -597,6 +606,9 @@ function logloads(loads) {
     var loader = linkSet.loader;
 
     for (var i = 0, l = load.dependencies.length; i < l; i++) {
+      if (!load.dependencies[i])
+        continue;
+
       var name = load.dependencies[i].value;
 
       if (loader.modules[name])
@@ -680,13 +692,26 @@ function logloads(loads) {
   // 15.2.5.2.4
   function linkSetFailed(linkSet, load, exc) {
     var loader = linkSet.loader;
+    var requests;
 
+    checkError: 
     if (load) {
-      if (load && linkSet.loads[0].name != load.name)
-        exc = addToError(exc, 'Error loading ' + load.name + ' from ' + linkSet.loads[0].name);
-
-      if (load)
+      if (linkSet.loads[0].name == load.name) {
         exc = addToError(exc, 'Error loading ' + load.name);
+      }
+      else {
+        for (var i = 0; i < linkSet.loads.length; i++) {
+          var pLoad = linkSet.loads[i];
+          for (var j = 0; j < pLoad.dependencies.length; j++) {
+            var dep = pLoad.dependencies[j];
+            if (dep.value == load.name) {
+              exc = addToError(exc, 'Error loading ' + load.name + ' as "' + dep.key + '" from ' + pLoad.name);
+              break checkError;
+            }
+          }
+        }
+        exc = addToError(exc, 'Error loading ' + load.name + ' from ' + linkSet.loads[0].name);
+      }
     }
     else {
       exc = addToError(exc, 'Error linking ' + linkSet.loads[0].name);
@@ -846,11 +871,17 @@ function logloads(loads) {
     // 26.3.3.9 keys not implemented
     // 26.3.3.10
     load: function(name, options) {
-      if (this._loader.modules[name]) {
-        doEnsureEvaluated(this._loader.modules[name], [], this._loader);
-        return Promise.resolve(this._loader.modules[name].module);
+      var loader = this._loader;
+      if (loader.modules[name]) {
+        doEnsureEvaluated(loader.modules[name], [], loader);
+        return Promise.resolve(loader.modules[name].module);
       }
-      return this._loader.importPromises[name] || createImportPromise(this, name, loadModule(this._loader, name, {}));
+      return loader.importPromises[name] || createImportPromise(this, name,
+        loadModule(loader, name, {})
+        .then(function(load) {
+          delete loader.importPromises[name];
+          return evaluateLoadedModule(loader, load);
+        }));
     },
     // 26.3.3.11
     module: function(source, options) {
@@ -1257,7 +1288,7 @@ var transpile = (function() {
         transpileFunction = babelTranspile;
 
       // note __moduleName will be part of the transformer meta in future when we have the spec for this
-      return 'var __moduleName = "' + load.name + '";' + transpileFunction.call(self, load, transpiler) + '\n//# sourceURL=' + load.address + '!transpiled';
+      return '(function(__moduleName){' + transpileFunction.call(self, load, transpiler) + '\n})("' + load.name + '");\n//# sourceURL=' + load.address + '!transpiled';
     });
   };
 
@@ -1265,7 +1296,8 @@ var transpile = (function() {
     var options = this.traceurOptions || {};
     options.modules = 'instantiate';
     options.script = false;
-    options.sourceMaps = 'inline';
+    if (options.sourceMaps === undefined)
+      options.sourceMaps = 'inline';
     options.filename = load.address;
     options.inputSourceMap = load.metadata.sourceMap;
     options.moduleName = false;
@@ -1287,7 +1319,8 @@ var transpile = (function() {
   function babelTranspile(load, babel) {
     var options = this.babelOptions || {};
     options.modules = 'system';
-    options.sourceMap = 'inline';
+    if (options.sourceMap === undefined)
+      options.sourceMap = 'inline';
     options.inputSourceMap = load.metadata.sourceMap;
     options.filename = load.address;
     options.code = true;
@@ -1298,11 +1331,13 @@ var transpile = (function() {
 
   function typescriptTranspile(load, ts) {
     var options = this.typescriptOptions || {};
-    if (options.target === undefined) {
-      options.target = ts.ScriptTarget.ES5;
-    }
+    options.target = options.target || ts.ScriptTarget.ES5;
+    if (options.sourceMap === undefined)
+      options.sourceMap = true;
+    if (options.sourceMap)
+      options.inlineSourceMap = true;
+
     options.module = ts.ModuleKind.System;
-    options.inlineSourceMap = true;
 
     return ts.transpile(load.source, options, load.address);
   }
@@ -1452,7 +1487,7 @@ SystemLoader.prototype.instantiate = function(load) {
         fulfill(xhr.responseText);
       }
       function error() {
-        reject(xhr.statusText + ': ' + url || 'XHR error');
+        reject(new Error('XHR error' + (xhr.status ? ' (' + xhr.status + (xhr.statusText ? ' ' + xhr.statusText  : '') + ')' : '') + ' loading ' + url));
       }
 
       xhr.onreadystatechange = function () {
@@ -1466,6 +1501,8 @@ SystemLoader.prototype.instantiate = function(load) {
       };
       xhr.open("GET", url, true);
 
+      xhr.setRequestHeader('Accept', 'application/x-es-module */*');
+
       if (doTimeout)
         setTimeout(function() {
           xhr.send();
@@ -1478,15 +1515,16 @@ SystemLoader.prototype.instantiate = function(load) {
     var fs;
     fetchTextFromURL = function(url, fulfill, reject) {
       if (url.substr(0, 8) != 'file:///')
-        throw 'Only file URLs of the form file:/// allowed running in Node.';
+        throw new Error('Unable to fetch "' + url + '". Only file URLs of the form file:/// allowed running in Node.');
       fs = fs || require('fs');
       if (isWindows)
         url = url.replace(/\//g, '\\').substr(8);
       else
         url = url.substr(7);
       return fs.readFile(url, function(err, data) {
-        if (err)
+        if (err) {
           return reject(err);
+        }
         else {
           // Strip Byte Order Mark out if it's the leading char
           var dataString = data + '';
@@ -1507,6 +1545,7 @@ SystemLoader.prototype.instantiate = function(load) {
       fetchTextFromURL(load.address, resolve, reject);
     });
   };
+
 (function() {
   // <script type="module"> support
   // allow a data-init function callback once loaded

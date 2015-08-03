@@ -40,7 +40,7 @@ module.exports = function(config) {
         ? (options['babel'] 
             ? 'node_modules/babel-core/browser.js' 
             : options['typescript']  
-                ? 'node_modules/typescript/bin/typescript.js' 
+                ? 'node_modules/typescript/lib/typescript.js' 
                 : 'node_modules/traceur/bin/traceur.js') 
         : ''],
 
@@ -56,7 +56,7 @@ module.exports = function(config) {
     {pattern: 'test/{loader,loads,syntax,worker}/**/*', included: false},
     {pattern: 'node_modules/traceur/bin/traceur.js', included: false},
     {pattern: 'node_modules/babel-core/browser.js', included: false},
-    {pattern: 'node_modules/typescript/bin/typescript.js', included: false},
+    {pattern: 'node_modules/typescript/lib/typescript.js', included: false},
     {pattern: 'node_modules/when/es6-shim/Promise.js', included: false},
     {pattern: 'dist/es6-module-loader*.js', included: false}
   ];
