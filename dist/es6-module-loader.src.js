@@ -534,13 +534,15 @@ function logloads(loads) {
             proceedToTranslate(loader, existingLoad, Promise.resolve(stepState.moduleSource));
           }
 
-          return existingLoad.linkSets[0].done.then(function() {
-            resolve(existingLoad);
-          });
+          // a primary load -> use that existing linkset
+          if (existingLoad.linkSets.length)
+            return existingLoad.linkSets[0].done.then(function() {
+              resolve(existingLoad);
+            });
         }
       }
 
-      var load = createLoad(name);
+      var load = existingLoad || createLoad(name);
 
       load.metadata = stepState.moduleMetadata;
 
