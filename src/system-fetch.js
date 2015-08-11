@@ -23,7 +23,10 @@
         doTimeout = true;
       }
       function load() {
-        fulfill(xhr.responseText);
+        fulfill({
+          source: xhr.responseText,
+          responseHeaders: xhr.getAllResponseHeaders && xhr.getAllResponseHeaders()
+        });
       }
       function error() {
         reject(new Error('XHR error' + (xhr.status ? ' (' + xhr.status + (xhr.statusText ? ' ' + xhr.statusText  : '') + ')' : '') + ' loading ' + url));
@@ -70,7 +73,7 @@
           if (dataString[0] === '\ufeff')
             dataString = dataString.substr(1);
 
-          fulfill(dataString);
+          fulfill({ source: dataString });
         }
       });
     };
@@ -82,5 +85,11 @@
   SystemLoader.prototype.fetch = function(load) {
     return new Promise(function(resolve, reject) {
       fetchTextFromURL(load.address, resolve, reject);
+    }).then(function(result) {
+      if (result.responseHeaders) {
+        load.metadata.responseHeaders = result.responseHeaders;
+      }
+
+      return result.source;
     });
   };
