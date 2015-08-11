@@ -581,6 +581,7 @@ function logloads(loads) {
         address: load.address,
         metadata: load.metadata,
         source: load.source,
+        transpiledSource: load.transpiledSource,
         kind: load.isDeclarative ? 'declarative' : 'dynamic'
       };
     }
