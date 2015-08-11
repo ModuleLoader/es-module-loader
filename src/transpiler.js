@@ -5,7 +5,6 @@ var transpile = (function() {
 
   // use Traceur by default
   Loader.prototype.transpiler = 'traceur';
-  Loader.prototype.transpiledSources = {};
 
   function transpile(load) {
     var self = this;
@@ -25,7 +24,7 @@ var transpile = (function() {
         transpileFunction = babelTranspile;
 
       // note __moduleName will be part of the transformer meta in future when we have the spec for this
-      return self.transpiledSources[load.address] = '(function(__moduleName){' + transpileFunction.call(self, load, transpiler) + '\n})("' + load.name + '");\n//# sourceURL=' + load.address + '!transpiled';
+      return load.transpiledSource = '(function(__moduleName){' + transpileFunction.call(self, load, transpiler) + '\n})("' + load.name + '");\n//# sourceURL=' + load.address + '!transpiled';
     });
   };
 
