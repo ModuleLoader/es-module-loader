@@ -266,6 +266,7 @@ function logloads(loads) {
               load.declare = declare;
               load.depsList = deps;
             }
+            load.transpiledSource = transpiled;
             // empty {} context is closest to undefined 'this' we can get
             __eval(transpiled, load.address, {});
             curSystem.register = curRegister;
