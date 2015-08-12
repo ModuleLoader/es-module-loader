@@ -40,7 +40,8 @@
       };
       xhr.open("GET", url, true);
 
-      xhr.setRequestHeader('Accept', 'application/x-es-module */*');
+      if (xhr.setRequestHeader)
+        xhr.setRequestHeader('Accept', 'application/x-es-module */*');
 
       if (doTimeout)
         setTimeout(function() {
