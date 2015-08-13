@@ -1457,13 +1457,6 @@ SystemLoader.prototype.instantiate = function(load) {
   var fetchTextFromURL;
   if (typeof XMLHttpRequest != 'undefined') {
     fetchTextFromURL = function(url, fulfill, reject) {
-      // percent encode just '#' in urls
-      // according to https://github.com/jorendorff/js-loaders/blob/master/browser-loader.js#L238
-      // we should encode everything, but it breaks for servers that don't expect it
-      // like in (https://github.com/systemjs/systemjs/issues/168)
-      if (isBrowser)
-        url = url.replace(/#/g, '%23');
-
       var xhr = new XMLHttpRequest();
       var sameDomain = true;
       var doTimeout = false;
@@ -1503,7 +1496,8 @@ SystemLoader.prototype.instantiate = function(load) {
       };
       xhr.open("GET", url, true);
 
-      xhr.setRequestHeader('Accept', 'application/x-es-module */*');
+      if (xhr.setRequestHeader)
+        xhr.setRequestHeader('Accept', 'application/x-es-module */*');
 
       if (doTimeout)
         setTimeout(function() {
