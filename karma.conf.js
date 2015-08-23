@@ -119,10 +119,6 @@ module.exports = function(config) {
         'internet explorer': '9..11'
       }
     });
-    
-
-    // IE tests disabled for now (https://github.com/ModuleLoader/es6-module-loader/issues/295)
-    customLaunchers = undefined;
 
     if (options.ie8) {
       customLaunchers = geSaLaKaCuLa({
