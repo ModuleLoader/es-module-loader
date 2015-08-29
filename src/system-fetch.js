@@ -1,6 +1,6 @@
   var fetchTextFromURL;
   if (typeof XMLHttpRequest != 'undefined') {
-    fetchTextFromURL = function(url, fulfill, reject) {
+    fetchTextFromURL = function(url, fulfill, reject, loader) {
       var xhr = new XMLHttpRequest();
       var sameDomain = true;
       var doTimeout = false;
@@ -43,6 +43,22 @@
       if (xhr.setRequestHeader)
         xhr.setRequestHeader('Accept', 'application/x-es-module */*');
 
+      if (typeof loader !== 'undefined') {
+        if (typeof loader.basicAuth !== 'undefined') {
+          for (var domain in loader.basicAuth) {
+            var username = loader.basicAuth[domain].username;
+            var password = loader.basicAuth[domain].password;
+
+            if (typeof domain === 'string' && typeof username === 'string' && typeof password === 'string') {
+              if (url.indexOf(domain) >= 0) {
+                xhr.setRequestHeader ("Authorization", "Basic " +btoa(username + ":" + password));
+                xhr.withCredentials = true;
+              }
+            }
+          }
+        }
+      }
+
       if (doTimeout)
         setTimeout(function() {
           xhr.send();
@@ -81,7 +97,9 @@
   }
 
   SystemLoader.prototype.fetch = function(load) {
+    var self = this;
+
     return new Promise(function(resolve, reject) {
-      fetchTextFromURL(load.address, resolve, reject);
+      fetchTextFromURL(load.address, resolve, reject, self);
     });
   };
