@@ -1,4 +1,43 @@
-# ES6 Module Loader Polyfill [![Build Status][travis-image]][travis-url]
+# ES6 Module Loader Polyfill 
+
+Important: This fork depends on coordinated changes in "core.js" in "https://github.com/typhonrt/systemjs" for the complete addition of functionality.
+
+This is a es6-module-loader fork for SystemJS adding the ability to pull in modules and other resources cross-domain that require HTTP basic authorization. The necessity for this addition is that I have an unbundled admin domain / site that references modules and resources from the main unbundled development site / domain. Both the admin and developer domain have basic authentication enabled. Since SystemJS uses XMLHttpRequest it's necessary to set authentication headers from the requesting domain (in my case the admin site). To fascilitate this process a new configuration option has been added. "basicAuth" which can contain one or more authentication credentials like the following:
+
+```
+   basicAuth:
+   {
+      "https://private.server.com/": { username: '<USERNAME>', password: '<PASSWORD>' },
+      "https://private.server2.com/": { username: '<USERNAME>', password: '<PASSWORD>' }
+   },
+```
+
+SystemJS when loading resources will add the authentication header with encoded username / password for urls matching the domains provided in the config parameters.
+
+It should be noted that an associated .htaccess file needs to be defined or other web server configuraiton needs to be setup on the private server to be accessed. The following is an example .htaccess file with the relevant details:
+
+```
+AuthType Basic
+AuthUserFile /home/username/private.server.com/.htpasswd
+AuthName "Private"
+<LimitExcept OPTIONS>
+   require valid-user
+</LimitExcept>
+
+Header always add Access-Control-Allow-Origin "https://requesting.domain.com"
+Header always add Access-Control-Allow-Headers "accept, origin, x-requested-with, authorization, content-type"
+Header always add Access-Control-Allow-Methods "GET"
+Header always add Access-Control-Allow-Credentials "true"
+```
+
+I have only tested these changes with Chrome & Safari on OSX. Note, that the above ```<LimitExcept OPTIONS>``` is necessary for Chrome as an OPTIONS request is sent and returned before the actual GET request. 
+
+Please note that the code in this fork has been changed in libs and the make file run, but only the complete source versions of "/dist/system.src.js" and "/dist/system-csp-production.src.js" have the actual changes. The minified and other versions are not modified. Also note the important fact that this modification depends on changes in es6-module-loader as well, so if you run the make file you won't pull in those changes.
+
+Please also note that I'm not a security expert. It seems OK to store the basic authorization credentials in the config.js file for the requesting site. Since in my case I have basic authorization setup for the requesting site the config.js file is not accessible without authentication on the requesting site.  
+
+---------
+
 
 _For upgrading to ES6 Module Loader 0.17, [read the release notes here](https://github.com/ModuleLoader/es6-module-loader/releases/tag/v0.17.0)._
 
