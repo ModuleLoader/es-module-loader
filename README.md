@@ -1,4 +1,4 @@
-# ES6 Module Loader Polyfill [![Build Status][travis-image]][travis-url] [![Sauce Test Status][saucelabs-image]][saucelabs-url]
+# ES6 Module Loader Polyfill [![Build Status][travis-image]][travis-url]
 
 _For upgrading to ES6 Module Loader 0.17, [read the release notes here](https://github.com/ModuleLoader/es6-module-loader/releases/tag/v0.17.0)._
 

@@ -128,6 +128,9 @@ module.exports = function(config) {
       });
     }
 
+    // saucelabs still fail sporadically
+    customLaunchers = undefined;
+
     var now = new Date();
     var buildData = options.travis ?
     {
