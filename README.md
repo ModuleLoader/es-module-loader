@@ -189,5 +189,5 @@ Licensed under the MIT license.
 
 [travis-url]: https://travis-ci.org/ModuleLoader/es6-module-loader
 [travis-image]: https://travis-ci.org/ModuleLoader/es6-module-loader.svg?branch=master
-[saucelabs-url]: https://saucelabs.com/u/dd-es6-module-loader
-[saucelabs-image]: https://saucelabs.com/buildstatus/dd-es6-module-loader
+[saucelabs-url]: https://saucelabs.com/u/guybedford
+[saucelabs-image]: https://saucelabs.com/buildstatus/guybedford
