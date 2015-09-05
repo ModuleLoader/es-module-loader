@@ -1,4 +1,4 @@
-# ES6 Module Loader Polyfill [![Build Status][travis-image]][travis-url] [![Sauce Test Status][saucelabs-browser-matrix-image]][saucelabs-url]
+# ES6 Module Loader Polyfill [![Build Status][travis-image]][travis-url] [![Sauce Test Status][saucelabs-image]][saucelabs-url]
 
 _For upgrading to ES6 Module Loader 0.17, [read the release notes here](https://github.com/ModuleLoader/es6-module-loader/releases/tag/v0.17.0)._
 
@@ -190,4 +190,4 @@ Licensed under the MIT license.
 [travis-url]: https://travis-ci.org/ModuleLoader/es6-module-loader
 [travis-image]: https://travis-ci.org/ModuleLoader/es6-module-loader.svg?branch=master
 [saucelabs-url]: https://saucelabs.com/u/dd-es6-module-loader
-[saucelabs-browser-matrix-image]: https://saucelabs.com/browser-matrix/dd-es6-module-loader.svg
+[saucelabs-image]: https://saucelabs.com/buildstatus/dd-es6-module-loader
