@@ -1056,7 +1056,7 @@ function applyPaths(paths, name) {
   }
 
   var outPath = paths[pathMatch] || name;
-  if (wildcard)
+  if (typeof wildcard == 'string')
     outPath = outPath.replace('*', wildcard);
 
   return outPath;
@@ -1114,7 +1114,7 @@ SystemLoader.prototype.instantiate = function(load) {
 };
   var fetchTextFromURL;
   if (typeof XMLHttpRequest != 'undefined') {
-    fetchTextFromURL = function(url, fulfill, reject) {
+    fetchTextFromURL = function(url, authorization, fulfill, reject) {
       var xhr = new XMLHttpRequest();
       var sameDomain = true;
       var doTimeout = false;
@@ -1154,8 +1154,15 @@ SystemLoader.prototype.instantiate = function(load) {
       };
       xhr.open("GET", url, true);
 
-      if (xhr.setRequestHeader)
+      if (xhr.setRequestHeader) {
         xhr.setRequestHeader('Accept', 'application/x-es-module */*');
+        // can set "authorization: true" to enable withCredentials only
+        if (authorization) {
+          if (typeof authorization == 'string')
+            xhr.setRequestHeader('Authorization', authorization);
+          xhr.withCredentials = true;
+        }
+      }
 
       if (doTimeout)
         setTimeout(function() {
@@ -1167,7 +1174,7 @@ SystemLoader.prototype.instantiate = function(load) {
   }
   else if (typeof require != 'undefined') {
     var fs;
-    fetchTextFromURL = function(url, fulfill, reject) {
+    fetchTextFromURL = function(url, authorization, fulfill, reject) {
       if (url.substr(0, 8) != 'file:///')
         throw new Error('Unable to fetch "' + url + '". Only file URLs of the form file:/// allowed running in Node.');
       fs = fs || require('fs');
@@ -1196,7 +1203,7 @@ SystemLoader.prototype.instantiate = function(load) {
 
   SystemLoader.prototype.fetch = function(load) {
     return new Promise(function(resolve, reject) {
-      fetchTextFromURL(load.address, resolve, reject);
+      fetchTextFromURL(load.address, undefined, resolve, reject);
     });
   };
 
