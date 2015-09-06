@@ -41,7 +41,7 @@
       xhr.open("GET", url, true);
 
       if (xhr.setRequestHeader) {
-        xhr.setRequestHeader('Accept', 'application/x-es-module */*');
+        xhr.setRequestHeader('Accept', 'application/x-es-module, */*');
         // can set "authorization: true" to enable withCredentials only
         if (authorization) {
           if (typeof authorization == 'string')
