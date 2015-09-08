@@ -38,7 +38,7 @@ function applyPaths(paths, name) {
     // wildcard path match
     else {
       var slashCount = p.split('/').length;
-      if (slashCount > maxSlashCount &&
+      if (slashCount >= maxSlashCount &&
           name.substr(0, pathParts[0].length) == pathParts[0] &&
           name.substr(name.length - pathParts[1].length) == pathParts[1]) {
             maxSlashCount = slashCount;
