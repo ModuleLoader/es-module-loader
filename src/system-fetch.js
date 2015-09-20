@@ -50,12 +50,13 @@
         }
       }
 
-      if (doTimeout)
+      if (doTimeout) {
         setTimeout(function() {
           xhr.send();
         }, 0);
-
-      xhr.send(null);
+      } else {
+        xhr.send(null);
+      }
     };
   }
   else if (typeof require != 'undefined') {
