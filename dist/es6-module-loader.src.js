@@ -1155,7 +1155,7 @@ SystemLoader.prototype.instantiate = function(load) {
       xhr.open("GET", url, true);
 
       if (xhr.setRequestHeader) {
-        xhr.setRequestHeader('Accept', 'application/x-es-module */*');
+        xhr.setRequestHeader('Accept', 'application/x-es-module, */*');
         // can set "authorization: true" to enable withCredentials only
         if (authorization) {
           if (typeof authorization == 'string')
@@ -1164,12 +1164,13 @@ SystemLoader.prototype.instantiate = function(load) {
         }
       }
 
-      if (doTimeout)
+      if (doTimeout) {
         setTimeout(function() {
           xhr.send();
         }, 0);
-
-      xhr.send(null);
+      } else {
+        xhr.send(null);
+      }
     };
   }
   else if (typeof require != 'undefined') {
