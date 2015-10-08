@@ -18,6 +18,7 @@
     exports.ModulePolyfill = Module;
     exports.Reflect = Reflect;
     exports.System = System;
+    exports.Registry = Registry;
 
   })(cjsMode ? exports : __global);
 
