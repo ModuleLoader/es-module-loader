@@ -12,13 +12,13 @@ var geSaLaKaCuLa = require('gesalakacula');
 var _argv = process.argv;
 var argv = require('minimist')(_argv.slice(_argv.indexOf('--') + 1));
 
-
 var options = extend({
   travis: process.env.TRAVIS,
   polyfill: false,
   saucelabs: false,
   ie8: false,
-  coverage: false
+  coverage: false,
+  'native-iterator': false
 }, argv);
 
 if (options.ie8) {
@@ -41,7 +41,7 @@ module.exports = function(config) {
 
     [options.polyfill ? 'node_modules/when/es6-shim/Promise.js' : ''],
 
-    'node_modules/core-js/client/core.js',
+    [options['native-iterator'] ? '': 'node_modules/core-js/client/core.js'],
 
     'dist/es6-module-loader-dev.src.js',
 
@@ -50,6 +50,8 @@ module.exports = function(config) {
     'test/custom-loader.js',
 
     [!options.ie8 ? 'test/*.spec.js' : 'test/*.normalize.spec.js'],
+
+    [options['native-iterator'] ? 'test/*.native-iterator-spec.js' : ''],
 
     {pattern: 'test/{loader,loads,syntax,worker}/**/*', included: false},
     {pattern: 'node_modules/traceur/bin/traceur.js', included: false},
@@ -123,6 +125,15 @@ module.exports = function(config) {
           'internet explorer': '8'
         }
       });
+    }
+
+    if (options['native-iterator']) {
+      customLaunchers = geSaLaKaCuLa({
+        Evergreen: {
+          firefox: 'dev',
+          chrome: 'dev'
+        }
+      })
     }
 
     var now = new Date();
