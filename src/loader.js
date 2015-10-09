@@ -227,8 +227,8 @@
     this._registry = {
       registryData: [],
       loader: loader
-    }
-    //4.4.2
+    };
+    // 4.4.2
     if (__global.Symbol && __global.Symbol.iterator) {
       var instance = this;
       this[__global.Symbol.iterator] = function() {
@@ -239,13 +239,17 @@
               return {
                 value: instance._registry.registryData[registryEntryIndex++],
                 done: false
-              }
-            } else {
-              return { done: true };
+              };
+            }
+            else {
+              return {
+                value: undefined,
+                done: true
+              };
             }
           }
         };
-      }
+      };
     }
   }
 

@@ -41,6 +41,8 @@ module.exports = function(config) {
 
     [options.polyfill ? 'node_modules/when/es6-shim/Promise.js' : ''],
 
+    'node_modules/core-js/client/core.js',
+
     'dist/es6-module-loader-dev.src.js',
 
     'test/_browser.js',
