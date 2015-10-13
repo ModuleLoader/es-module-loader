@@ -16,6 +16,11 @@
   if (typeof exports === 'object')
     module.exports = System;
 
+  var oldSystem = __global.System;
+  System.noConflict = function() {
+    __global.System = oldSystem;
+  };
+
   __global.System = System;
 
 })(typeof self != 'undefined' ? self : global);
