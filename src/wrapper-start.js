@@ -65,7 +65,7 @@
 
   var baseURI;
   // environent baseURI detection
-  if (typeof document != 'undefined' && document.getElementsByTagName) {
+  if (typeof document != 'undefined' && document.getElementsByTagName && (typeof process === 'undefined' || typeof process.cwd === 'undefined')) {
     baseURI = document.baseURI;
 
     if (!baseURI) {
