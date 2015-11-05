@@ -130,8 +130,7 @@ module.exports = function(config) {
     if (options['native-iterator']) {
       customLaunchers = geSaLaKaCuLa({
         'Windows 7': {
-          firefox: 'dev',
-          chrome: 'dev'
+          'internet explorer': '11'
         }
       })
     }
