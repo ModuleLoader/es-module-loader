@@ -236,8 +236,6 @@
       throw new TypeError('registry must be an object');
     if (this._registry.registryData[key])
       throw new TypeError('Module with key ' + key + ' already exists');
-    if (!(module instanceof Module))
-      throw new TypeError('module must be an instance of Module');
 
     var result = new Promise(function(resolve) {
       resolve(module);
