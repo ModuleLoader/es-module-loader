@@ -23,6 +23,7 @@
   ],
   "devDependencies": {
     "babel-core": "^4.7.16",
+    "core-js": "^1.2.1",
     "expect.js": "^0.3.1",
     "gesalakacula": "^1.0.0",
     "grunt": "~0.4.1",

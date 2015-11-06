@@ -216,6 +216,42 @@
   };
 
   // 4. Registry Objects
+  
+  // 4.2.1
+  // For now, registry objects are a work in progress that don't fully integrate into the rest of the code base
+  function Registry(loader) {
+    if (!this.constructor)
+      throw new TypeError('The Registry constructor must be called with "new"');
+    if (typeof loader !== 'object')
+      throw new TypeError('The Registry constructor must be called with a loader object');
+    this._registry = {
+      registryData: [],
+      loader: loader
+    };
+    // 4.4.2
+    if (__global.Symbol && __global.Symbol.iterator) {
+      var instance = this;
+      this[__global.Symbol.iterator] = function() {
+        var registryEntryIndex = 0;
+        return {
+          next: function() {
+            if (registryEntryIndex < instance._registry.registryData.length - 1) {
+              return {
+                value: instance._registry.registryData[registryEntryIndex++],
+                done: false
+              };
+            }
+            else {
+              return {
+                value: undefined,
+                done: true
+              };
+            }
+          }
+        };
+      };
+    }
+  }
 
   // 5. Loading
 

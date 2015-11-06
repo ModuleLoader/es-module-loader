@@ -4,3 +4,4 @@ tmp
 coverage
 .DS_Store
 npm-debug.log
+.lvimrc
