@@ -57,10 +57,6 @@ describe('Registry', function () {
       expect(function() { registry.install(key, new ModulePolyfill({})) }).to.throwException();
     });
 
-    it('should fail if the given module is not really a Module', function() {
-      expect(function() { registry.install('key', []) }).to.throwException();
-    });
-
     it('should add a new key value pair to registryData when it succeeds', function(done) {
       var registeredModule = new ModulePolyfill({});
       registry.install('key', registeredModule);
