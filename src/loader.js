@@ -116,63 +116,6 @@
       throw new TypeError('Invalid stage ' + stage);
   };
 
-  // TODO: This has been moved to Registry.prototype.lookup (4.4.3)
-  Loader.prototype.lookup = function(key) {
-    var loader = this._loader;
-
-    var entry = loader.registry[key];
-    if (!entry)
-      return null;
-
-    var state;
-    if (entry.state == FETCH)
-      state = 'fetch';
-    else if (entry.state == TRANSLATE)
-      state = 'translate';
-    else if (entry.state == INSTANTIATE)
-      state = 'instantiate';
-    else if (entry.state == LINK)
-      state = 'link';
-    else if (entry.state == READY)
-      state = 'ready';
-
-    return {
-      state: state,
-      metadata: entry.metadata,
-      fetch: entry.fetch && Promise.resolve(entry.fetch),
-      translate: entry.translate && Promise.resolve(entry.translate),
-      instantiate: entry.instantiate && Promise.resolve(entry.instantiate),
-      module: entry.state == READY && (entry.module instanceof Module ? entry.module : entry.module.module),
-      error: entry.error
-    };
-  };
-
-  // TODO: this has been moved to Registry.prototype.install (4.4.4)
-  Loader.prototype.install = function(key, module) {
-    var loader = this._loader;
-
-    if (loader.registry[key])
-      throw new TypeError(key + ' is already defined in the Loader registry.');
-
-    if (!(module instanceof Module))
-      throw new TypeError('Install must provide a valid Module object.');
-
-    loader.registry[key] = {
-      key: key,
-      state: READY,
-      metadata: metadata,
-
-      fetch: undefined,
-      translate: undefined,
-      instantiate: undefined,
-
-      dependencies: undefined,
-      module: module,
-      declare: undefined,
-      error: null
-    };
-  };
-
   // TODO: this has been moved to Registry.prototype.uninstall (4.4.5)
   Loader.prototype.uninstall = function(key) {
     var loader = this._loader;
@@ -216,7 +159,36 @@
   };
 
   // 4. Registry Objects
-  
+
+  // 4.1.1
+  function getCurrentStage(entry) {
+    if (typeof entry !== 'object')
+      throw new TypeError('entry is not an object');
+    return entry.pipeline[0];
+  }
+
+  // 4.1.4
+  function getRegistryEntry(registry, key) {
+    if (typeof registry !== 'object')
+      throw new TypeError('registry is not an object');
+
+    var entry = registry._registry.registryData[key];
+    if (!entry)
+      return null;
+
+    var currentStage = getCurrentStage(entry);
+    var result = new Promise(function(resolve) {
+      resolve(currentStage.result);
+    });
+
+    return {
+      stage: currentStage.stage,
+      result: result,
+      module: currentStage.stage == 'ready' ? entry.module : undefined,
+      error: entry.error ? { value: entry.error } : null
+    };
+  }
+
   // 4.2.1
   // For now, registry objects are a work in progress that don't fully integrate into the rest of the code base
   function Registry(loader) {
@@ -251,6 +223,35 @@
         };
       };
     }
+  }
+
+  // 4.4.3
+  Registry.prototype.lookup = function(key) {
+    return getRegistryEntry(this, key);
+  };
+
+  // 4.4.4
+  Registry.prototype.install = function(key, module) {
+    if (typeof this !== 'object')
+      throw new TypeError('registry must be an object');
+    if (this._registry.registryData[key])
+      throw new TypeError('Module with key ' + key + ' already exists');
+    if (!(module instanceof Module))
+      throw new TypeError('module must be an instance of Module');
+
+    var result = new Promise(function(resolve) {
+      resolve(module);
+    });
+    this._registry.registryData[key] = {
+      key: key,
+      pipeline: [{
+        stage: 'ready',
+        result: result
+      }],
+      metadata: undefined,
+      dependencies: undefined,
+      module: module
+    };
   }
 
   // 5. Loading
