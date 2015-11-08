@@ -59,7 +59,7 @@
       }
     };
   }
-  else if (typeof require != 'undefined') {
+  else if (typeof require != 'undefined' && typeof process != 'undefined') {
     var fs;
     fetchTextFromURL = function(url, authorization, fulfill, reject) {
       if (url.substr(0, 8) != 'file:///')
@@ -83,6 +83,29 @@
         }
       });
     };
+  }
+  else if (typeof self != 'undefined' && typeof self.fetch != 'undefined') {
+    fetchTextFromURL = function(url, authorization, fulfill, reject) {
+      var opts = {
+        headers: {'Accept': 'application/x-es-module, */*'}
+      };
+
+      if (authorization) {
+        if (typeof authorization == 'string')
+          opts.headers['Authorization'] = authorization;
+        opts.credentials = 'include';
+      }
+
+      fetch(url, opts)
+        .then(function (r) {
+          if (r.ok) {
+            return r.text();
+          } else {
+            throw new Error('Fetch error: ' + r.status + ' ' + r.statusText);
+          }
+        })
+        .then(fulfill, reject);
+    }
   }
   else {
     throw new TypeError('No environment fetch API available.');
