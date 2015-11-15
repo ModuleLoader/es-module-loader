@@ -119,4 +119,65 @@ describe('Registry', function () {
 
   });
 
+  describe('uninstall function', function() {
+
+    var registry;
+
+    beforeEach(function() {
+      registry = new Registry({});
+    });
+
+    it('throws if called on a context that\'s not an object', function() {
+      expect(function() { Registry.prototype.uninstall('not an object') }).to.throwException();
+    });
+
+    it('throws if there is no such module', function() {
+      expect(function() { registry.uninstall('non-existent') }).to.throwException();
+    });
+
+    it('throws if the module is still loading', function() {
+      var registeredModule = new ModulePolyfill({});
+      registry.install('still-loading', registeredModule);
+      registry._registry.registryData['still-loading'].pipeline[0].stage = 'fetch';
+      expect(function() { registry.uninstall('still-loading') }).to.throwException();
+    });
+
+    it('removes the module if the module exists and was loaded', function() {
+      registry.install('module-name', new ModulePolyfill({}));
+      registry.uninstall('module-name');
+      expect(registry._registry.registryData['module-name']).to.be(undefined);
+    });
+
+  });
+
+  describe('cancel function', function() {
+
+    var registry;
+
+    beforeEach(function() {
+      registry = new Registry({});
+    });
+
+    it('throws if called on a context that\'s not an object', function() {
+      expect(function() { Registry.prototype.cancel('not an object') }).to.throwException();
+    });
+
+    it('throws if there is no such module', function() {
+      expect(function() { registry.cancel('non-existent') }).to.throwException();
+    });
+
+    it('throws if the module isn\'t still loading', function() {
+      registry.install('already-loaded', new ModulePolyfill({}));
+      expect(function() { registry.cancel('already-loaded') }).to.throwException();
+    });
+
+    it('removes the module if the module exists and is being loaded', function() {
+      registry.install('module-name', new ModulePolyfill({}));
+      registry._registry.registryData['module-name'].pipeline[0].stage = 'fetch';
+      registry.cancel('module-name');
+      expect(registry._registry.registryData['module-name']).to.be(undefined);
+    });
+
+  });
+
 });
