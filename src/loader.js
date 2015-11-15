@@ -116,34 +116,6 @@
       throw new TypeError('Invalid stage ' + stage);
   };
 
-  // TODO: this has been moved to Registry.prototype.uninstall (4.4.5)
-  Loader.prototype.uninstall = function(key) {
-    var loader = this._loader;
-
-    var entry = loader.registry[key];
-    if (!entry)
-      throw new TypeError(key + ' is not defined in the Loader registry.');
-
-    if (entry.state < LINK)
-      throw new TypeError(key + ' is still loading.');
-
-    delete loader.registry[key];
-  };
-
-  // TODO: this has been moved to Registry.prototype.cancel (4.4.6)
-  Loader.prototype.cancel = function(key) {
-    var loader = this._loader;
-
-    var entry = loader.registry[key];
-    if (!entry)
-      throw new TypeError(key + ' does not exist.');
-
-    if (entry.state >= LINK)
-      throw new TypeError(key + ' is already past linking.');
-
-    delete loader.registry[key];
-  };
-
   // TODO: the Loader no longer has the hook property
   // loader.hook('resolve') -> returns resolve hook
   // loader.hook('resolve', fn) -> sets resolve hook
@@ -250,6 +222,32 @@
       dependencies: undefined,
       module: module
     };
+  }
+
+  // 4.4.5
+  Registry.prototype.uninstall = function(key) {
+    if (typeof this !== 'object')
+      throw new TypeError('registry must be an object');
+    var entry = this._registry.registryData[key];
+    if (!entry)
+      throw new TypeError('Module with key ' + key + 'does not exist');
+    var stageEntry = getCurrentStage(entry);
+    if (stageEntry.stage !== 'link' && stageEntry.stage !== 'ready')
+      throw new TypeError('Module is still loading');
+    delete this._registry.registryData[key];
+  }
+
+  // 4.4.6
+  Registry.prototype.cancel = function(key) {
+    if (typeof this !== 'object')
+      throw new TypeError('registry must be an object');
+    var entry = this._registry.registryData[key];
+    if (!entry)
+      throw new TypeError('Module with key ' + key + ' does not exist');
+    var stageEntry = getCurrentStage(entry);
+    if (stageEntry.stage === 'link' || stageEntry.stage === 'ready')
+      throw new TypeError('Module with key ' + key + ' is already done linking');
+    delete this._registry.registryData[key];
   }
 
   // 5. Loading
