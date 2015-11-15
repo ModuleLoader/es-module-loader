@@ -233,7 +233,7 @@
       throw new TypeError('Module ' + key + ' does not exist');
     var stageEntry = getCurrentStage(entry);
     if (stageEntry.stage !== 'link' && stageEntry.stage !== 'ready')
-      throw new TypeError('Module is still loading');
+      throw new TypeError('Module ' + key + ' is still loading');
     delete this._registry.registryData[key];
   }
 
