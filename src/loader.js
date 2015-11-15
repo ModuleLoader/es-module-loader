@@ -227,10 +227,10 @@
   // 4.4.5
   Registry.prototype.uninstall = function(key) {
     if (typeof this !== 'object')
-      throw new TypeError('registry must be an object');
+      throw new TypeError('Registry must be an object');
     var entry = this._registry.registryData[key];
     if (!entry)
-      throw new TypeError('Module with key ' + key + 'does not exist');
+      throw new TypeError('Module ' + key + ' does not exist');
     var stageEntry = getCurrentStage(entry);
     if (stageEntry.stage !== 'link' && stageEntry.stage !== 'ready')
       throw new TypeError('Module is still loading');
@@ -240,13 +240,13 @@
   // 4.4.6
   Registry.prototype.cancel = function(key) {
     if (typeof this !== 'object')
-      throw new TypeError('registry must be an object');
+      throw new TypeError('Registry must be an object');
     var entry = this._registry.registryData[key];
     if (!entry)
-      throw new TypeError('Module with key ' + key + ' does not exist');
+      throw new TypeError('Module ' + key + ' does not exist');
     var stageEntry = getCurrentStage(entry);
     if (stageEntry.stage === 'link' || stageEntry.stage === 'ready')
-      throw new TypeError('Module with key ' + key + ' is already done linking');
+      throw new TypeError('Module ' + key + ' is already done linking');
     delete this._registry.registryData[key];
   }
 
