@@ -70,7 +70,7 @@ var transpile = (function() {
     options.target = options.target || ts.ScriptTarget.ES5;
     if (options.sourceMap === undefined)
       options.sourceMap = true;
-    if (options.sourceMap)
+    if (options.sourceMap && options.inlineSourceMap !== false)
       options.inlineSourceMap = true;
 
     options.module = ts.ModuleKind.System;
