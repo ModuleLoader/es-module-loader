@@ -366,13 +366,14 @@ function logloads(loads) {
         if (loader.loads[i].name == name) {
           existingLoad = loader.loads[i];
 
-          if(step == 'translate' && !existingLoad.source) {
+          if (step == 'translate' && !existingLoad.source) {
             existingLoad.address = stepState.moduleAddress;
             proceedToTranslate(loader, existingLoad, Promise.resolve(stepState.moduleSource));
           }
 
-          // a primary load -> use that existing linkset
-          if (existingLoad.linkSets.length)
+          // a primary load -> use that existing linkset if it is for the direct load here
+          // otherwise create a new linkset unit
+          if (existingLoad.linkSets.length && existingLoad.linkSets[0].loads[0].name == existingLoad.name)
             return existingLoad.linkSets[0].done.then(function() {
               resolve(existingLoad);
             });
