@@ -31,9 +31,22 @@
 
       xhr.onreadystatechange = function () {
         if (xhr.readyState === 4) {
-          if (xhr.status === 200 || (xhr.status == 0 && xhr.responseText)) {
+          // in Chrome on file:/// URLs, status is 0
+          if (xhr.status == 0) {
+            if (xhr.responseText) {
+              load();
+            }
+            else {
+              // when responseText is empty, wait for load or error event
+              // to inform if it is a 404 or empty file
+              xhr.addEventListener('error', error);
+              xhr.addEventListener('load', load);
+            }
+          }
+          else if (xhr.status === 200) {
             load();
-          } else {
+          }
+          else {
             error();
           }
         }
