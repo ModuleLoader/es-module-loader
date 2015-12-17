@@ -529,13 +529,14 @@ function logloads(loads) {
         if (loader.loads[i].name == name) {
           existingLoad = loader.loads[i];
 
-          if(step == 'translate' && !existingLoad.source) {
+          if (step == 'translate' && !existingLoad.source) {
             existingLoad.address = stepState.moduleAddress;
             proceedToTranslate(loader, existingLoad, Promise.resolve(stepState.moduleSource));
           }
 
-          // a primary load -> use that existing linkset
-          if (existingLoad.linkSets.length)
+          // a primary load -> use that existing linkset if it is for the direct load here
+          // otherwise create a new linkset unit
+          if (existingLoad.linkSets.length && existingLoad.linkSets[0].loads[0].name == existingLoad.name)
             return existingLoad.linkSets[0].done.then(function() {
               resolve(existingLoad);
             });
@@ -903,19 +904,14 @@ function logloads(loads) {
       if (typeof obj != 'object')
         throw new TypeError('Expected object');
 
-      // we do this to be able to tell if a module is a module privately in ES5
-      // by doing m instanceof Module
       var m = new Module();
 
-      var pNames;
-      if (Object.getOwnPropertyNames && obj != null) {
+      var pNames = [];
+      if (Object.getOwnPropertyNames && obj != null)
         pNames = Object.getOwnPropertyNames(obj);
-      }
-      else {
-        pNames = [];
+      else
         for (var key in obj)
           pNames.push(key);
-      }
 
       for (var i = 0; i < pNames.length; i++) (function(key) {
         defineProperty(m, key, {
@@ -926,9 +922,6 @@ function logloads(loads) {
           }
         });
       })(pNames[i]);
-
-      if (Object.preventExtensions)
-        Object.preventExtensions(m);
 
       return m;
     },
@@ -1027,7 +1020,7 @@ function SystemLoader() {
 // NB no specification provided for System.paths, used ideas discussed in https://github.com/jorendorff/js-loaders/issues/25
 function applyPaths(paths, name) {
   // most specific (most number of slashes in path) match wins
-  var pathMatch = '', wildcard, maxSlashCount = 0;
+  var pathMatch = '', wildcard, maxWildcardPrefixLen = 0;
 
   // check to see if we have a paths entry
   for (var p in paths) {
@@ -1044,11 +1037,11 @@ function applyPaths(paths, name) {
     }
     // wildcard path match
     else {
-      var slashCount = p.split('/').length;
-      if (slashCount >= maxSlashCount &&
+      var wildcardPrefixLen = pathParts[0].length;
+      if (wildcardPrefixLen >= maxWildcardPrefixLen &&
           name.substr(0, pathParts[0].length) == pathParts[0] &&
           name.substr(name.length - pathParts[1].length) == pathParts[1]) {
-            maxSlashCount = slashCount;
+            maxWildcardPrefixLen = wildcardPrefixLen;
             pathMatch = p;
             wildcard = name.substr(pathParts[0].length, name.length - pathParts[1].length - pathParts[0].length);
           }
@@ -1145,9 +1138,22 @@ SystemLoader.prototype.instantiate = function(load) {
 
       xhr.onreadystatechange = function () {
         if (xhr.readyState === 4) {
-          if (xhr.status === 200 || (xhr.status == 0 && xhr.responseText)) {
+          // in Chrome on file:/// URLs, status is 0
+          if (xhr.status == 0) {
+            if (xhr.responseText) {
+              load();
+            }
+            else {
+              // when responseText is empty, wait for load or error event
+              // to inform if it is a 404 or empty file
+              xhr.addEventListener('error', error);
+              xhr.addEventListener('load', load);
+            }
+          }
+          else if (xhr.status === 200) {
             load();
-          } else {
+          }
+          else {
             error();
           }
         }
@@ -1173,7 +1179,7 @@ SystemLoader.prototype.instantiate = function(load) {
       }
     };
   }
-  else if (typeof require != 'undefined') {
+  else if (typeof require != 'undefined' && typeof process != 'undefined') {
     var fs;
     fetchTextFromURL = function(url, authorization, fulfill, reject) {
       if (url.substr(0, 8) != 'file:///')
@@ -1197,6 +1203,29 @@ SystemLoader.prototype.instantiate = function(load) {
         }
       });
     };
+  }
+  else if (typeof self != 'undefined' && typeof self.fetch != 'undefined') {
+    fetchTextFromURL = function(url, authorization, fulfill, reject) {
+      var opts = {
+        headers: {'Accept': 'application/x-es-module, */*'}
+      };
+
+      if (authorization) {
+        if (typeof authorization == 'string')
+          opts.headers['Authorization'] = authorization;
+        opts.credentials = 'include';
+      }
+
+      fetch(url, opts)
+        .then(function (r) {
+          if (r.ok) {
+            return r.text();
+          } else {
+            throw new Error('Fetch error: ' + r.status + ' ' + r.statusText);
+          }
+        })
+        .then(fulfill, reject);
+    }
   }
   else {
     throw new TypeError('No environment fetch API available.');
