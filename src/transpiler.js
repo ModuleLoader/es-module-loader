@@ -47,8 +47,12 @@ var transpile = (function() {
       return compiler.compile(source, filename);
     }
     catch(e) {
-      // traceur throws an error array
-      throw e[0];
+      // on older versions of traceur (<0.9.3), an array of errors is thrown
+      // rather than a single error.
+      if (e.length) {
+        throw e[0];
+      }
+      throw e;
     }
   }
 
