@@ -36,7 +36,7 @@
   function addToError(err, msg) {
     var newErr;
     if (err instanceof Error) {
-      var newErr = new Error(err.message, err.fileName, err.lineNumber);
+      newErr = new Error(err.message, err.fileName, err.lineNumber);
       if (isBrowser) {
         newErr.message = err.message + '\n\t' + msg;
         newErr.stack = err.stack;
