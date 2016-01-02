@@ -85,6 +85,21 @@
       throw new TypeError('Invalid stage ' + stage);
   };
 
+  // 3.3.5
+  Object.defineProperty(Loader.prototype, 'registry', {
+      get: function() {
+          if (typeof this !== 'object')
+              throw new TypeError('this must be a Loader');
+          // uncomment when Realm is implemented
+          // if (!this._loader.realm)
+          //     throw new TypeError('A Loader must have a realm');
+
+          if (typeof this._loader.registry !== 'object')
+              throw new TypeError('registry must be an object');
+          return this._loader.registry;
+      }
+  });
+
   // No longer in spec
   // For eg fetch, <script type="module">${value}</script>, key = anon
   Loader.prototype.provide = function(key, stage, value, metadata) {
