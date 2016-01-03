@@ -18,7 +18,8 @@
       translate: undefined,
       instantiate: undefined,
 
-      registry: {}
+      registry: {},
+      newRegistry: createRegistry(), //this is temporary until Registry is ready to be used
       // Realm not implemented
     };
   }
@@ -94,9 +95,9 @@
           // if (!this._loader.realm)
           //     throw new TypeError('A Loader must have a realm');
 
-          if (typeof this._loader.registry !== 'object')
-              throw new TypeError('registry must be an object');
-          return this._loader.registry;
+          if (!(this._loader.newRegistry instanceof RegistryPrototype))
+              throw new TypeError('invalid registry -- must be created during Loader constructor');
+          return this._loader.newRegistry;
       }
   });
 
@@ -148,13 +149,90 @@
   // 4. Registry Objects
 
   // 4.1.1
+  function createRegistry() {
+    var registry = new RegistryPrototype();
+    registry._registry = {};
+    registry._registry.registryMap = new Map();
+    // 4.4.2
+    if (__global.Symbol && __global.Symbol.iterator)
+      registry[__global.Symbol.iterator] = RegistryPrototype.prototype.entries;
+    return registry;
+  }
+
+  // 4.2
+  // For now, registry objects are a work in progress that don't fully integrate into the rest of the code base
+  function Registry() {
+    throw new Error('A registry may only be created when creating a loader');
+  }
+
+  // 4.3.1
+  Registry.prototype = RegistryPrototype;
+
+  // 4.4 (reason for a separate constructor explained at 4.3.1)
+  function RegistryPrototype() {}
+
+  // 4.4.1
+  Registry.prototype.constructor = Registry;
+
+  // 4.4.2 is inlined in 4.1.1
+
+  // 4.4.3
+  RegistryPrototype.prototype.entries = function() {
+    if (typeof this !== 'object' || !(this._registry.registryMap instanceof Map))
+      throw new TypeError('cannot get entries of a non-registry');
+    return this._registry.registryMap.entries();
+  }
+
+  // 4.4.4
+  RegistryPrototype.prototype.keys = function() {
+    if (typeof this !== 'object' || !(this._registry.registryMap instanceof Map))
+      throw new TypeError('invalid registry');
+    return this._registry.registryMap.keys();
+  }
+
+  // 4.4.5
+  RegistryPrototype.prototype.values = function() {
+    if (typeof this !== 'object' || !(this._registry.registryMap instanceof Map))
+      throw new TypeError('invalid registry');
+    return this._registry.registryMap.values();
+  }
+
+  // 4.4.6
+  RegistryPrototype.prototype.get = function(key) {
+    if (typeof this !== 'object' || !(this._registry.registryMap instanceof Map))
+      throw new TypeError('invalid registry');
+    return this._registry.registryMap.get(key);
+  }
+
+  // 4.4.7
+  RegistryPrototype.prototype.set = function(key, value) {
+    if (typeof this !== 'object' || !(this._registry.registryMap instanceof Map))
+      throw new TypeError('invalid registry');
+    return this._registry.registryMap.set(key, value);
+  }
+
+  // 4.4.8
+  RegistryPrototype.prototype.has = function(key) {
+    if (typeof this !== 'object' || !(this._registry.registryMap instanceof Map))
+      throw new TypeError('invalid registry');
+    return this._registry.registryMap.has(key);
+  }
+
+  // 4.4.9
+  RegistryPrototype.prototype.delete = function(key) {
+    if (typeof this !== 'object' || !(this._registry.registryMap instanceof Map))
+      throw new TypeError('invalid registry');
+    return this._registry.registryMap.delete(key);
+  }
+
+  // 4.1.1 - TODO out of date
   function getCurrentStage(entry) {
     if (typeof entry !== 'object')
       throw new TypeError('entry is not an object');
     return entry.pipeline[0];
   }
 
-  // 4.1.4
+  // 4.1.4 - TODO out of date
   function getRegistryEntry(registry, key) {
     if (typeof registry !== 'object')
       throw new TypeError('registry is not an object');
@@ -176,48 +254,12 @@
     };
   }
 
-  // 4.2.1
-  // For now, registry objects are a work in progress that don't fully integrate into the rest of the code base
-  function Registry(loader) {
-    if (!this.constructor)
-      throw new TypeError('The Registry constructor must be called with "new"');
-    if (typeof loader !== 'object')
-      throw new TypeError('The Registry constructor must be called with a loader object');
-    this._registry = {
-      registryData: [],
-      loader: loader
-    };
-    // 4.4.2
-    if (__global.Symbol && __global.Symbol.iterator) {
-      var instance = this;
-      this[__global.Symbol.iterator] = function() {
-        var registryEntryIndex = 0;
-        return {
-          next: function() {
-            if (registryEntryIndex < instance._registry.registryData.length - 1) {
-              return {
-                value: instance._registry.registryData[registryEntryIndex++],
-                done: false
-              };
-            }
-            else {
-              return {
-                value: undefined,
-                done: true
-              };
-            }
-          }
-        };
-      };
-    }
-  }
-
-  // 4.4.3
+  // 4.4.3 - TODO out of date
   Registry.prototype.lookup = function(key) {
     return getRegistryEntry(this, key);
   };
 
-  // 4.4.4
+  // 4.4.4 - TODO out of date
   Registry.prototype.install = function(key, module) {
     if (typeof this !== 'object')
       throw new TypeError('registry must be an object');
@@ -239,7 +281,7 @@
     };
   }
 
-  // 4.4.5
+  // 4.4.5 - TODO out of date
   Registry.prototype.uninstall = function(key) {
     if (typeof this !== 'object')
       throw new TypeError('Registry must be an object');
@@ -252,7 +294,7 @@
     delete this._registry.registryData[key];
   }
 
-  // 4.4.6
+  // 4.4.6 - TODO out of date
   Registry.prototype.cancel = function(key) {
     if (typeof this !== 'object')
       throw new TypeError('Registry must be an object');
@@ -265,9 +307,9 @@
     delete this._registry.registryData[key];
   }
 
-  // 5. Loading
+  // 5. Loading - TODO out of date
 
-  // 5.1.1
+  // 5.1.1 - TODO out of date
   function ensureRegistered(loader, key, metadata) {
     return loader.registry[key] || (loader.registry[key] = {
       key: key,
@@ -292,9 +334,9 @@
     });
   }
 
-  // 5.1.2 inlined
+  // 5.1.2 inlined - TODO out of date
 
-  // 5.1.3
+  // 5.1.3 - TODO out of date
   function fulfillFetch(loader, entry, payload) {
     if (entry.fetchResolve)
       entry.fetchResolve(payload);
@@ -305,7 +347,7 @@
     entry.state = Math.max(entry.state, TRANSLATE);
   }
 
-  // 5.1.4
+  // 5.1.4 - TODO out of date
   function fulfillTranslate(loader, entry, source) {
     if (entry.translateResolve)
       entry.translateResolve(source);
@@ -316,7 +358,7 @@
     entry.state = Math.max(entry.state, INSTANTIATE);
   }
 
-  // 5.1.5
+  // 5.1.5 - TODO out of date
   function fulfillInstantiate(loader, entry, instance, source) {
     // 5.1.6 CommitInstantiated inlined
 
@@ -361,7 +403,7 @@
     });
   }
 
-  // 5.2.1
+  // 5.2.1 - TODO out of date
   function requestFetch(loader, key, metadata, entry) {
     entry = entry || ensureRegistered(loader, key, metadata);
 
@@ -397,7 +439,7 @@
     });
   }
 
-  // 5.2.2
+  // 5.2.2 - TODO out of date
   function requestTranslate(loader, key, metadata, entry) {
     entry = entry || ensureRegistered(loader, key, metadata);
 
@@ -436,7 +478,7 @@
     });
   }
 
-  // 5.2.3
+  // 5.2.3 - TODO out of date
   function requestInstantiate(loader, key, metadata, entry) {
     entry = entry || ensureRegistered(loader, key, metadata);
     
@@ -474,7 +516,7 @@
     });
   }
 
-  // 5.2.4
+  // 5.2.4 - TODO out of date
   function requestInstantiateAll(loader, key, metadata, entry) {
     entry = entry || ensureRegistered(loader, key, metadata);
 
@@ -507,7 +549,7 @@
     });
   }
 
-  // 5.2.5
+  // 5.2.5 - TODO out of date
   function requestLink(loader, key, metadata, entry) {
     entry = entry || ensureRegistered(loader, key, metadata);
 
@@ -551,7 +593,7 @@
     });
   }
 
-  // 5.2.6
+  // 5.2.6 - TODO out of date
   function requestReady(loader, key, metadata, entry) {
     entry = entry || ensureRegistered(loader, key, metadata);
 
@@ -577,12 +619,12 @@
     });
   }
 
-  // 6. Linking
+  // 6. Linking - TODO out of date
 
-  // 6.2.1 inlined in 5.2.5
-  // 6.2.2 inlined in 5.2.5
+  // 6.2.1 inlined in 5.2.5 - TODO out of date
+  // 6.2.2 inlined in 5.2.5 - TODO out of date
 
-  // 6.2.3
+  // 6.2.3 - TODO out of date
   function computeDependencyGraph(entry, result) {
     if (indexOf.call(result, entry) != -1)
       return;
@@ -607,9 +649,9 @@
   }
 
 
-  // 7. Module Objects
+  // 7. Module Objects - TODO out of date
 
-  // 7.3 Module Reflection
+  // 7.3 Module Reflection - TODO out of date
 
   // plain user-facing module object
   function Module(descriptors, executor, evaluate) {
