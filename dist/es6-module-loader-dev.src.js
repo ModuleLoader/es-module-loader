@@ -72,7 +72,7 @@ global.URLPolyfill = URLPolyfill;
 
   var isWorker = typeof window == 'undefined' && typeof self != 'undefined' && typeof importScripts != 'undefined';
   var isBrowser = typeof window != 'undefined' && typeof document != 'undefined';
-  var isWindows = typeof process != 'undefined' && !!process.platform.match(/^win/);
+  var isWindows = typeof process != 'undefined' && typeof process.platform != 'undefined' && !!process.platform.match(/^win/);
 
   if (!__global.console)
     __global.console = { assert: function() {} };
@@ -106,7 +106,7 @@ global.URLPolyfill = URLPolyfill;
   function addToError(err, msg) {
     var newErr;
     if (err instanceof Error) {
-      var newErr = new Error(err.message, err.fileName, err.lineNumber);
+      newErr = new Error(err.message, err.fileName, err.lineNumber);
       if (isBrowser) {
         newErr.message = err.message + '\n\t' + msg;
         newErr.stack = err.stack;
@@ -873,18 +873,21 @@ function logloads(loads) {
     },
     // 26.3.3.9 keys not implemented
     // 26.3.3.10
-    load: function(name, options) {
+    load: function(name) {
       var loader = this._loader;
-      if (loader.modules[name]) {
-        doEnsureEvaluated(loader.modules[name], [], loader);
-        return Promise.resolve(loader.modules[name].module);
-      }
-      return loader.importPromises[name] || createImportPromise(this, name,
-        loadModule(loader, name, {})
-        .then(function(load) {
-          delete loader.importPromises[name];
-          return evaluateLoadedModule(loader, load);
-        }));
+      if (loader.modules[name])
+        return Promise.resolve();
+      return loader.importPromises[name] || createImportPromise(this, name, new Promise(asyncStartLoadPartwayThrough({
+        step: 'locate',
+        loader: loader,
+        moduleName: name,
+        moduleMetadata: {},
+        moduleSource: undefined,
+        moduleAddress: undefined
+      }))
+      .then(function() {
+        delete loader.importPromises[name];
+      }));
     },
     // 26.3.3.11
     module: function(source, options) {
@@ -1119,7 +1122,7 @@ function logloads(loads) {
 
       module.locked = false;
       return value;
-    }, load.name);
+    }, { id: load.name });
 
     // setup our setters and execution function
     module.setters = registryEntry.setters;
@@ -1306,8 +1309,12 @@ var transpile = (function() {
       return compiler.compile(source, filename);
     }
     catch(e) {
-      // traceur throws an error array
-      throw e[0];
+      // on older versions of traceur (<0.9.3), an array of errors is thrown
+      // rather than a single error.
+      if (e.length) {
+        throw e[0];
+      }
+      throw e;
     }
   }
 
@@ -1390,7 +1397,7 @@ function applyPaths(paths, name) {
     }
   }
 
-  var outPath = paths[pathMatch] || name;
+  var outPath = paths[pathMatch];
   if (typeof wildcard == 'string')
     outPath = outPath.replace('*', wildcard);
 
@@ -1412,7 +1419,7 @@ SystemLoader.prototype.normalize = function(name, parentName, parentAddress) {
 
   // not absolute or relative -> apply paths (what will be sites)
   if (!name.match(absURLRegEx) && name[0] != '.')
-    name = new URL(applyPaths(this.paths, name), baseURI).href;
+    name = new URL(applyPaths(this.paths, name) || name, baseURI).href;
   // apply parent-relative normalization, parentAddress is already normalized
   else
     name = new URL(name, parentName || baseURI).href;
