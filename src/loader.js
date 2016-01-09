@@ -147,12 +147,16 @@
   };
 
   // 4. Registry Objects
+  // For now, registry objects are a work in progress that don't fully integrate into the rest of the code base
 
   // 4.1.1
   function createRegistry() {
     var registry = new RegistryPrototype();
     registry._registry = {};
-    registry._registry.registryMap = new Map();
+    if (Map)
+      registry._registry.registryMap = new Map();
+    else
+      registry._registry.registryMap = {};
     // 4.4.2
     if (__global.Symbol && __global.Symbol.iterator)
       registry[__global.Symbol.iterator] = RegistryPrototype.prototype.entries;
@@ -160,7 +164,6 @@
   }
 
   // 4.2
-  // For now, registry objects are a work in progress that don't fully integrate into the rest of the code base
   function Registry() {
     throw new Error('A registry may only be created when creating a loader');
   }
@@ -178,51 +181,136 @@
 
   // 4.4.3
   RegistryPrototype.prototype.entries = function() {
-    if (typeof this !== 'object' || !(this._registry.registryMap instanceof Map))
+    if (typeof this !== 'object')
       throw new TypeError('cannot get entries of a non-registry');
-    return this._registry.registryMap.entries();
+    if (Map) {
+      // native iterator
+      return this._registry.registryMap.entries();
+    } else {
+      // polyfilled iterator
+      var keys = Object.keys(this._registry.registryMap);
+      var keyIndex = 0;
+      var instance = this;
+      return {
+        next: function() {
+          if (keyIndex < keys.length - 1) {
+            return {
+              value: [keys[keyIndex], instance._registry.registryMap[keys[keyIndex++]]],
+              done: false
+            };
+          } else {
+            return {
+              value: undefined,
+              done: true
+            };
+          }
+        }
+      };
+    }
   }
 
   // 4.4.4
   RegistryPrototype.prototype.keys = function() {
-    if (typeof this !== 'object' || !(this._registry.registryMap instanceof Map))
+    if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    return this._registry.registryMap.keys();
+    if (Map) {
+      // native iterator
+      return this._registry.registryMap.keys();
+    } else {
+      // polyfilled iterator
+      var keys = Object.keys(this._registry.registryMap);
+      var keyIndex = 0;
+      return {
+        next: function() {
+          if (keyIndex < keys.length - 1) {
+            return {
+              value: keys[keyIndex++],
+              done: false
+            };
+          } else {
+            return {
+              value: undefined,
+              done: true
+            };
+          }
+        }
+      };
+    }
   }
 
   // 4.4.5
   RegistryPrototype.prototype.values = function() {
-    if (typeof this !== 'object' || !(this._registry.registryMap instanceof Map))
+    if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    return this._registry.registryMap.values();
+    if (Map) {
+      // native iterator
+      return this._registry.registryMap.values();
+    } else {
+      // polyfilled iterator
+      var keys = Object.keys(this._registry.registryMap);
+      var keyIndex = 0;
+      var instance = this;
+      return {
+        next: function() {
+          if (keyIndex < keys.length - 1) {
+            return {
+              value: instance._registry.registryMap[keys[keyIndex++]],
+              done: false
+            };
+          } else {
+            return {
+              value: undefined,
+              done: true
+            };
+          }
+        }
+      };
+    }
   }
 
   // 4.4.6
   RegistryPrototype.prototype.get = function(key) {
-    if (typeof this !== 'object' || !(this._registry.registryMap instanceof Map))
+    if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    return this._registry.registryMap.get(key);
+    if (Map)
+      return this._registry.registryMap.get(key);
+    else
+      return this._registry.registryMap[key];
   }
 
   // 4.4.7
   RegistryPrototype.prototype.set = function(key, value) {
-    if (typeof this !== 'object' || !(this._registry.registryMap instanceof Map))
+    if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    return this._registry.registryMap.set(key, value);
+    if (Map)
+      this._registry.registryMap.set(key, value);
+    else
+      this._registry.registryMap[key] = value;
+
+    return this;
   }
 
   // 4.4.8
   RegistryPrototype.prototype.has = function(key) {
-    if (typeof this !== 'object' || !(this._registry.registryMap instanceof Map))
+    if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    return this._registry.registryMap.has(key);
+    if (Map)
+      return this._registry.registryMap.has(key);
+    else
+      return this._registry.registryMap.hasOwnProperty(key);
   }
 
   // 4.4.9
   RegistryPrototype.prototype.delete = function(key) {
-    if (typeof this !== 'object' || !(this._registry.registryMap instanceof Map))
+    if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    return this._registry.registryMap.delete(key);
+    if (Map)
+      return this._registry.registryMap.delete(key);
+    else {
+      var hadProperty = this._registry.registryMap.hasOwnProperty(key);
+      delete this._registry.registryMap[key];
+      return hadProperty;
+    }
   }
 
   // 4.1.1 - TODO out of date

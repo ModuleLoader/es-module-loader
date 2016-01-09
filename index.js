@@ -1,7 +1,5 @@
 if (typeof Promise === 'undefined')
   require('when/es6-shim/Promise');
-if (typeof Map === 'undefined')
-  require('es6-map/implement');
 
 module.exports = require('./dist/es6-module-loader-dev.src');
 

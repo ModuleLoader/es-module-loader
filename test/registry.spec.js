@@ -87,6 +87,10 @@ describe('Registry', function() {
       expect(System.registry.get(moduleName)).to.eql(moduleValue);
     });
 
+    it('returns the registry when you call set', function() {
+      expect(System.registry.set(moduleName, 'newValue')).to.eql(System.registry);
+    });
+
     it('throws if the registry is invalid', function() {
       expect(function() {Registry.prototype.set.call('not a real registry', 'm2', 'value m2')})
       .to.throwException(function(e) {
@@ -119,7 +123,9 @@ describe('Registry', function() {
     describe('delete function', function() {
 
       it('removes a module and returns true', function() {
+        expect(System.registry.has(moduleName)).to.be(true);
         expect(System.registry.delete(moduleName)).to.be(true);
+        expect(System.registry.has(moduleName)).to.be(false);
       });
 
       it('returns false if it didn\'t remove the module', function() {
