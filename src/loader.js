@@ -153,8 +153,8 @@
   function createRegistry() {
     var registry = new RegistryPrototype();
     registry._registry = {};
-    if (Map)
-      registry._registry.registryMap = new Map();
+    if (__global.Map)
+      registry._registry.registryMap = new __global.Map();
     else
       registry._registry.registryMap = {};
     // 4.4.2
@@ -183,7 +183,7 @@
   RegistryPrototype.prototype.entries = function() {
     if (typeof this !== 'object')
       throw new TypeError('cannot get entries of a non-registry');
-    if (Map) {
+    if (__global.Map) {
       // native iterator
       return this._registry.registryMap.entries();
     } else {
@@ -213,7 +213,7 @@
   RegistryPrototype.prototype.keys = function() {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    if (Map) {
+    if (__global.Map) {
       // native iterator
       return this._registry.registryMap.keys();
     } else {
@@ -242,7 +242,7 @@
   RegistryPrototype.prototype.values = function() {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    if (Map) {
+    if (__global.Map) {
       // native iterator
       return this._registry.registryMap.values();
     } else {
@@ -272,7 +272,7 @@
   RegistryPrototype.prototype.get = function(key) {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    if (Map)
+    if (__global.Map)
       return this._registry.registryMap.get(key);
     else
       return this._registry.registryMap[key];
@@ -282,7 +282,7 @@
   RegistryPrototype.prototype.set = function(key, value) {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    if (Map)
+    if (__global.Map)
       this._registry.registryMap.set(key, value);
     else
       this._registry.registryMap[key] = value;
@@ -294,7 +294,7 @@
   RegistryPrototype.prototype.has = function(key) {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    if (Map)
+    if (__global.Map)
       return this._registry.registryMap.has(key);
     else
       return this._registry.registryMap.hasOwnProperty(key);
@@ -304,7 +304,7 @@
   RegistryPrototype.prototype.delete = function(key) {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    if (Map)
+    if (__global.Map)
       return this._registry.registryMap.delete(key);
     else {
       var hadProperty = this._registry.registryMap.hasOwnProperty(key);
