@@ -186,14 +186,14 @@
     if (__global.Map) {
       // native iterator
       return this._registry.registryMap.entries();
-    } else {
+    } else if (__global.Symbol && __global.Symbol.iterator) {
       // polyfilled iterator
       var keys = Object.keys(this._registry.registryMap);
       var keyIndex = 0;
       var instance = this;
       return {
         next: function() {
-          if (keyIndex < keys.length - 1) {
+          if (keyIndex < keys.length) {
             return {
               value: [keys[keyIndex], instance._registry.registryMap[keys[keyIndex++]]],
               done: false
@@ -206,6 +206,8 @@
           }
         }
       };
+    } else {
+      throw new Error('Symbol.iterator must be polyfilled to iterate over registry entries');
     }
   }
 
@@ -216,13 +218,13 @@
     if (__global.Map) {
       // native iterator
       return this._registry.registryMap.keys();
-    } else {
+    } else if (__global.Symbol && __global.Symbol.iterator) {
       // polyfilled iterator
       var keys = Object.keys(this._registry.registryMap);
       var keyIndex = 0;
       return {
         next: function() {
-          if (keyIndex < keys.length - 1) {
+          if (keyIndex < keys.length) {
             return {
               value: keys[keyIndex++],
               done: false
@@ -235,6 +237,8 @@
           }
         }
       };
+    } else {
+      throw new Error("Symbol.iterator must be polyfilled in order to iterate over registry keys")
     }
   }
 
@@ -245,14 +249,14 @@
     if (__global.Map) {
       // native iterator
       return this._registry.registryMap.values();
-    } else {
+    } else if (__global.Symbol && __global.Symbol.iterator) {
       // polyfilled iterator
       var keys = Object.keys(this._registry.registryMap);
       var keyIndex = 0;
       var instance = this;
       return {
         next: function() {
-          if (keyIndex < keys.length - 1) {
+          if (keyIndex < keys.length) {
             return {
               value: instance._registry.registryMap[keys[keyIndex++]],
               done: false
@@ -265,6 +269,8 @@
           }
         }
       };
+    } else {
+      throw new Error("Symbol.iterator must be polyfilled in order to iterate over registry values");
     }
   }
 
