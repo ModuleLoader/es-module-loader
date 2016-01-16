@@ -29,7 +29,7 @@ describe('Registry', function() {
 
     it('returns all the entries in the registry in a MapIterator', function() {
       // iterate and get it out
-      var iter = System.registry.entries();
+      var iter = System.registry.entries()[Symbol.iterator]();
       var entry1 = iter.next();
       expect(entry1.value).to.eql([moduleName, moduleValue]);
       var entry2 = iter.next(); //move past the last value
@@ -48,7 +48,7 @@ describe('Registry', function() {
   describeIf(System.transpiler !== 'traceur', 'keys function', function() {
 
     it('returns an iterator of all of the moduleNames', function() {
-      var iter = System.registry.keys();
+      var iter = System.registry.keys()[Symbol.iterator]();
       var entry1 = iter.next();
       expect(entry1.value).to.equal(moduleName);
     });
@@ -65,7 +65,7 @@ describe('Registry', function() {
   describeIf(System.transpiler !== 'traceur', 'values function', function() {
 
     it('returns an iterator of all of the moduleValues', function() {
-      var iter = System.registry.values();
+      var iter = System.registry.values()[Symbol.iterator]();
       var entry1 = iter.next();
       expect(entry1.value).to.eql(moduleValue);
       expect(entry1.done).to.be(false);

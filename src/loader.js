@@ -153,13 +153,16 @@
   function createRegistry() {
     var registry = new RegistryPrototype();
     registry._registry = {};
-    if (__global.Map)
+    var iterator;
+    if (__global.Map && __global.Map.prototype && __global.Map.prototype.entries && __global.Map.prototype.keys
+         && __global.Map.prototype.values && __global.Map.prototype.get && __global.Map.prototype.set
+         && __global.Map.prototype.has && __global.Map.prototype.delete)
       registry._registry.registryMap = new __global.Map();
     else
-      registry._registry.registryMap = {};
+      registry._registry.registryMap = new InternalMapPolyfill();
     // 4.4.2
     if (__global.Symbol && __global.Symbol.iterator)
-      registry[__global.Symbol.iterator] = RegistryPrototype.prototype.entries;
+      registry[__global.Symbol.iterator] = mapPolyfillEntriesIterator.bind(registry._registry.registryMap);
     return registry;
   }
 
@@ -183,116 +186,35 @@
   RegistryPrototype.prototype.entries = function() {
     if (typeof this !== 'object')
       throw new TypeError('cannot get entries of a non-registry');
-    if (__global.Map) {
-      // native iterator
-      return this._registry.registryMap.entries();
-    } else if (__global.Symbol && __global.Symbol.iterator) {
-      // polyfilled iterator
-      var keys = Object.keys(this._registry.registryMap);
-      var keyIndex = 0;
-      var instance = this;
-      return {
-        next: function() {
-          if (keyIndex < keys.length) {
-            return {
-              value: [keys[keyIndex], instance._registry.registryMap[keys[keyIndex++]]],
-              done: false
-            };
-          } else {
-            return {
-              value: undefined,
-              done: true
-            };
-          }
-        }
-      };
-    } else {
-      throw new Error('Symbol.iterator must be polyfilled to iterate over registry entries');
-    }
+    return this._registry.registryMap.entries();
   }
 
   // 4.4.4
   RegistryPrototype.prototype.keys = function() {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    if (__global.Map) {
-      // native iterator
-      return this._registry.registryMap.keys();
-    } else if (__global.Symbol && __global.Symbol.iterator) {
-      // polyfilled iterator
-      var keys = Object.keys(this._registry.registryMap);
-      var keyIndex = 0;
-      return {
-        next: function() {
-          if (keyIndex < keys.length) {
-            return {
-              value: keys[keyIndex++],
-              done: false
-            };
-          } else {
-            return {
-              value: undefined,
-              done: true
-            };
-          }
-        }
-      };
-    } else {
-      throw new Error("Symbol.iterator must be polyfilled in order to iterate over registry keys")
-    }
+    return this._registry.registryMap.keys();
   }
 
   // 4.4.5
   RegistryPrototype.prototype.values = function() {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    if (__global.Map) {
-      // native iterator
-      return this._registry.registryMap.values();
-    } else if (__global.Symbol && __global.Symbol.iterator) {
-      // polyfilled iterator
-      var keys = Object.keys(this._registry.registryMap);
-      var keyIndex = 0;
-      var instance = this;
-      return {
-        next: function() {
-          if (keyIndex < keys.length) {
-            return {
-              value: instance._registry.registryMap[keys[keyIndex++]],
-              done: false
-            };
-          } else {
-            return {
-              value: undefined,
-              done: true
-            };
-          }
-        }
-      };
-    } else {
-      throw new Error("Symbol.iterator must be polyfilled in order to iterate over registry values");
-    }
+    return this._registry.registryMap.values();
   }
 
   // 4.4.6
   RegistryPrototype.prototype.get = function(key) {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    if (__global.Map)
-      return this._registry.registryMap.get(key);
-    else
-      return this._registry.registryMap[key];
+    return this._registry.registryMap.get(key);
   }
 
   // 4.4.7
   RegistryPrototype.prototype.set = function(key, value) {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    if (__global.Map)
-      this._registry.registryMap.set(key, value);
-    else
-      this._registry.registryMap[key] = value;
-
+    this._registry.registryMap.set(key, value);
     return this;
   }
 
@@ -300,23 +222,14 @@
   RegistryPrototype.prototype.has = function(key) {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    if (__global.Map)
-      return this._registry.registryMap.has(key);
-    else
-      return this._registry.registryMap.hasOwnProperty(key);
+    return this._registry.registryMap.has(key);
   }
 
   // 4.4.9
   RegistryPrototype.prototype.delete = function(key) {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    if (__global.Map)
-      return this._registry.registryMap.delete(key);
-    else {
-      var hadProperty = this._registry.registryMap.hasOwnProperty(key);
-      delete this._registry.registryMap[key];
-      return hadProperty;
-    }
+    return this._registry.registryMap.delete(key);
   }
 
   // 4.1.1 - TODO out of date
@@ -754,3 +667,116 @@
     for (var p in descriptors)
       this[p] = descriptors[p];
   }
+
+  function InternalMapPolyfill() {}
+
+  function mapPolyfillEntriesIterator() {
+    var map = this;
+    var keys = Object.keys(map);
+    var keyIndex = 0;
+    return {
+      next: function() {
+        if (keyIndex < keys.length) {
+          return {
+            value: [keys[keyIndex], map[keys[keyIndex++]]],
+            done: false
+          };
+        } else {
+          return {
+            value: undefined,
+            done: true
+          };
+        }
+      }
+    };
+  }
+
+  InternalMapPolyfill.prototype.entries = function() {
+    if (__global.Symbol && __global.Symbol.iterator) {
+      var iterable = {};
+      var map = this;
+      iterable[__global.Symbol.iterator] = function() {
+        return mapPolyfillEntriesIterator.call(map);
+      };
+      return iterable;
+    } else {
+      throw new Error('Cannot return entries iterator unless Symbol.iterator is defined');
+    }
+  };
+
+  InternalMapPolyfill.prototype.keys = function() {
+    if (__global.Symbol && __global.Symbol.iterator) {
+      var map = this;
+      var iterable = {};
+      iterable[__global.Symbol.iterator] = function() {
+        var keys = Object.keys(map);
+        var keyIndex = 0;
+        return {
+          next: function() {
+            if (keyIndex < keys.length) {
+              return {
+                value: keys[keyIndex++],
+                done: false
+              };
+            } else {
+              return {
+                value: undefined,
+                done: true
+              };
+            }
+          }
+        };
+      };
+      return iterable;
+    } else {
+      throw new Error('Cannot return keys iterator unless Symbol.iterator is defined');
+    }
+  };
+
+  InternalMapPolyfill.prototype.values = function() {
+    if (__global.Symbol && __global.Symbol.iterator) {
+      var map = this;
+      var iterable = {};
+      iterable[__global.Symbol.iterator] = function() {
+        var keys = Object.keys(map);
+        var keyIndex = 0;
+        return {
+          next: function() {
+            if (keyIndex < keys.length) {
+              return {
+                value: map[keys[keyIndex++]],
+                done: false
+              };
+            } else {
+              return {
+                value: undefined,
+                done: true
+              };
+            }
+          }
+        };
+      };
+      return iterable;
+    } else {
+      throw new Error('Cannot return values iterator unless Symbol.iterator is defined');
+    }
+  };
+
+  InternalMapPolyfill.prototype.get = function(key) {
+    return this[key];
+  };
+
+  InternalMapPolyfill.prototype.set = function(key, value) {
+    this[key] = value;
+    return this;
+  };
+
+  InternalMapPolyfill.prototype.has = function(key) {
+    return this.hasOwnProperty(key);
+  };
+
+  InternalMapPolyfill.prototype.delete = function(key) {
+    var hadProperty = this.hasOwnProperty(key);
+    delete this[key];
+    return hadProperty;
+  };
