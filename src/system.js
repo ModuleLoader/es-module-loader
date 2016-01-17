@@ -30,10 +30,12 @@ function applyPaths(paths, name) {
 
     // exact path match
     if (pathParts.length == 1) {
-      if (name == p) {
-        pathMatch = p;
-        break;
-      }
+      if (name == p)
+        return paths[p];
+      
+      // support trailing / in paths rules
+      else if (name.substr(0, p.length - 1) == p.substr(0, p.length - 1) && (name.length < p.length || name[p.length - 1] == p[p.length - 1]) && paths[p][paths[p].length - 1] == '/')
+        return paths[p].substr(0, paths[p].length - 1) + (name.length > p.length ? '/' + name.substr(p.length) : '');
     }
     // wildcard path match
     else {
