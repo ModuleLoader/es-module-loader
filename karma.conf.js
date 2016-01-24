@@ -43,6 +43,8 @@ module.exports = function(config) {
 
     [options['native-iterator'] ? '': 'node_modules/core-js/client/core.js'],
 
+    [options['force-map-polyfill'] ? 'test/force-map-polyfill.js' : ''],
+
     'dist/es6-module-loader-dev.src.js',
 
     'test/_browser.js',

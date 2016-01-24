@@ -366,14 +366,14 @@ describe('System', function () {
       it('returns the registry object', function () {
           expect(System.registry).to.be.an('object');
           var oldRegistry = System.registry;
-          System._loader.registry = 'invalid registry';
+          System._loader.newRegistry = 'invalid registry';
           expect(function() {
             return System.registry;
           }).to.throwException(function(ex) {
               expect(ex).to.be.a(TypeError);
           });
 
-          System._loader.registry = oldRegistry;
+          System._loader.newRegistry = oldRegistry;
       });
   });
 
