@@ -11,20 +11,6 @@ describe('Registry', function() {
     System.registry.delete(moduleName, moduleValue);
   });
 
-  describe('constructor', function() {
-
-    //The constructor always throws because registries cannot be created in user-land
-
-    it('should fail if not called with new', function() {
-      expect(Registry).to.throwException();
-    });
-
-    it('should fail if called with new', function() {
-      expect(function() { new Registry() }).to.throwException();
-    });
-
-  });
-
   describeIf(System.transpiler !== 'traceur', 'entries function', function() {
 
     it('returns all the entries in the registry in a MapIterator', function() {

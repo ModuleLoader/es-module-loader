@@ -19,7 +19,7 @@
       instantiate: undefined,
 
       registry: {},
-      newRegistry: createRegistry(), //this is temporary until Registry is ready to be used
+      newRegistry: new Registry(), //this is temporary until Registry is ready to be used
       // Realm not implemented
     };
   }
@@ -36,6 +36,7 @@
   var hasNativeMap = __global.Map && __global.Map.prototype && __global.Map.prototype.entries && __global.Map.prototype.keys
        && __global.Map.prototype.values && __global.Map.prototype.get && __global.Map.prototype.set
        && __global.Map.prototype.has && __global.Map.prototype.delete;
+  var hasNativeIterator = __global.Symbol && __global.Symbol.iterator;
 
   // 3.3.2
   Loader.prototype['import'] = function(name, referrer) {
@@ -100,7 +101,7 @@
           // if (!this._loader.realm)
           //     throw new TypeError('A Loader must have a realm');
 
-          if (!(this._loader.newRegistry instanceof RegistryPrototype))
+          if (!(this._loader.newRegistry instanceof Registry))
               throw new TypeError('invalid registry -- must be created during Loader constructor');
           return this._loader.newRegistry;
       }
@@ -154,66 +155,59 @@
   // 4. Registry Objects
   // For now, registry objects are a work in progress that don't fully integrate into the rest of the code base
 
-  // 4.1.1
-  function createRegistry() {
-    var registry = new RegistryPrototype();
-    registry._registry = {};
-    if (hasNativeMap)
-      registry._registry.registryMap = new __global.Map();
-    else
-      registry._registry.registryMap = new InternalMapPolyfill();
-    // 4.4.2
-    if (__global.Symbol && __global.Symbol.iterator)
-      registry[__global.Symbol.iterator] = mapPolyfillEntriesIterator.bind(registry._registry.registryMap);
-    return registry;
-  }
+  // 4.1.1 inlined in 4.2
 
-  // 4.2
+  // 4.2 - see https://github.com/ModuleLoader/es6-module-loader/pull/462#discussion-diff-50639828 for why it deviates from spec
   function Registry() {
-    throw new Error('A registry may only be created when creating a loader');
+    this._registry = {};
+    if (hasNativeMap)
+      this._registry.registryMap = new __global.Map();
+    else
+      this._registry.registryMap = new InternalMapPolyfill();
+    // 4.4.2
+    if (hasNativeIterator)
+      this[__global.Symbol.iterator] = mapPolyfillEntriesIterator.bind(this._registry.registryMap);
   }
 
-  // 4.3.1
-  Registry.prototype = RegistryPrototype;
+  // 4.3.1 -- not necessary because of https://github.com/ModuleLoader/es6-module-loader/pull/462#discussion-diff-50639828
 
-  // 4.4 (reason for a separate constructor explained at 4.3.1)
-  function RegistryPrototype() {}
+  // 4.4 - not necessary because of https://github.com/ModuleLoader/es6-module-loader/pull/462#discussion-diff-50639828
 
   // 4.4.1
   Registry.prototype.constructor = Registry;
 
-  // 4.4.2 is inlined in 4.1.1
+  // 4.4.2 is inlined in 4.2
 
   // 4.4.3
-  RegistryPrototype.prototype.entries = function() {
+  Registry.prototype.entries = function() {
     if (typeof this !== 'object')
       throw new TypeError('cannot get entries of a non-registry');
     return this._registry.registryMap.entries();
   }
 
   // 4.4.4
-  RegistryPrototype.prototype.keys = function() {
+  Registry.prototype.keys = function() {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
     return this._registry.registryMap.keys();
   }
 
   // 4.4.5
-  RegistryPrototype.prototype.values = function() {
+  Registry.prototype.values = function() {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
     return this._registry.registryMap.values();
   }
 
   // 4.4.6
-  RegistryPrototype.prototype.get = function(key) {
+  Registry.prototype.get = function(key) {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
     return this._registry.registryMap.get(key);
   }
 
   // 4.4.7
-  RegistryPrototype.prototype.set = function(key, value) {
+  Registry.prototype.set = function(key, value) {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
     this._registry.registryMap.set(key, value);
@@ -221,14 +215,14 @@
   }
 
   // 4.4.8
-  RegistryPrototype.prototype.has = function(key) {
+  Registry.prototype.has = function(key) {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
     return this._registry.registryMap.has(key);
   }
 
   // 4.4.9
-  RegistryPrototype.prototype.delete = function(key) {
+  Registry.prototype.delete = function(key) {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
     return this._registry.registryMap.delete(key);
