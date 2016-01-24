@@ -159,14 +159,13 @@
 
   // 4.2 - see https://github.com/ModuleLoader/es6-module-loader/pull/462#discussion-diff-50639828 for why it deviates from spec
   function Registry() {
-    this._registry = {};
     if (hasNativeMap)
-      this._registry.registryMap = new __global.Map();
+      this.registryMap = new __global.Map();
     else
-      this._registry.registryMap = new InternalMapPolyfill();
+      this.registryMap = new InternalMapPolyfill();
     // 4.4.2
     if (hasNativeIterator)
-      this[__global.Symbol.iterator] = mapPolyfillEntriesIterator.bind(this._registry.registryMap);
+      this[__global.Symbol.iterator] = mapPolyfillEntriesIterator.bind(this.registryMap);
   }
 
   // 4.3.1 -- not necessary because of https://github.com/ModuleLoader/es6-module-loader/pull/462#discussion-diff-50639828
@@ -182,35 +181,35 @@
   Registry.prototype.entries = function() {
     if (typeof this !== 'object')
       throw new TypeError('cannot get entries of a non-registry');
-    return this._registry.registryMap.entries();
+    return this.registryMap.entries();
   }
 
   // 4.4.4
   Registry.prototype.keys = function() {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    return this._registry.registryMap.keys();
+    return this.registryMap.keys();
   }
 
   // 4.4.5
   Registry.prototype.values = function() {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    return this._registry.registryMap.values();
+    return this.registryMap.values();
   }
 
   // 4.4.6
   Registry.prototype.get = function(key) {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    return this._registry.registryMap.get(key);
+    return this.registryMap.get(key);
   }
 
   // 4.4.7
   Registry.prototype.set = function(key, value) {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    this._registry.registryMap.set(key, value);
+    this.registryMap.set(key, value);
     return this;
   }
 
@@ -218,14 +217,14 @@
   Registry.prototype.has = function(key) {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    return this._registry.registryMap.has(key);
+    return this.registryMap.has(key);
   }
 
   // 4.4.9
   Registry.prototype.delete = function(key) {
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
-    return this._registry.registryMap.delete(key);
+    return this.registryMap.delete(key);
   }
 
   // 4.1.1 - TODO out of date
