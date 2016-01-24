@@ -32,6 +32,11 @@
   var LINK = 4;
   var READY = 5;
 
+  // feature detection
+  var hasNativeMap = __global.Map && __global.Map.prototype && __global.Map.prototype.entries && __global.Map.prototype.keys
+       && __global.Map.prototype.values && __global.Map.prototype.get && __global.Map.prototype.set
+       && __global.Map.prototype.has && __global.Map.prototype.delete;
+
   // 3.3.2
   Loader.prototype['import'] = function(name, referrer) {
     var loader = this._loader;
@@ -153,10 +158,7 @@
   function createRegistry() {
     var registry = new RegistryPrototype();
     registry._registry = {};
-    var iterator;
-    if (__global.Map && __global.Map.prototype && __global.Map.prototype.entries && __global.Map.prototype.keys
-         && __global.Map.prototype.values && __global.Map.prototype.get && __global.Map.prototype.set
-         && __global.Map.prototype.has && __global.Map.prototype.delete)
+    if (hasNativeMap)
       registry._registry.registryMap = new __global.Map();
     else
       registry._registry.registryMap = new InternalMapPolyfill();
