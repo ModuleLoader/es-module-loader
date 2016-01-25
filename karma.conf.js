@@ -32,7 +32,7 @@ module.exports = function(config) {
     'test/_helper.js',
     [options.babel ? 'node_modules/regenerator/runtime.js' : ''],
 
-    [!options['babel'] ? 'node_modules/traceur/bin/traceur.js' : 'node_modules/babel-core/browser.js']
+    [!options['babel'] ? 'node_modules/traceur/bin/traceur.js' : 'node_modules/babel-core/browser.js'],
 
     [options.polyfill ? 'node_modules/when/es6-shim/Promise.js' : ''],
 
