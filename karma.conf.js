@@ -16,15 +16,10 @@ var options = extend({
   travis: process.env.TRAVIS,
   polyfill: false,
   saucelabs: false,
-  ie8: false,
   coverage: false,
   'native-iterator': false
 }, argv);
 
-if (options.ie8) {
-  console.log('IE8 Mode !\n - polyfill required\n');
-  options.polyfill = true;
-}
 if (options.saucelabs) {
   options.polyfill = true;
 }
@@ -37,7 +32,7 @@ module.exports = function(config) {
     'test/_helper.js',
     [options.babel ? 'node_modules/regenerator/runtime.js' : ''],
 
-    [!options.ie8 ? (!options['babel'] ? 'node_modules/traceur/bin/traceur.js' : 'node_modules/babel-core/browser.js') : ''],
+    [!options['babel'] ? 'node_modules/traceur/bin/traceur.js' : 'node_modules/babel-core/browser.js']
 
     [options.polyfill ? 'node_modules/when/es6-shim/Promise.js' : ''],
 
@@ -51,7 +46,7 @@ module.exports = function(config) {
     'test/browser-script-type-module.js',
     'test/custom-loader.js',
 
-    [!options.ie8 ? 'test/*.spec.js' : 'test/*.normalize.spec.js'],
+    ['test/*.spec.js'],
 
     [options['native-iterator'] ? 'test/*.native-iterator-spec.js' : ''],
 
@@ -120,14 +115,6 @@ module.exports = function(config) {
 
     // IE tests disabled for now (https://github.com/ModuleLoader/es6-module-loader/issues/295)
     customLaunchers = undefined;
-
-    if (options.ie8) {
-      customLaunchers = geSaLaKaCuLa({
-        'Windows 7': {
-          'internet explorer': '8'
-        }
-      });
-    }
 
     if (options['native-iterator']) {
       customLaunchers = geSaLaKaCuLa({

@@ -10,17 +10,6 @@
 
 (function(__global) {
 
-  // IE8 support
-  // Note: console.assert is not supported or polyfillable in IE8
-  // so it is better to debug in IE8 against the source with 
-  // assertions removed.
-  var indexOf = Array.prototype.indexOf || function(item) {
-    for (var i = 0, thisLen = this.length; i < thisLen; i++)
-      if (this[i] === item)
-        return i;
-    return -1;
-  };
-
   // if we have require and exports, then define as CommonJS
   var cjsMode = typeof exports == 'object' && typeof require == 'function';
 
