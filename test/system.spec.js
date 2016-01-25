@@ -365,6 +365,10 @@ describe('System', function () {
   describe('get Loader.prototype.registry', function () {
       it('returns the registry object', function () {
           expect(System.registry).to.be.an('object');
+      });
+
+      describeIf(typeof window != 'undefined' && !!window.strictCorrectness, 'strict correctness', function () {
+        it('throws with an invalid registry', function () {
           var oldRegistry = System.registry;
           System._loader.newRegistry = 'invalid registry';
           expect(function() {
@@ -374,6 +378,7 @@ describe('System', function () {
           });
 
           System._loader.newRegistry = oldRegistry;
+        });
       });
   });
 

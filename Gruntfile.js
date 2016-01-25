@@ -20,7 +20,7 @@ module.exports = function (grunt) {
     concat: {
       dist: {
         files: {
-          'dist/<%= pkg.name %>.src.js': [
+          'dist/<%= pkg.name %>-strict.src.js': [
             'src/wrapper-start.js',
             'src/loader.js',
             'src/dynamic-only.js',
@@ -28,7 +28,7 @@ module.exports = function (grunt) {
             'src/system.js',
             'src/wrapper-end.js'
           ],
-          'dist/<%= pkg.name %>-dev.src.js': [
+          'dist/<%= pkg.name %>-dev-strict.src.js': [
             'src/wrapper-start.js',
             'src/loader.js',
             'src/declarative.js',
@@ -38,6 +38,17 @@ module.exports = function (grunt) {
             'src/module-tag.js',
             'src/wrapper-end.js'
           ]
+        }
+      }
+    },
+    preprocess: {
+      multifile: {
+        files: {
+          'dist/es6-module-loader-dev.src.js': 'dist/es6-module-loader-dev-strict.src.js',
+          'dist/es6-module-loader.src.js': 'dist/es6-module-loader-strict.src.js'
+        },
+        context: {
+          STRICT: true
         }
       }
     },
@@ -53,9 +64,17 @@ module.exports = function (grunt) {
         src: 'dist/<%= pkg.name %>.src.js',
         dest: 'dist/<%= pkg.name %>.js'
       },
+      distStrict: {
+        src: 'dist/<%= pkg.name %>-strict.src.js',
+        dest: 'dist/<%= pkg.name %>-strict.js'
+      },
       distDev: {
         src: 'dist/<%= pkg.name %>-dev.src.js',
         dest: 'dist/<%= pkg.name %>-dev.js'
+      },
+      distDevStrict: {
+        src: 'dist/<%= pkg.name %>-dev-strict.src.js',
+        dest: 'dist/<%= pkg.name %>-dev-strict.js'
       }
     }
   });
@@ -63,8 +82,9 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-preprocess');
 
   grunt.registerTask('lint', ['jshint']);
   grunt.registerTask('compile', ['concat']);
-  grunt.registerTask('default', [/*'jshint', */'concat', 'uglify']);
+  grunt.registerTask('default', [/*'jshint', */'concat', 'preprocess', 'uglify']);
 };

@@ -45,7 +45,7 @@ module.exports = function(config) {
 
     [options['force-map-polyfill'] ? 'test/force-map-polyfill.js' : ''],
 
-    'dist/es6-module-loader-dev.src.js',
+    (options['strict'] ? ['dist/es6-module-loader-dev-strict.js', 'test/set-strict.js'] : 'dist/es6-module-loader-dev.src.js'),
 
     'test/_browser.js',
     'test/browser-script-type-module.js',
