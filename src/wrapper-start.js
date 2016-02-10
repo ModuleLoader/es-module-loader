@@ -36,7 +36,7 @@
   function addToError(err, msg) {
     var newErr;
     if (err instanceof Error) {
-      newErr = new Error(msg + '\n\t' + err.message);
+      newErr = new Error(msg + '\n\t' + err.message, err.fileName, err.lineNumber);
       newErr.originalError = err.originalError || err;
     }
     else {
