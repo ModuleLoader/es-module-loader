@@ -4,9 +4,8 @@ function URLPolyfill(url, baseURL) {
   if (typeof url != 'string')
     throw new TypeError('URL must be a string');
   var m = String(url).replace(/^\s+|\s+$/g, "").match(/^([^:\/?#]+:)?(?:\/\/(?:([^:@\/?#]*)(?::([^:@\/?#]*))?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
-  if (!m) {
-    throw new RangeError();
-  }
+  if (!m)
+    throw new RangeError('Invalid URL format');
   var protocol = m[1] || "";
   var username = m[2] || "";
   var password = m[3] || "";
@@ -18,26 +17,23 @@ function URLPolyfill(url, baseURL) {
   var hash = m[9] || "";
   if (baseURL !== undefined) {
     var base = baseURL instanceof URLPolyfill ? baseURL : new URLPolyfill(baseURL);
-    var flag = protocol === "" && host === "" && username === "";
-    if (flag && pathname === "" && search === "") {
+    var flag = !protocol && !host && !username;
+    if (flag && !pathname && !search)
       search = base.search;
-    }
-    if (flag && pathname.charAt(0) !== "/") {
-      pathname = (pathname !== "" ? (((base.host !== "" || base.username !== "") && base.pathname === "" ? "/" : "") + base.pathname.slice(0, base.pathname.lastIndexOf("/") + 1) + pathname) : base.pathname);
-    }
+    if (flag && pathname[0] !== "/")
+      pathname = (pathname ? (((base.host || base.username) && !base.pathname ? "/" : "") + base.pathname.slice(0, base.pathname.lastIndexOf("/") + 1) + pathname) : base.pathname);
     // dot segments removal
     var output = [];
     pathname.replace(/^(\.\.?(\/|$))+/, "")
       .replace(/\/(\.(\/|$))+/g, "/")
       .replace(/\/\.\.$/, "/../")
       .replace(/\/?[^\/]*/g, function (p) {
-        if (p === "/..") {
+        if (p === "/..")
           output.pop();
-        } else {
+        else
           output.push(p);
-        }
       });
-    pathname = output.join("").replace(/^\//, pathname.charAt(0) === "/" ? "/" : "");
+    pathname = output.join("").replace(/^\//, pathname[0] === "/" ? "/" : "");
     if (flag) {
       port = base.port;
       hostname = base.hostname;
@@ -45,17 +41,16 @@ function URLPolyfill(url, baseURL) {
       password = base.password;
       username = base.username;
     }
-    if (protocol === "") {
+    if (!protocol)
       protocol = base.protocol;
-    }
   }
 
   // convert windows file URLs to use /
   if (protocol == 'file:')
     pathname = pathname.replace(/\\/g, '/');
 
-  this.origin = protocol + (protocol !== "" || host !== "" ? "//" : "") + host;
-  this.href = protocol + (protocol !== "" || host !== "" ? "//" : "") + (username !== "" ? username + (password !== "" ? ":" + password : "") + "@" : "") + host + pathname + search + hash;
+  this.origin = host ? protocol + (protocol !== "" || host !== "" ? "//" : "") + host : "";
+  this.href = protocol + (protocol && host || protocol == "file:" ? "//" : "") + (username !== "" ? username + (password !== "" ? ":" + password : "") + "@" : "") + host + pathname + search + hash;
   this.protocol = protocol;
   this.username = username;
   this.password = password;
@@ -104,24 +99,14 @@ global.URLPolyfill = URLPolyfill;
   })();
 
   function addToError(err, msg) {
-    var newErr;
     if (err instanceof Error) {
-      newErr = new Error(err.message, err.fileName, err.lineNumber);
-      if (isBrowser) {
-        newErr.message = err.message + '\n\t' + msg;
-        newErr.stack = err.stack;
-      }
-      else {
-        // node errors only look correct with the stack modified
-        newErr.message = err.message;
-        newErr.stack = err.stack + '\n\t' + msg;
-      }
+      err.message = msg + '\n\t' + err.message;
+      Error.call(err, err.message);
     }
     else {
-      newErr = err + '\n\t' + msg;
+      err = msg + '\n\t' + err;
     }
-      
-    return newErr;
+    return err;
   }
 
   function __eval(source, debugName, context) {
@@ -922,9 +907,15 @@ function logloads(loads) {
           enumerable: true,
           get: function () {
             return obj[key];
+          },
+          set: function() {
+            throw new Error('Module exports cannot be changed externally.');
           }
         });
       })(pNames[i]);
+
+      if (Object.freeze)
+        Object.freeze(m);
 
       return m;
     },
@@ -1033,10 +1024,12 @@ function applyPaths(paths, name) {
 
     // exact path match
     if (pathParts.length == 1) {
-      if (name == p) {
-        pathMatch = p;
-        break;
-      }
+      if (name == p)
+        return paths[p];
+      
+      // support trailing / in paths rules
+      else if (name.substr(0, p.length - 1) == p.substr(0, p.length - 1) && (name.length < p.length || name[p.length - 1] == p[p.length - 1]) && paths[p][paths[p].length - 1] == '/')
+        return paths[p].substr(0, paths[p].length - 1) + (name.length > p.length ? '/' + name.substr(p.length) : '');
     }
     // wildcard path match
     else {
