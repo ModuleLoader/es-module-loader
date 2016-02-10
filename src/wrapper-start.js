@@ -34,15 +34,11 @@
   })();
 
   function addToError(err, msg) {
-    var newErr;
-    if (err instanceof Error) {
-      newErr = new Error(msg + '\n\t' + err.message, err.fileName, err.lineNumber);
-      newErr.originalError = err.originalError || err;
-    }
-    else {
-      newErr = msg + '\n\t' + err;
-    }
-    return newErr;
+    if (err instanceof Error)
+      err.message = err.message + '\n\t' + msg;
+    else
+      newErr = err + '\n\t' + msg;
+    return err;
   }
 
   function __eval(source, debugName, context) {
