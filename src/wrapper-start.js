@@ -34,24 +34,14 @@
   })();
 
   function addToError(err, msg) {
-    var newErr;
     if (err instanceof Error) {
-      newErr = new Error(err.message, err.fileName, err.lineNumber);
-      if (isBrowser) {
-        newErr.message = err.message + '\n\t' + msg;
-        newErr.stack = err.stack;
-      }
-      else {
-        // node errors only look correct with the stack modified
-        newErr.message = err.message;
-        newErr.stack = err.stack + '\n\t' + msg;
-      }
+      err.message = msg + '\n\t' + err.message;
+      Error.call(err, err.message);
     }
     else {
-      newErr = err + '\n\t' + msg;
+      err = msg + '\n\t' + err;
     }
-      
-    return newErr;
+    return err;
   }
 
   function __eval(source, debugName, context) {
