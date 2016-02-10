@@ -34,14 +34,15 @@
   })();
 
   function addToError(err, msg) {
+    var newErr;
     if (err instanceof Error) {
-      err.message = msg + '\n\t' + err.message;
-      Error.call(err, err.message);
+      newErr = new Error(msg + '\n\t' + err.message);
+      newErr.originalError = err.originalError || err;
     }
     else {
-      err = msg + '\n\t' + err;
+      newErr = msg + '\n\t' + err;
     }
-    return err;
+    return newErr;
   }
 
   function __eval(source, debugName, context) {
