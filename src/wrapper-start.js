@@ -37,7 +37,7 @@
     if (err instanceof Error)
       err.message = err.message + '\n\t' + msg;
     else
-      newErr = err + '\n\t' + msg;
+      err += '\n\t' + msg;
     return err;
   }
 
