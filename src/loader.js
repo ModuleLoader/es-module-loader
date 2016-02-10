@@ -759,9 +759,15 @@ function logloads(loads) {
           enumerable: true,
           get: function () {
             return obj[key];
+          },
+          set: function() {
+            throw new Error('Module exports cannot be changed externally.');
           }
         });
       })(pNames[i]);
+
+      if (Object.freeze)
+        Object.freeze(m);
 
       return m;
     },
