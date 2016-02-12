@@ -160,7 +160,7 @@ _Also, please don't edit files in the "dist" subdirectory as they are generated 
 
 ## Testing
 
-- `npm run test:node` will use node to  to run the tests
+- `npm run test:node` will use node to run the tests
 - `npm run test:browser` will run `npm run test:browser-babel`, `npm run test:browser-traceur` and `npm run test:browser-typescript`
 - `npm run test:browser-[transpiler]` use karma to run the tests with Traceur, Babel or TypeScript.
 - `npm run test:browser:perf` will use karma to run benchmarks
