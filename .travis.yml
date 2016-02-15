@@ -3,10 +3,8 @@ git:
   depth: 1
 language: node_js
 node_js:
-  - '0.10'
-  - '0.11'
   - '0.12'
-  - 'iojs'
+  - '4.1'
 env:
   global:
     - SAUCE_LABS=false PARSER=false OPTIONS=""
@@ -15,19 +13,19 @@ env:
     - PARSER="babel"
 matrix:
   include:
-    - node_js: "0.12"
+    - node_js: "4.1"
       env: SAUCE_LABS=true PARSER="traceur"
-    - node_js: "0.12"
+    - node_js: "4.1"
       env: SAUCE_LABS=true PARSER="babel"
     # Native iterator tests
-    - node_js: "0.12"
+    - node_js: "4.1"
       env: SAUCE_LABS=true PARSER="traceur" OPTIONS="--native-iterator"
-    - node_js: "0.12"
+    - node_js: "4.1"
       env: SAUCE_LABS=true PARSER="babel" OPTIONS="--native-iterator"
     # Map polyfill tests
-    - node_js: "0.12"
+    - node_js: "4.1"
       env: SAUCE_LABS=true PARSER="babel" OPTIONS="--force-map-polyfill"
-    - node_js: "0.12"
+    - node_js: "4.1"
       env: SAUCE_LABS=true PARSER="babel" OPTIONS="--native-iterator --force-map-polyfill"
 before_install:
   - export CHROME_BIN=chromium-browser
