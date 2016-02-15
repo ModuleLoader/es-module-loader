@@ -17,7 +17,7 @@
       for (var i = 0; i < module.importers.length; i++) {
         var importerModule = module.importers[i];
         if (!importerModule.locked) {
-          var importerIndex = indexOf.call(importerModule.dependencies, module);
+          var importerIndex = importerModule.dependencies.indexOf(module);
           importerModule.setters[importerIndex](moduleObj);
         }
       }
@@ -59,7 +59,7 @@
 
   // execute a module record and all the modules that need it
   function ensureModuleExecution(module, seen) {
-    if (indexOf.call(seen, module) != -1)
+    if (seen.indexOf(module) != -1)
       return;
 
     if (module.error)

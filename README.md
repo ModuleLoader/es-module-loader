@@ -13,7 +13,7 @@ The rest of this Readme describes the previous implementation and will be update
 * Includes [`baseURL` and `paths` implementations](https://github.com/ModuleLoader/es6-module-loader/wiki/Configuring-the-Loader).
 * Can be used as a [tracing tool](https://github.com/ModuleLoader/es6-module-loader/wiki/Tracing-API) for static analysis of modules.
 * Polyfills ES6 Promises in the browser with an optionally bundled ES6 promise implementation.
-* Supports IE8+, with IE9+ support for ES6 development without pre-compilation.
+* Supports IE9+.
 * The complete combined polyfill, including ES6 promises, comes to 9KB minified and gzipped, making it suitable for production use, provided that modules are [built into ES5 making them independent of Traceur](https://github.com/ModuleLoader/es6-module-loader/wiki/Production-Workflows).
 
 For an overview of build workflows, [see the production guide](https://github.com/ModuleLoader/es6-module-loader/wiki/Production-Workflows).
@@ -153,7 +153,9 @@ _Also, please don't edit files in the "dist" subdirectory as they are generated 
 
 - You can use the `--coverage` option to test and extract coverage info.
 
-- You can use the `--ie8` option to test the code in the ie8 scope only.
+- You can use the `--native-iterator` option to run extra tests that check that `for ... of` and other iterator syntaxes work with es6-module-loader
+
+- You can use the `--force-map-polyfill` option to simulate an environment where `Map` is not defined
 
 - You can use the `--saucelabs` option to use karma and saucelabs to run the tests in various browsers.
 Note: you will need to export your username and key to launch it.

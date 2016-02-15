@@ -157,7 +157,7 @@
   Loader.prototype.hook = function(name, value) {
     var loader = this._loader;
     // @ifdef STRICT
-    if (indexOf.call(hooks, name) == -1)
+    if (hooks.indexOf(name) == -1)
       throw new TypeError(name + ' is not a valid hook.');
     // @endif
     if (value)
@@ -662,7 +662,7 @@
 
   // 6.2.3 - TODO out of date
   function computeDependencyGraph(entry, result) {
-    if (indexOf.call(result, entry) != -1)
+    if (result.indexOf(entry) != -1)
       return;
 
     result.push(entry);
