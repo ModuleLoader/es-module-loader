@@ -88,22 +88,26 @@
         return entry.module;
       });
 
+    // @ifdef STRICT
     else
       throw new TypeError('Invalid stage ' + stage);
+    // @endif
   };
 
   // 3.3.5
   Object.defineProperty(Loader.prototype, 'registry', {
       get: function() {
-          if (typeof this !== 'object')
-              throw new TypeError('this must be a Loader');
-          // uncomment when Realm is implemented
-          // if (!this._loader.realm)
-          //     throw new TypeError('A Loader must have a realm');
+        // @ifdef STRICT
+        if (typeof this !== 'object')
+            throw new TypeError('this must be a Loader');
+        // uncomment when Realm is implemented
+        // if (!this._loader.realm)
+        //     throw new TypeError('A Loader must have a realm');
 
-          if (!(this._loader.newRegistry instanceof Registry))
-              throw new TypeError('invalid registry -- must be created during Loader constructor');
-          return this._loader.newRegistry;
+        if (!(this._loader.newRegistry instanceof Registry))
+            throw new TypeError('invalid registry -- must be created during Loader constructor');
+        // @endif
+        return this._loader.newRegistry;
       }
   });
 
@@ -115,18 +119,24 @@
     var entry = ensureRegistered(loader, key, metadata);
 
     if (stage == 'fetch') {
+      // @ifdef STRICT
       if (entry.state > FETCH)
         throw new TypeError(key + ' has already been fetched.');
+      // @endif
       fulfillFetch(loader, entry, value);
     }
     else if (stage == 'translate') {
+      // @ifdef STRICT
       if (entry.state > TRANSLATE)
         throw new TypeError(key + ' has already been translated.');
+      // @endif
       fulfillTranslate(loader, entry, value);
     }
     else if (stage == 'instantiate') {
+      // @ifdef STRICT
       if (entry.state > INSTANTIATE)
         throw new TypeError(key + ' has already been instantiated.');
+      // @endif
       fulfillFetch(loader, entry, undefined);
       fulfillTranslate(loader, entry, undefined);
       // NB error propogation
@@ -134,8 +144,10 @@
         loadTranspilerThenFulfillInstantiate(loader, entry, value, source);
       });
     }
+    // @ifdef STRICT
     else
       throw new TypeError('Invalid stage ' + stage);
+    // @endif
   };
 
   // TODO: the Loader no longer has the hook property
@@ -144,8 +156,10 @@
   var hooks = ['resolve', 'fetch', 'translate', 'instantiate'];
   Loader.prototype.hook = function(name, value) {
     var loader = this._loader;
+    // @ifdef STRICT
     if (hooks.indexOf(name) == -1)
       throw new TypeError(name + ' is not a valid hook.');
+    // @endif
     if (value)
       loader[name] = value;
     else
@@ -179,65 +193,83 @@
 
   // 4.4.3
   Registry.prototype.entries = function() {
+    // @ifdef STRICT
     if (typeof this !== 'object')
       throw new TypeError('cannot get entries of a non-registry');
+    // @endif
     return this.registryMap.entries();
   }
 
   // 4.4.4
   Registry.prototype.keys = function() {
+    // @ifdef STRICT
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
+    // @endif
     return this.registryMap.keys();
   }
 
   // 4.4.5
   Registry.prototype.values = function() {
+    // @ifdef STRICT
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
+    // @endif
     return this.registryMap.values();
   }
 
   // 4.4.6
   Registry.prototype.get = function(key) {
+    // @ifdef STRICT
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
+    // @endif
     return this.registryMap.get(key);
   }
 
   // 4.4.7
   Registry.prototype.set = function(key, value) {
+    // @ifdef STRICT
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
+    // @endif
     this.registryMap.set(key, value);
     return this;
   }
 
   // 4.4.8
   Registry.prototype.has = function(key) {
+    // @ifdef STRICT
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
+    // @endif
     return this.registryMap.has(key);
   }
 
   // 4.4.9
   Registry.prototype.delete = function(key) {
+    // @ifdef STRICT
     if (typeof this !== 'object')
       throw new TypeError('invalid registry');
+    // @endif
     return this.registryMap.delete(key);
   }
 
   // 4.1.1 - TODO out of date
   function getCurrentStage(entry) {
+    // @ifdef STRICT
     if (typeof entry !== 'object')
       throw new TypeError('entry is not an object');
+    // @endif
     return entry.pipeline[0];
   }
 
   // 4.1.4 - TODO out of date
   function getRegistryEntry(registry, key) {
+    // @ifdef STRICT
     if (typeof registry !== 'object')
       throw new TypeError('registry is not an object');
+    // @endif
 
     var entry = registry._registry.registryData[key];
     if (!entry)
@@ -263,10 +295,12 @@
 
   // 4.4.4 - TODO out of date
   Registry.prototype.install = function(key, module) {
+    // @ifdef STRICT
     if (typeof this !== 'object')
       throw new TypeError('registry must be an object');
     if (this._registry.registryData[key])
       throw new TypeError('Module with key ' + key + ' already exists');
+    // @endif
 
     var result = new Promise(function(resolve) {
       resolve(module);

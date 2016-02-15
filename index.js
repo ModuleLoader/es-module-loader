@@ -1,7 +1,7 @@
 if (typeof Promise === 'undefined')
   require('when/es6-shim/Promise');
 
-module.exports = require('./dist/es6-module-loader-dev.src');
+module.exports = require('./dist/es6-module-loader-declarative.src');
 
 var System = module.exports.System;
 

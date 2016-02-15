@@ -28,7 +28,7 @@ module.exports = function (grunt) {
             'src/system.js',
             'src/wrapper-end.js'
           ],
-          'dist/<%= pkg.name %>-dev.src.js': [
+          'dist/<%= pkg.name %>-declarative.src.js': [
             'src/wrapper-start.js',
             'src/loader.js',
             'src/declarative.js',
@@ -38,6 +38,26 @@ module.exports = function (grunt) {
             'src/module-tag.js',
             'src/wrapper-end.js'
           ]
+        }
+      }
+    },
+    preprocess: {
+      declarative: {
+        src: 'dist/es6-module-loader-declarative.src.js',
+        options: {
+          inline: true,
+          context: {
+            STRICT: true
+          }
+        }
+      },
+      production: {
+        src: 'dist/es6-module-loader.src.js',
+        options: {
+          inline: true,
+          contextr: {
+            STRICT: false
+          }
         }
       }
     },
@@ -53,18 +73,19 @@ module.exports = function (grunt) {
         src: 'dist/<%= pkg.name %>.src.js',
         dest: 'dist/<%= pkg.name %>.js'
       },
-      distDev: {
-        src: 'dist/<%= pkg.name %>-dev.src.js',
-        dest: 'dist/<%= pkg.name %>-dev.js'
-      }
+      distDeclarative: {
+        src: 'dist/<%= pkg.name %>-declarative.src.js',
+        dest: 'dist/<%= pkg.name %>-declarative.js'
+      },
     }
   });
 
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-preprocess');
 
   grunt.registerTask('lint', ['jshint']);
   grunt.registerTask('compile', ['concat']);
-  grunt.registerTask('default', [/*'jshint', */'concat', 'uglify']);
+  grunt.registerTask('default', [/*'jshint', */'concat', 'preprocess', 'uglify']);
 };
