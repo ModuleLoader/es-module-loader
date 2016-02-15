@@ -58,15 +58,12 @@
   "scripts": {
     "test": "npm run test:node && npm run test:browser",
     "test:node": "mocha test/_node-traceur.js && mocha test/_node-babel.js",
-    "test:browser": "npm run test:browser-traceur && npm run test:browser-babel && npm run test:browser:native-iterator && npm run test:browser:map-polyfill && npm run test:browser:strict",
+    "test:browser": "npm run test:browser-traceur && npm run test:browser-babel && npm run test:browser:native-iterator && npm run test:browser:map-polyfill",
     "test:browser-traceur": "karma start --single-run",
     "test:browser-babel": "karma start --single-run --babel",
     "test:browser:perf": "karma start karma-benchmark.conf.js --single-run",
     "test:browser:native-iterator": "karma start --single-run --native-iterator && karma start --single-run --babel --native-iterator",
-    "test:browser:map-polyfill": "karma start --single-run --babel --native-iterator --force-map-polyfill && karma start --single-run --babel --force-map-polyfill",
-    "test:browser:strict": "npm run test:browser-babel:strict && npm run test:browser-traceur:strict",
-    "test:browser-babel:strict": "karma start --single-run --babel --native-iterator --force-map-polyfill --strict",
-    "test:browser-traceur:strict": "karma start --single-run --native-iterator --strict"
+    "test:browser:map-polyfill": "karma start --single-run --babel --native-iterator --force-map-polyfill && karma start --single-run --babel --force-map-polyfill"
   },
   "dependencies": {
     "when": "^3.7.2"

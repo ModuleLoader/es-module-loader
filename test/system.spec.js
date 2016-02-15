@@ -367,7 +367,7 @@ describe('System', function () {
           expect(System.registry).to.be.an('object');
       });
 
-      describeIf(typeof window != 'undefined' && !!window.strictCorrectness, 'strict correctness', function () {
+      describe('strict correctness', function () {
         it('throws with an invalid registry', function () {
           var oldRegistry = System.registry;
           System._loader.newRegistry = 'invalid registry';

@@ -29,11 +29,6 @@ matrix:
       env: SAUCE_LABS=true PARSER="babel" OPTIONS="--force-map-polyfill"
     - node_js: "0.12"
       env: SAUCE_LABS=true PARSER="babel" OPTIONS="--native-iterator --force-map-polyfill"
-    # Strict correctness tests
-    - node_js: "0.12"
-      env: SAUCE_LABS=true PARSER="traceur" OPTIONS="--native-iterator --force-map-polyfill --strict"
-    - node_js: "0.12"
-      env: SAUCE_LABS=true PARSER="babel" OPTIONS="--force-map-polyfill --strict"
 before_install:
   - export CHROME_BIN=chromium-browser
   - export DISPLAY=:99.0
