@@ -34,11 +34,16 @@
   })();
 
   function addToError(err, msg) {
-    if (err instanceof Error)
-      err.message = err.message + '\n\t' + msg;
-    else
-      err += '\n\t' + msg;
-    return err;
+    var newErr = new Error((err.message || err) + '\n\t' + msg, err.fileName, err.lineNumber);
+    
+    // Node needs stack adjustment for throw to show message
+    if (!isBrowser)
+      newErr.stack = (err.stack || err.message || err) + '\n\t' + msg;
+    
+    // track the original error
+    newErr.originalErr = err.originalErr || err;
+
+    return newErr;
   }
 
   function __eval(source, debugName, context) {
