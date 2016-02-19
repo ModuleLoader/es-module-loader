@@ -41,7 +41,7 @@ When compiling ES6 modules to ES5, the Traceur `instantiate` output and Babel `s
 ->
 
 ```javascript
-  System.register(['./dep'], function($__export) {
+  System.register(['./dep'], function($__export, $__moduleContext) {
     var s, C, q;
     function func() {
       return q;
@@ -60,6 +60,7 @@ When compiling ES6 modules to ES5, the Traceur `instantiate` output and Babel `s
         // use the export function to update the exports of this module
         s = 'local';
         $__export('C', C = $traceurRuntime.createClass(...));
+        var moduleName = $__moduleContext.id;
       }
     };
   });
