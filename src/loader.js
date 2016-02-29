@@ -473,11 +473,13 @@ function logloads(loads) {
     try {
       link(linkSet, function(load, exc) {
         linkSetFailed(linkSet, load, exc);
+        console.error(exc);
         error = true;
       });
     }
     catch(e) {
       linkSetFailed(linkSet, null, e);
+      console.error(e);
       error = true;
     }
     return error;
