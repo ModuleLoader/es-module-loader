@@ -34,13 +34,12 @@
   })();
 
   function addToError(err, msg) {
-
     // parse the stack removing loader code lines for simplification
-    if (!err.originalErr && typeof $__curScript != 'undefined') {
+    if (!err.originalErr) {
       var stack = (err.stack || err.message || err).split('\n');
       var newStack = [];
       for (var i = 0; i < stack.length; i++) {
-        if (stack[i].indexOf($__curScript.src) == -1)
+        if (typeof $__curScript == 'undefined' || stack[i].indexOf($__curScript.src) == -1)
           newStack.push(stack[i]);
       }
     }
