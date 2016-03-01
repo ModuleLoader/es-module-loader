@@ -34,11 +34,25 @@
   })();
 
   function addToError(err, msg) {
-    var newErr = new Error((err.message || err) + '\n\t' + msg, err.fileName, err.lineNumber);
+
+    // parse the stack removing loader code lines for simplification
+    if (!err.originalErr && typeof $__curScript != 'undefined') {
+      var stack = (err.stack || err.message || err).split('\n');
+      var newStack = [];
+      for (var i = 0; i < stack.length; i++) {
+        if (stack[i].indexOf($__curScript.src) == -1)
+          newStack.push(stack[i]);
+      }
+    }
+
+    var newErr = new Error((newStack ? newStack.join('\n\t') : err.message) + '\n\t' + msg, err.fileName, err.lineNumber);
     
     // Node needs stack adjustment for throw to show message
     if (!isBrowser)
       newErr.stack = (err.stack || err.message || err) + '\n\t' + msg;
+    // Clearing the stack stops unnecessary loader lines showing
+    else
+      newErr.stack = null;
     
     // track the original error
     newErr.originalErr = err.originalErr || err;
