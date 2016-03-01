@@ -207,11 +207,17 @@ describe('System', function () {
       }
 
       it('should throw if on syntax error', function (done) {
+        var base = baseURL;
+        if (typeof process != 'undefined') {
+          var isWindows = !!process.platform.match(/^win/);
+          base = base.substr(7 + isWindows);
+        }
+
         System.import('test/loads/main.js')
           .then(supposedToFail)
           .catch(function (e) {
-            expect(e)
-              .to.be.equal('dep error\n\tError evaluating ' + baseURL + 'test/loads/deperror.js');
+            expect(e.toString())
+              .to.be.equal('Error: dep error\n\tError evaluating ' + base + 'test/loads/deperror.js');
           })
           .then(done, done);
       });

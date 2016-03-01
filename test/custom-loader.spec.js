@@ -42,6 +42,10 @@ describe('Custom Loader', function () {
         expect(false, 'should not be successful').to.be.ok();
       }
       var base = baseURL + 'test/loader/';
+      if (typeof process != 'undefined') {
+        var isWindows = !!process.platform.match(/^win/);
+        base = base.substr(7 + isWindows);
+      }
 
       it('should make the normalize throw', function(done) {
         customLoader['import']('test/loader/error1-parent.js')

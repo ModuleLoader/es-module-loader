@@ -46,13 +46,15 @@
 
     var newMsg = (newStack ? newStack.join('\n\t') : err.message) + '\n\t' + msg;
 
+    // Convert file:/// URLs to paths in Node
+    if (!isBrowser)
+      newMsg = newMsg.replace(isWindows ? /file:\/\/\//g : /file:\/\//g, '');
+
     var newErr = new Error(newMsg, err.fileName, err.lineNumber);
     
     // Node needs stack adjustment for throw to show message
-    // Also covert file:/// URLs to paths
-    if (!isBrowser) {
-      newErr.stack = newMsg.replace(isWindows ? /file:\/\/\//g : /file:\/\//g, '');
-    }
+    if (!isBrowser)
+      newErr.stack = newMsg;
     // Clearing the stack stops unnecessary loader lines showing
     else
       newErr.stack = null;
