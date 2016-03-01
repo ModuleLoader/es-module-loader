@@ -45,11 +45,15 @@
       }
     }
 
-    var newErr = new Error((newStack ? newStack.join('\n\t') : err.message) + '\n\t' + msg, err.fileName, err.lineNumber);
+    var newMsg = (newStack ? newStack.join('\n\t') : err.message) + '\n\t' + msg;
+
+    var newErr = new Error(newMsg, err.fileName, err.lineNumber);
     
     // Node needs stack adjustment for throw to show message
-    if (!isBrowser)
-      newErr.stack = (err.stack || err.message || err) + '\n\t' + msg;
+    // Also covert file:/// URLs to paths
+    if (!isBrowser) {
+      newErr.stack = newMsg.replace(isWindows ? /file:\/\/\//g : /file:\/\//g, '');
+    }
     // Clearing the stack stops unnecessary loader lines showing
     else
       newErr.stack = null;
