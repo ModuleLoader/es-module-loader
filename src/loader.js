@@ -733,14 +733,18 @@ function logloads(loads) {
       var load = createLoad();
       load.address = options && options.address;
       load.name = options && options.name;
-      var linkSet = createLinkSet(this._loader, load);
-      var sourcePromise = Promise.resolve(source);
-      var loader = this._loader;
-      var p = linkSet.done.then(function() {
-        return evaluateLoadedModule(loader, load);
-      });
-      proceedToTranslate(loader, load, sourcePromise);
-      return p;
+      if (!this._loader.modules[load.name]) {
+        var linkSet = createLinkSet(this._loader, load);
+        var sourcePromise = Promise.resolve(source);
+        var p = linkSet.done.then(function () {
+          return evaluateLoadedModule(loader, load);
+        });
+        proceedToTranslate(loader, load, sourcePromise);
+        return p;
+      } else
+        return Promise.resolve().then(function(){
+          return loader.modules[load.name].module;
+        });
     },
     // 26.3.3.12
     newModule: function (obj) {
