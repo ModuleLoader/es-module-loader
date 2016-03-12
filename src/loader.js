@@ -713,7 +713,9 @@ function logloads(loads) {
     load: function(name) {
       var loader = this._loader;
       if (loader.modules[name])
-        return Promise.resolve();
+        return Promise.resolve().then(function(){
+          return loader.modules[name].module;
+        });
       return loader.importPromises[name] || createImportPromise(this, name, new Promise(asyncStartLoadPartwayThrough({
         step: 'locate',
         loader: loader,
