@@ -733,6 +733,7 @@ function logloads(loads) {
       var load = createLoad();
       load.address = options && options.address;
       load.name = options && options.name;
+      var loader = this._loader;
       if (!this._loader.modules[load.name]) {
         var linkSet = createLinkSet(this._loader, load);
         var sourcePromise = Promise.resolve(source);
