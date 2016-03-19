@@ -58,7 +58,6 @@ var transpile = (function() {
 
   function babelTranspile(load, babel) {
     var options = this.babelOptions || {};
-    options.modules = 'system';
     if (options.sourceMap === undefined)
       options.sourceMap = 'inline';
     options.inputSourceMap = load.metadata.sourceMap;
