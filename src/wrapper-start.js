@@ -100,4 +100,9 @@
     throw new TypeError('No environment baseURI');
   }
 
-  var URL = __global.URLPolyfill || __global.URL;
+  try {
+    var nativeURL = new __global.URL('test:///').protocol == 'test:';
+  }
+  catch(e) {}
+
+  var URL = nativeURL ? __global.URL : __global.URLPolyfill;
