@@ -33,6 +33,8 @@
     }
   })();
 
+  var errArgs = new Error(0, '_').fileName == '_';
+
   function addToError(err, msg) {
     // parse the stack removing loader code lines for simplification
     if (!err.originalErr) {
@@ -50,7 +52,7 @@
     if (!isBrowser)
       newMsg = newMsg.replace(isWindows ? /file:\/\/\//g : /file:\/\//g, '');
 
-    var newErr = err.fileName ? new Error(newMsg, err.fileName, err.lineNumber) : new Error(newMsg);
+    var newErr = errArgs ? new Error(newMsg, err.fileName, err.lineNumber) : new Error(newMsg);
     
     // Node needs stack adjustment for throw to show message
     if (!isBrowser)
