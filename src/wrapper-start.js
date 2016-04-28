@@ -50,7 +50,7 @@
     if (!isBrowser)
       newMsg = newMsg.replace(isWindows ? /file:\/\/\//g : /file:\/\//g, '');
 
-    var newErr = new Error(newMsg, err.fileName, err.lineNumber);
+    var newErr = err.fileName ? new Error(newMsg, err.fileName, err.lineNumber) : new Error(newMsg);
     
     // Node needs stack adjustment for throw to show message
     if (!isBrowser)
