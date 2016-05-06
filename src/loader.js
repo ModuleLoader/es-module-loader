@@ -19,7 +19,7 @@
 */
 
 function Module() {
-	if (this) {
+	if (typeof this === 'object') {
 		this.__esModule = true;
 	}
 }
