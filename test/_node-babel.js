@@ -4,7 +4,7 @@ global.expect = require('expect.js');
 
 require('./_helper');
 
-require('regenerator/runtime');
+require('regenerator-runtime/runtime');
 
 global.System = require('../index').System;
 global.System.transpiler = 'babel';
