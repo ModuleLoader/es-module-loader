@@ -18,7 +18,11 @@
 *********************************************************************************************
 */
 
-function Module() {}
+function Module() {
+	if (typeof this === 'object') {
+		this.__esModule = true;
+	}
+}
 // http://www.ecma-international.org/ecma-262/6.0/#sec-@@tostringtag
 defineProperty(Module.prototype, 'toString', {
   value: function() {
