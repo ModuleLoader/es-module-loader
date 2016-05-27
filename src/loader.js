@@ -143,11 +143,13 @@ function logloads(loads) {
 
   // 15.2.3.2 Load Records and LoadRequest Objects
 
+  var anonCnt = 0;
+
   // 15.2.3.2.1
   function createLoad(name) {
     return {
       status: 'loading',
-      name: name,
+      name: name || '<Anonymous' + ++anonCnt + '>',
       linkSets: [],
       dependencies: [],
       metadata: {}
@@ -231,8 +233,6 @@ function logloads(loads) {
     );
   }
 
-  var anonCnt = 0;
-
   // 15.2.4.5
   function proceedToTranslate(loader, load, p) {
     p
@@ -252,8 +252,8 @@ function logloads(loads) {
       // 15.2.4.5.3 InstantiateSucceeded
       .then(function(instantiateResult) {
         if (instantiateResult === undefined) {
-          load.address = load.address || '<Anonymous Module ' + ++anonCnt + '>';
-
+          load.address = load.address || load.name;
+          
           // instead of load.kind, use load.isDeclarative
           load.isDeclarative = true;
           return transpile.call(loader.loaderObj, load)
