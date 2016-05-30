@@ -241,6 +241,8 @@ function logloads(loads) {
       if (load.status != 'loading')
         return;
 
+      load.address = load.address || load.name;
+
       return Promise.resolve(loader.loaderObj.translate({ name: load.name, metadata: load.metadata, address: load.address, source: source }))
 
       // 15.2.4.5.2 CallInstantiate
@@ -252,8 +254,6 @@ function logloads(loads) {
       // 15.2.4.5.3 InstantiateSucceeded
       .then(function(instantiateResult) {
         if (instantiateResult === undefined) {
-          load.address = load.address || load.name;
-          
           // instead of load.kind, use load.isDeclarative
           load.isDeclarative = true;
           return transpile.call(loader.loaderObj, load)
