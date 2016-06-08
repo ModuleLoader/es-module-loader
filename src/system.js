@@ -27,12 +27,8 @@ function applyPaths(paths, name) {
     if (paths.hasOwnProperty && !paths.hasOwnProperty(p))
       continue;
 
-    var pathParts = p.split('*');
-    if (pathParts.length > 2)
-      throw new TypeError('Only one wildcard in a path is permitted');
-
     // exact path match
-    if (pathParts.length == 1) {
+    if (p.indexOf('*') === -1) {
       if (name == p)
         return paths[p];
       
@@ -43,6 +39,10 @@ function applyPaths(paths, name) {
     }
     // wildcard path match
     else {
+      var pathParts = p.split('*');
+      if (pathParts.length > 2)
+        throw new TypeError('Only one wildcard in a path is permitted');
+
       var wildcardPrefixLen = pathParts[0].length;
       if (wildcardPrefixLen >= maxWildcardPrefixLen &&
           name.substr(0, pathParts[0].length) == pathParts[0] &&
