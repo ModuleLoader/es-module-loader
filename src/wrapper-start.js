@@ -77,6 +77,7 @@
   }
 
   var baseURI;
+
   // environent baseURI detection
   if (typeof document != 'undefined' && document.getElementsByTagName) {
     baseURI = document.baseURI;
@@ -85,8 +86,13 @@
       var bases = document.getElementsByTagName('base');
       baseURI = bases[0] && bases[0].href || window.location.href;
     }
+  }
+  else if (typeof location != 'undefined') {
+    baseURI = __global.location.href;
+  }
 
-    // sanitize out the hash and querystring
+  // sanitize out the hash and querystring
+  if (baseURI) {
     baseURI = baseURI.split('#')[0].split('?')[0];
     baseURI = baseURI.substr(0, baseURI.lastIndexOf('/') + 1);
   }
@@ -94,9 +100,6 @@
     baseURI = 'file://' + (isWindows ? '/' : '') + process.cwd() + '/';
     if (isWindows)
       baseURI = baseURI.replace(/\\/g, '/');
-  }
-  else if (typeof location != 'undefined') {
-    baseURI = __global.location.href;
   }
   else {
     throw new TypeError('No environment baseURI');
