@@ -98,6 +98,7 @@ This enables supporting the edge cases of for example:
 
 a.js
 ```javascript
+import {a} from './b.js';
 export function b() {
   a();
 }
@@ -106,6 +107,7 @@ a();
 
 b.js
 ```javascript
+import {b} from './a.js';
 export function a() {
   b();
 }
