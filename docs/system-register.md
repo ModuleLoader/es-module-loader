@@ -113,7 +113,9 @@ export function b() {
 a();
 ```
 
-If a.js is imported first, then b.js will execute first. b.js can thus call the function export from a.js before a.js has even executed.
+If a.js is imported first, then b.js will execute first. In ES module execution, b.js will successfully call the function export 
+from a.js before a.js has even executed since function bindings are setup before execution. This is supported fully by 
+the deferred loading step in this System.register approach.
 
 It can be argued that this full support of ES module circular references is unnecessary. There is minimal additional performance
 cost to this extra return statement though and it ensures that during the transition period where ES modules and traditional
