@@ -81,6 +81,8 @@ while supporting ES3 environments for the module syntax conversion.
 
 Since `System` is the loader name, `System.register` is a function that allows us to _define_ a module directly into the loader instance.
 
+Note that the loader name is not fixed and can be changed here. For example to `SystemJS.register` in the case of bundling for SystemJS.
+
 When code is executed, we only need to assume that `System` is in the scope of execution.
 
 This then has the same advantages of the AMD `define` function in that it is a CSP-compatible output mechanism, allowing support
@@ -113,7 +115,7 @@ Where a.js can call the function export in b.js before b.js has even executed.
 
 It can be argued that full support of ES module circular references is unnecessary. There is minimal additional performance
 cost to this extra return statement though and it ensures that during the transition period where ES modules and traditional
-environments are running side-by-side, that the best parity is provided between the systems that we can.
+environments are running side-by-side, that the best parity is provided between the systems.
 
 #### Bulk exports
 
