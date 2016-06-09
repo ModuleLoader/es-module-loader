@@ -77,6 +77,44 @@ Then we separately run all the execution functions left to right from the bottom
 In this way we get the live binding and circular reference support exactly as expected by the spec, 
 while supporting ES3 environments for the module syntax conversion.
 
+#### Why the System.register name
+
+Since `System` is the loader name, `System.register` is a function that allows us to _define_ a module directly into the loader instance.
+
+When code is executed, we only need to assume that `System` is in the scope of execution.
+
+This then has the same advantages of the AMD `define` function in that it is a CSP-compatible output mechanism, allowing support
+in environments where _eval_ is not supported, which would be necessary for other types of plain script outputs.
+
+#### Why deferred execution
+
+The use of `return { setters: ..., execute: ... }` is done instead of direct execution to allow bindings to be fully propogated
+through the module tree before running execution functions. This separation of setting up bindings, and then running execution
+allows us to match the exact ES module exeuction semantics.
+
+This enables supporting the edge cases of for example:
+
+a.js
+```javascript
+export function b() {
+  a();
+}
+a();
+```
+
+b.js
+```javascript
+export function a() {
+  b();
+}
+```
+
+Where a.js can call the function export in b.js before b.js has even executed.
+
+It can be argued that full support of ES module circular references is unnecessary. There is minimal additional performance
+cost to this extra return statement though and it ensures that during the transition period where ES modules and traditional
+environments are running side-by-side, that the best parity is provided between the systems that we can.
+
 #### Bulk exports
 
 The `$__export` function above can also be used to export multiple exports at the same time:
@@ -85,7 +123,8 @@ The `$__export` function above can also be used to export multiple exports at th
 $__export({ key: 'value', another: 'value' });
 ```
 
-This is useful for performance of deep re-exports where unnecessary setter operations can be avoided.
+This is useful for performance of deep re-exports where unnecessary setter operations can be avoided, otherwise setter performance
+grows quadratically with the `export *` tree depth, and can cause noticable slowdowns on large trees.
 
 #### Metadata
 
