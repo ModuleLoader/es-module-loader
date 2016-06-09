@@ -98,24 +98,24 @@ This enables supporting the edge cases of for example:
 
 a.js
 ```javascript
-import {a} from './b.js';
-export function b() {
-  a();
-}
-a();
-```
-
-b.js
-```javascript
-import {b} from './a.js';
+import {b} from './b.js';
 export function a() {
   b();
 }
 ```
 
-Where a.js can call the function export in b.js before b.js has even executed.
+b.js
+```javascript
+import {a} from './a.js';
+export function b() {
+  console.log('b');
+}
+a();
+```
 
-It can be argued that full support of ES module circular references is unnecessary. There is minimal additional performance
+If a.js is imported first, then b.js will execute first. b.js can thus call the function export from a.js before a.js has even executed.
+
+It can be argued that this full support of ES module circular references is unnecessary. There is minimal additional performance
 cost to this extra return statement though and it ensures that during the transition period where ES modules and traditional
 environments are running side-by-side, that the best parity is provided between the systems.
 
