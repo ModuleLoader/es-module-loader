@@ -92,7 +92,7 @@ in environments where _eval_ is not supported, which would be necessary for othe
 
 The use of `return { setters: ..., execute: ... }` is done instead of direct execution to allow bindings to be fully propogated
 through the module tree before running execution functions. This separation of setting up bindings, and then running execution
-allows us to match the exact ES module exeuction semantics.
+allows us to match the exact ES module execution semantics.
 
 This enables supporting the edge cases of for example:
 
