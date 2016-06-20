@@ -32,12 +32,6 @@
   var LINK = 4;
   var READY = 5;
 
-  // feature detection
-  var hasNativeMap = __global.Map && __global.Map.prototype && __global.Map.prototype.entries && __global.Map.prototype.keys
-       && __global.Map.prototype.values && __global.Map.prototype.get && __global.Map.prototype.set
-       && __global.Map.prototype.has && __global.Map.prototype.delete;
-  var hasNativeIterator = __global.Symbol && __global.Symbol.iterator;
-
   // 3.3.2
   Loader.prototype['import'] = function(name, referrer) {
     var loader = this._loader;
@@ -173,13 +167,8 @@
 
   // 4.2 - see https://github.com/ModuleLoader/es6-module-loader/pull/462#discussion-diff-50639828 for why it deviates from spec
   function Registry() {
-    if (hasNativeMap)
-      this.registryMap = new __global.Map();
-    else
-      this.registryMap = new InternalMapPolyfill();
+    this.registryMap = new __global.Map();
     // 4.4.2
-    if (hasNativeIterator)
-      this[__global.Symbol.iterator] = mapPolyfillEntriesIterator.bind(this.registryMap);
   }
 
   // 4.3.1 -- not necessary because of https://github.com/ModuleLoader/es6-module-loader/pull/462#discussion-diff-50639828
@@ -696,116 +685,3 @@
     for (var p in descriptors)
       this[p] = descriptors[p];
   }
-
-  function InternalMapPolyfill() {}
-
-  function mapPolyfillEntriesIterator() {
-    var map = this;
-    var keys = Object.keys(map);
-    var keyIndex = 0;
-    return {
-      next: function() {
-        if (keyIndex < keys.length) {
-          return {
-            value: [keys[keyIndex], map[keys[keyIndex++]]],
-            done: false
-          };
-        } else {
-          return {
-            value: undefined,
-            done: true
-          };
-        }
-      }
-    };
-  }
-
-  InternalMapPolyfill.prototype.entries = function() {
-    if (__global.Symbol && __global.Symbol.iterator) {
-      var iterable = {};
-      var map = this;
-      iterable[__global.Symbol.iterator] = function() {
-        return mapPolyfillEntriesIterator.call(map);
-      };
-      return iterable;
-    } else {
-      throw new Error('Cannot return entries iterator unless Symbol.iterator is defined');
-    }
-  };
-
-  InternalMapPolyfill.prototype.keys = function() {
-    if (__global.Symbol && __global.Symbol.iterator) {
-      var map = this;
-      var iterable = {};
-      iterable[__global.Symbol.iterator] = function() {
-        var keys = Object.keys(map);
-        var keyIndex = 0;
-        return {
-          next: function() {
-            if (keyIndex < keys.length) {
-              return {
-                value: keys[keyIndex++],
-                done: false
-              };
-            } else {
-              return {
-                value: undefined,
-                done: true
-              };
-            }
-          }
-        };
-      };
-      return iterable;
-    } else {
-      throw new Error('Cannot return keys iterator unless Symbol.iterator is defined');
-    }
-  };
-
-  InternalMapPolyfill.prototype.values = function() {
-    if (__global.Symbol && __global.Symbol.iterator) {
-      var map = this;
-      var iterable = {};
-      iterable[__global.Symbol.iterator] = function() {
-        var keys = Object.keys(map);
-        var keyIndex = 0;
-        return {
-          next: function() {
-            if (keyIndex < keys.length) {
-              return {
-                value: map[keys[keyIndex++]],
-                done: false
-              };
-            } else {
-              return {
-                value: undefined,
-                done: true
-              };
-            }
-          }
-        };
-      };
-      return iterable;
-    } else {
-      throw new Error('Cannot return values iterator unless Symbol.iterator is defined');
-    }
-  };
-
-  InternalMapPolyfill.prototype.get = function(key) {
-    return this[key];
-  };
-
-  InternalMapPolyfill.prototype.set = function(key, value) {
-    this[key] = value;
-    return this;
-  };
-
-  InternalMapPolyfill.prototype.has = function(key) {
-    return this.hasOwnProperty(key);
-  };
-
-  InternalMapPolyfill.prototype.delete = function(key) {
-    var hadProperty = this.hasOwnProperty(key);
-    delete this[key];
-    return hadProperty;
-  };
