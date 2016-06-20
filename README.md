@@ -1,172 +1,58 @@
 # ES6 Module Loader Polyfill [![Build Status][travis-image]][travis-url]
 
-Dynamically loads ES6 modules in browsers and [NodeJS](#nodejs-use) with support for loading existing and custom module formats through loader hooks.
+Dynamically loads ES6 modules in browsers and NodeJS with support for loading existing and custom module formats through loader hooks.
 
-This project implements dynamic module loading as per the newly redrafted specification at [WhatWG loader spec](https://github.com/whatwg/loader). It replaces the 0.* branch, which implements the previous ES6-specified loader API at [2014-08-24 ES6 Specification Draft Rev 27, Section 15](http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts#august_24_2014_draft_rev_27).
+### Specifications
+ES6/ES2015 introduces native support for JavaScript modules, self-standing pieces of code which execute in their own scope and import values exported by other modules. Originally, the specification included the loader, and this polyfill was created to support those loader functions in current browsers and in NodeJS.
 
-The rest of this Readme describes the previous implementation and will be updated as work progresses.
+The final specification, though, only defines the [language-specific semantics of modules](http://www.ecma-international.org/ecma-262/6.0/#sec-modules), leaving implementations of the loading of those modules to separate specifications. The dynamic configurable loader is being specified at the [WhatWG loader spec](https://whatwg.github.io/loader/), and from version 0.50 this polyfill implements that.
 
+Support for static loading of modules from HTML using `<script type="module">` tags has also been added to the [WhatWG HTML specification](https://html.spec.whatwg.org/multipage/scripting.html#the-script-element). This adapts the existing script-loading mechanism to include the loading of 'module scripts' together with all the other modules on which those module scripts depend. However, this currently has no interface with the WhatWG loader, and consequently with this polyfill. Eventually, both loading mechanisms should share a module registry, and the WhatWG loader resolution hooks should apply to the loading of module scripts as well.
 
-* Provides an asynchronous loader (`System.import`) to [dynamically load ES6 modules](#getting-started).
-* Supports both [Traceur](https://github.com/google/traceur-compiler) and [Babel](http://babeljs.io/) for compiling ES6 modules and syntax into ES5 in the browser with source map support.
-* Fully supports [ES6 circular references and live bindings](https://github.com/ModuleLoader/es6-module-loader/wiki/Circular-References-&-Bindings).
-* Includes [`baseURL` and `paths` implementations](https://github.com/ModuleLoader/es6-module-loader/wiki/Configuring-the-Loader).
-* Can be used as a [tracing tool](https://github.com/ModuleLoader/es6-module-loader/wiki/Tracing-API) for static analysis of modules.
-* Polyfills ES6 Promises in the browser with an optionally bundled ES6 promise implementation.
-* Supports IE9+.
-* The complete combined polyfill, including ES6 promises, comes to 9KB minified and gzipped, making it suitable for production use, provided that modules are [built into ES5 making them independent of Traceur](https://github.com/ModuleLoader/es6-module-loader/wiki/Production-Workflows).
+### Support status June 2016
+* ES6 is now [widely supported](http://kangax.github.io/compat-table/es6/) in the main browsers and in NodeJS.
+* Browser support for module scripts is being implemented, currently behind flags; it's likely to be a while before this is usable in production systems.
+* The WhatWG loader is not finalized and is unstable and liable to change. Consequently, this polyfill is also liable to change. This is unlikely to be implemented in browsers until stable.
 
-For an overview of build workflows, [see the production guide](https://github.com/ModuleLoader/es6-module-loader/wiki/Production-Workflows).
+### WhatWG loader status June 2016
+* Defines a `Loader` class in the (new to ES2015) `Reflect` global object, with `import`, `resolve` and `load` prototype methods.
+* The `Loader` class also includes a module `Registry`, which is a `Symbol.iterator`.
+* Introduces a `System` global object, with an instance of `Reflect.Loader` as the `loader` property; this is the default browser loader. In addition to the `Loader` methods, this has `resolve`, `fetch`, `translate` and `instantiate` prototype methods, of which the last two are by default no-ops.
+* Defines a `Module` constructor in the `Reflect` global for dynamic construction of modules from within script or module code.
 
-For an example of a universal module loader based on this polyfill for loading AMD, CommonJS and globals, see [SystemJS](https://github.com/systemjs/systemjs).
+### This polyfill
+* Implements `Reflect.Loader`, providing the ability for developers to create custom loader instances.
+* Implements the module registry
+* Implements `Reflect.Module`
+* Implements the `System.loader` default `Reflect.Loader` class instance, which means that `System.loader.import` can be used to dynamically load ES6 modules.
+* Until the parsing of `import` and `export` statements are natively supported, supports both [Traceur](https://github.com/google/traceur-compiler) and [Babel](http://babeljs.io/) for transpiling these statements; this requires loading a large parser, so is not suitable for production use.
+* Provides a standards-based hookable loader, so users can create their own custom loaders with it.
+* Fully supports ES6 circular references and live bindings.
+* Targets modern browsers, all of which now support the great bulk of ES6.
 
-### Documentation
+### Differences with versions prior to 0.50
+* As the target browsers support ES6, no polyfills are included; applications wanting to support older browsers, such as IE, need to include polyfills for `Map`, `Symbol.iterator`, and `Promise`, as well as `URL()`; https://cdn.polyfill.io provides a simple way to do this.
+* As only `import` and `export` are transpiled, those wanting to support older browsers should also pre-transpile any ES6 code into ES5.
+* What was previously in the `System` object, for example `System.import`, is now in `System.loader` (applications can of course supply an alias to ease the transition).
+* The previous `normalize` and `locate` methods have now been combined into the `resolve` method.
+* The `Module` constructor has been moved to the `Reflect` object.
+* Although the WhatWG loader will eventually define a `site` object, which will probably include some kind of module name/URL mapping, this is not currently defined and so is not included in the current polyfill; this means there is no longer any `baseURL` or `paths` support. For compatibility with module scripts, the default loader only supports relative URLs `/`, `./` and `../` in `import` statements (this is relative to the URL of the importing module).
 
-* [A brief overview of ES6 module syntax](https://github.com/ModuleLoader/es6-module-loader/wiki/Brief-Overview-of-ES6-Module-syntax)
-* [Configuring the loader](https://github.com/ModuleLoader/es6-module-loader/wiki/Configuring-the-Loader)
-* [Production workflows](https://github.com/ModuleLoader/es6-module-loader/wiki/Production-Workflows)
-* [Circular References &amp; Bindings](https://github.com/ModuleLoader/es6-module-loader/wiki/Circular-References-&-Bindings)
-* [Extending the loader through loader hooks](https://github.com/ModuleLoader/es6-module-loader/wiki/Extending-the-ES6-Loader)
-* [Tracing API](https://github.com/ModuleLoader/es6-module-loader/wiki/Tracing-API)
-
-### Getting Started
-
-If using ES6 syntax (optional), include `traceur.js` or `babel.js` in the page first then include `es6-module-loader.js`:
-
-```html
-  <script src="traceur.js"></script>
-  <script src="es6-module-loader.js"></script>
-```
-
-To use Babel, load Babel's `browser.js` instead and set the transpiler to `babel` with the loader configuration:
-
-```html
-<script>
-  System.transpiler = 'babel';
-</script>
-```
-
-Then we can write any ES6 module:
-
-mymodule.js:
-```javascript
-  export class q {
-    constructor() {
-      console.log('this is an es6 class!');
-    }
-  }
-```
-
-and load the module dynamically in the browser
-
-```html
-<script>
-  System.import('mymodule').then(function(m) {
-    new m.q();
-  });
-</script>
-```
-
-The dynamic loader returns a `Module` object, which contains getters for the named exports (in this case, `q`).
-
-#### Setting transpilation options
-
-If using Traceur, these can be set with:
-
-```javascript
-System.traceurOptions = {...};
-```
-
-Or with Babel:
-
-```javascript
-System.babelOptions = {...};
-```
-
-#### Module Tag
-
-As well as defining `window.System`, this polyfill provides support for the `<script type="module">` tag:
-
-```html
-<script type="module">
-  // loads the 'q' export from 'mymodule.js' in the same path as the page
-  import { q } from 'mymodule';
-
-  new q(); // -> 'this is an es6 class!'
-</script>
-```
-
-Because it is only possible to load ES6 modules with this tag, it is not suitable for production use in this way.
-
-See the [demo folder](https://github.com/ModuleLoader/es6-module-loader/blob/master/demo/index.html) in this repo for a working example demonstrating module loading in the browser both with `System.import` and with the module-type script tag.
-
-#### NodeJS Use
-
-```
-  npm install es6-module-loader babel traceur
-```
-
-It is important that Babel or Traceur is installed into the path in order to be found, since these are no longer project dependencies.
-
-For use in NodeJS, the `Loader` and `System` globals are provided as exports:
-
-index.js:
-```javascript
-  var System = require('es6-module-loader').System;
-  /*  
-   *  Include:
-   *    System.transpiler = 'babel'; 
-   *  to use Babel instead of Traceur
-   */
-
-  System.import('some-module').then(function(m) {
-    console.log(m.p);
-  });
-```
-
-some-module.js:
-```javascript
-  export var p = 'NodeJS test';
-```
-
-Running the application:
-```
-> node index.js
-NodeJS test
-```
+For an example of approaches for using the loader in production, see [SystemJs](https://github.com/systemjs/systemjs/) which hooks in functionality such as supporting ES6 modules through the System.register transpiled format and its own custom module resolution mechanism.
 
 ## Contributing
+Changing to the new loader spec is quite a lot of work, so contributions are welcome.
+
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [grunt](https://github.com/cowboy/grunt).
 
 _Also, please don't edit files in the "dist" subdirectory as they are generated via grunt. You'll find source code in the "lib" subdirectory!_
 
-## Testing
-
-- `npm run test:node` will use node to  to run the tests
-- `npm run test:browser` will run `npm run test:browser-babel` and `npm run test:browser-traceur`
-- `npm run test:browser-[transpiler]` use karma to run the tests with Traceur or Babel.
-- `npm run test:browser:perf` will use karma to run benchmarks
-
-`npm run test:browser-[transpiler]` supports options after a double dash (`--`) :
-
-- You can use the `--polyfill` option to test the code with polyfill.
-
-- You can use the `--coverage` option to test and extract coverage info.
-
-- You can use the `--native-iterator` option to run extra tests that check that `for ... of` and other iterator syntaxes work with es6-module-loader
-
-- You can use the `--force-map-polyfill` option to simulate an environment where `Map` is not defined
-
-- You can use the `--saucelabs` option to use karma and saucelabs to run the tests in various browsers.
-Note: you will need to export your username and key to launch it.
-
-  ```sh
-  export SAUCE_USERNAME={your user name} && export SAUCE_ACCESS_KEY={the access key that you see once logged in}
-  npm run test:browsers -- --saucelabs
-  ```
-
-## Credit
-Copyright (c) 2015 Luke Hoban, Addy Osmani, Guy Bedford
+##Contributors
+Guy Bedford  
+Joel Denning  
+Luke Hoban  
+Addy Osmani  
+Peter Robins
 
 ## License
 Licensed under the MIT license.
