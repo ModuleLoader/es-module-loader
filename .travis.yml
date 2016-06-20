@@ -39,3 +39,7 @@ script:
   - npm run test:node
   - npm run test:browser-$PARSER
   - "[ $SAUCE_LABS == false ] || npm run test:browser-$PARSER -- --saucelabs $OPTIONS"
+
+branches:
+  except:
+    - 0.50
