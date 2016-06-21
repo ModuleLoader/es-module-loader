@@ -83,59 +83,10 @@
   var SystemLoader = function() {
     Loader.call(this, arguments);
 
-    var siteTable = {};
-    this.site = function(mappings) {
-      for (var m in mappings)
-        siteTable[m] = mappings[m];
-    }
-    this.site.get = function(name) {
-      return siteTable[name];
-    }
-    this.site.set = function(name, url) {
-      siteTable[name] = url;
-    }
-    this.site.has = function(name) {
-      return !!siteTable[name];
-    }
-    this.site['delete'] = function(name) {
-      delete siteTable[name];
-    }
-
-    function siteLookup(target) {
-      if (siteTable[target])
-        return siteTable[target];
-
-      // most specific wildcard wins, with specificity metric as "/" count in pattern
-      var curMatch, curMatchLen = 0;
-      for (var p in siteTable) {
-        var wildcardParts = p.split('*');
-        if (wildcardParts.length > 2)
-          throw new TypeError('Sites entry ' + p + ' contains multiple wildcards.');
-
-        if (wildcardParts.length == 1)
-          continue;
-        
-        if (p.split('/').length >= curMatchLen
-            && p.substr(0, wildcardParts[0].length) === target.substr(0, wildcardParts[0].length)
-            && p.substr(p.length - wildcardParts[1].length) === wildcardParts[1]) {
-          curMatch = siteTable[p].replace('*', target.substr(wildcardParts[0].length, target.length - p.length + 1));
-          curMatchLen = p.split('/').length;
-        }
-      }
-
-      return curMatch;
-    }
-
     this.hook('resolve', function(url, parentUrl, metadata) {
-      // first check site table
-      var sitesUrl = siteLookup(url);
-      
-      if (sitesUrl || !parentUrl)
-        parentUrl = base;
-
-      // then do url normalization
+      // do url normalization
       // NB for performance, test out a normalization cache here
-      return new URL(sitesUrl || url, parentUrl).href;
+      return new URL(url, parentUrl).href;
     });
 
     this.hook('fetch', function(url, metadata) {
