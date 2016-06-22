@@ -32,6 +32,7 @@ Support for static loading of modules from HTML using `<script type="module">` t
 
 ### Differences with versions prior to 0.50
 * As the target browsers support ES6, no polyfills are included; applications wanting to support older browsers, such as IE, need to include polyfills for `Map`, `Symbol.iterator`, and `Promise`, as well as `URL()`; https://cdn.polyfill.io provides a simple way to do this.
+* For use in NodeJS, support for `Map`, `Symbol.iterator`, and `Promise` is needed, so NodeJS v4+ is required (v6+ is recommended).
 * As only `import` and `export` are transpiled, those wanting to support older browsers should also pre-transpile any ES6 code into ES5.
 * What was previously in the `System` object, for example `System.import`, is now in `System.loader` (applications can of course supply an alias to ease the transition).
 * The previous `normalize` and `locate` methods have now been combined into the `resolve` method.
