@@ -1,11 +1,7 @@
 /*
  * Dynamic ES6 Module Loader Polyfill
  *
- * Implemented to the in-progress WhatWG loader standard at
- *   https://github.com/whatwg/loader/tree/819035fd5c59c53130a025694162fcaa2315fc36
- *
- * Up to date as of 23 Feb 2015.
- *
+ * Implemented to the in-progress WhatWG loader standard at https://whatwg.github.io/loader/
  */
 
 (function(__global) {

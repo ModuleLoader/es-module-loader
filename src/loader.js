@@ -1,10 +1,17 @@
 // ---------- Loader ----------
-  /*
-   * Spec Differences
-   * - Added ensureRegistered entry cache argument to avoid repeated lookups
-   * - metadata sent through ensureRegistered and all requestHOOK calls
-   * - Error entry checking and saving added to requestHOOK calls
-   */
+/**
+  * Spec Differences
+  * - Realm not implemented
+  * - Out of date; sections 3 & 4 are implemented though need checking
+  * - uses newRegistry instead of Registry (this can probably be changed, as I
+  *   suspect that the existing Registry code will work with ES6 Map and Symbol.iterator)
+  * - 3.3.6 toStringTag not implemented
+  * - Other sections need implementing/(re)writing
+
+  * - Added ensureRegistered entry cache argument to avoid repeated lookups
+  * - metadata sent through ensureRegistered and all requestHOOK calls
+  * - Error entry checking and saving added to requestHOOK calls
+  */
 
   // 3. Loader Objects
 
@@ -24,7 +31,8 @@
     };
   }
 
-  // States
+  // States - TODO out of date; better as a 'states' object?
+  // 5
   var FETCH = 0;
   var TRANSLATE = 1;
   var INSTANTIATE = 2;
@@ -73,7 +81,7 @@
       });
     
     else if (stage == 'link')
-      return requestLink(loader, key, metadata).then(function() {})
+      return requestLink(loader, key, metadata).then(function() {});
     
     else if (!stage || stage == 'ready')
       return requestReady(loader, key, metadata)
@@ -105,61 +113,6 @@
       }
   });
 
-  // No longer in spec
-  // For eg fetch, <script type="module">${value}</script>, key = anon
-  Loader.prototype.provide = function(key, stage, value, metadata) {
-    var loader = this._loader;
-
-    var entry = ensureRegistered(loader, key, metadata);
-
-    if (stage == 'fetch') {
-      // @ifdef STRICT
-      if (entry.state > FETCH)
-        throw new TypeError(key + ' has already been fetched.');
-      // @endif
-      fulfillFetch(loader, entry, value);
-    }
-    else if (stage == 'translate') {
-      // @ifdef STRICT
-      if (entry.state > TRANSLATE)
-        throw new TypeError(key + ' has already been translated.');
-      // @endif
-      fulfillTranslate(loader, entry, value);
-    }
-    else if (stage == 'instantiate') {
-      // @ifdef STRICT
-      if (entry.state > INSTANTIATE)
-        throw new TypeError(key + ' has already been instantiated.');
-      // @endif
-      fulfillFetch(loader, entry, undefined);
-      fulfillTranslate(loader, entry, undefined);
-      // NB error propogation
-      entry.translate.then(function(source) {
-        loadTranspilerThenFulfillInstantiate(loader, entry, value, source);
-      });
-    }
-    // @ifdef STRICT
-    else
-      throw new TypeError('Invalid stage ' + stage);
-    // @endif
-  };
-
-  // TODO: the Loader no longer has the hook property
-  // loader.hook('resolve') -> returns resolve hook
-  // loader.hook('resolve', fn) -> sets resolve hook
-  var hooks = ['resolve', 'fetch', 'translate', 'instantiate'];
-  Loader.prototype.hook = function(name, value) {
-    var loader = this._loader;
-    // @ifdef STRICT
-    if (hooks.indexOf(name) == -1)
-      throw new TypeError(name + ' is not a valid hook.');
-    // @endif
-    if (value)
-      loader[name] = value;
-    else
-      return loader[name];
-  };
-
   // 4. Registry Objects
   // For now, registry objects are a work in progress that don't fully integrate into the rest of the code base
 
@@ -187,7 +140,7 @@
       throw new TypeError('cannot get entries of a non-registry');
     // @endif
     return this.registryMap.entries();
-  }
+  };
 
   // 4.4.4
   Registry.prototype.keys = function() {
@@ -196,7 +149,7 @@
       throw new TypeError('invalid registry');
     // @endif
     return this.registryMap.keys();
-  }
+  };
 
   // 4.4.5
   Registry.prototype.values = function() {
@@ -205,7 +158,7 @@
       throw new TypeError('invalid registry');
     // @endif
     return this.registryMap.values();
-  }
+  };
 
   // 4.4.6
   Registry.prototype.get = function(key) {
@@ -214,7 +167,7 @@
       throw new TypeError('invalid registry');
     // @endif
     return this.registryMap.get(key);
-  }
+  };
 
   // 4.4.7
   Registry.prototype.set = function(key, value) {
@@ -224,7 +177,7 @@
     // @endif
     this.registryMap.set(key, value);
     return this;
-  }
+  };
 
   // 4.4.8
   Registry.prototype.has = function(key) {
@@ -233,7 +186,7 @@
       throw new TypeError('invalid registry');
     // @endif
     return this.registryMap.has(key);
-  }
+  };
 
   // 4.4.9
   Registry.prototype.delete = function(key) {
@@ -242,9 +195,12 @@
       throw new TypeError('invalid registry');
     // @endif
     return this.registryMap.delete(key);
-  }
+  };
 
-  // 4.1.1 - TODO out of date
+
+  // 5. ModuleStatus Objects - TODO
+
+  // 5.1.1 - TODO out of date
   function getCurrentStage(entry) {
     // @ifdef STRICT
     if (typeof entry !== 'object')
@@ -253,88 +209,9 @@
     return entry.pipeline[0];
   }
 
-  // 4.1.4 - TODO out of date
-  function getRegistryEntry(registry, key) {
-    // @ifdef STRICT
-    if (typeof registry !== 'object')
-      throw new TypeError('registry is not an object');
-    // @endif
+  // 6. Loading - TODO out of date
 
-    var entry = registry._registry.registryData[key];
-    if (!entry)
-      return null;
-
-    var currentStage = getCurrentStage(entry);
-    var result = new Promise(function(resolve) {
-      resolve(currentStage.result);
-    });
-
-    return {
-      stage: currentStage.stage,
-      result: result,
-      module: currentStage.stage == 'ready' ? entry.module : undefined,
-      error: entry.error ? { value: entry.error } : null
-    };
-  }
-
-  // 4.4.3 - TODO out of date
-  Registry.prototype.lookup = function(key) {
-    return getRegistryEntry(this, key);
-  };
-
-  // 4.4.4 - TODO out of date
-  Registry.prototype.install = function(key, module) {
-    // @ifdef STRICT
-    if (typeof this !== 'object')
-      throw new TypeError('registry must be an object');
-    if (this._registry.registryData[key])
-      throw new TypeError('Module with key ' + key + ' already exists');
-    // @endif
-
-    var result = new Promise(function(resolve) {
-      resolve(module);
-    });
-    this._registry.registryData[key] = {
-      key: key,
-      pipeline: [{
-        stage: 'ready',
-        result: result
-      }],
-      metadata: undefined,
-      dependencies: undefined,
-      module: module
-    };
-  }
-
-  // 4.4.5 - TODO out of date
-  Registry.prototype.uninstall = function(key) {
-    if (typeof this !== 'object')
-      throw new TypeError('Registry must be an object');
-    var entry = this._registry.registryData[key];
-    if (!entry)
-      throw new TypeError('Module ' + key + ' does not exist');
-    var stageEntry = getCurrentStage(entry);
-    if (stageEntry.stage !== 'link' && stageEntry.stage !== 'ready')
-      throw new TypeError('Module ' + key + ' is still loading');
-    delete this._registry.registryData[key];
-  }
-
-  // 4.4.6 - TODO out of date
-  Registry.prototype.cancel = function(key) {
-    if (typeof this !== 'object')
-      throw new TypeError('Registry must be an object');
-    var entry = this._registry.registryData[key];
-    if (!entry)
-      throw new TypeError('Module ' + key + ' does not exist');
-    var stageEntry = getCurrentStage(entry);
-    if (stageEntry.stage === 'link' || stageEntry.stage === 'ready')
-      throw new TypeError('Module ' + key + ' is already done linking');
-    delete this._registry.registryData[key];
-  }
-
-  // 5. Loading - TODO out of date
-
-  // 5.1.1 - TODO out of date
+  // 6.1.1 - TODO out of date
   function ensureRegistered(loader, key, metadata) {
     return loader.registry[key] || (loader.registry[key] = {
       key: key,
@@ -359,76 +236,52 @@
     });
   }
 
-  // 5.1.2 inlined - TODO out of date
+  // TODO - review this
+  // function fulfillInstantiate(loader, entry, instance, source) {
+  //   // 5.1.6 CommitInstantiated inlined
 
-  // 5.1.3 - TODO out of date
-  function fulfillFetch(loader, entry, payload) {
-    if (entry.fetchResolve)
-      entry.fetchResolve(payload);
-    else
-      entry.fetch = Promise.resolve(payload);
-      
-    entry.fetchResolve = undefined;
-    entry.state = Math.max(entry.state, TRANSLATE);
-  }
+  //   // 5.1.7 Instantiation inlined
+  //     if (instance === undefined)
+  //       // defined in transpiler.js
+  //       var registration = transpile(loader.loaderObj, entry.key, source, entry.metadata);
+  //     else if (typeof instance !== 'function')
+  //       throw new TypeError('Instantiate must return an execution function.');
 
-  // 5.1.4 - TODO out of date
-  function fulfillTranslate(loader, entry, source) {
-    if (entry.translateResolve)
-      entry.translateResolve(source);
-    else
-      entry.translate = Promise.resolve(source);
-      
-    entry.translateResolve = undefined;
-    entry.state = Math.max(entry.state, INSTANTIATE);
-  }
-
-  // 5.1.5 - TODO out of date
-  function fulfillInstantiate(loader, entry, instance, source) {
-    // 5.1.6 CommitInstantiated inlined
-
-    // 5.1.7 Instantiation inlined
-      if (instance === undefined)
-        // defined in transpiler.js
-        var registration = transpile(loader.loaderObj, entry.key, source, entry.metadata);
-      else if (typeof instance !== 'function')
-        throw new TypeError('Instantiate must return an execution function.');
-
-    // we should really resolve instantiate with a Source Text Module Record
-    // but we don't have that thing here
-    // it's not used through the instantiate promise though, so it's ok
-    if (entry.instantiateResolve)
-      entry.instantiateResolve(instance);
-    else
-      entry.instantiate = Promise.resolve(instance);
+  //   // we should really resolve instantiate with a Source Text Module Record
+  //   // but we don't have that thing here
+  //   // it's not used through the instantiate promise though, so it's ok
+  //   if (entry.instantiateResolve)
+  //     entry.instantiateResolve(instance);
+  //   else
+  //     entry.instantiate = Promise.resolve(instance);
     
-    entry.instantiateResolve = undefined;
+  //   entry.instantiateResolve = undefined;
 
-    var deps = [];
+  //   var deps = [];
 
-    if (instance === undefined) {
-      // adjusted to use custom transpile hook
-      // with the system register declare function
-      entry.declare = registration.declare;
+  //   if (instance === undefined) {
+  //     // adjusted to use custom transpile hook
+  //     // with the system register declare function
+  //     entry.declare = registration.declare;
       
-      for (var i = 0; i < registration.deps.length; i++)
-        deps.push({ key: registration.deps[i], value: undefined });
-    }
+  //     for (var i = 0; i < registration.deps.length; i++)
+  //       deps.push({ key: registration.deps[i], value: undefined });
+  //   }
 
-    entry.dependencies = deps;
-    entry.module = instance;
-    entry.state = Math.max(entry.state, INSTANTIATE_ALL);
-  }
+  //   entry.dependencies = deps;
+  //   entry.module = instance;
+  //   entry.state = Math.max(entry.state, INSTANTIATE_ALL);
+  // }
 
-  // adjusted asynchronous declarative instantiate fulfillment
-  // to load transpiler
-  function loadTranspilerThenFulfillInstantiate(loader, entry, instance, source) {
-    return Promise.resolve(instance === undefined && loadTranspiler(loader.loaderObj)).then(function() {
-      fulfillInstantiate(loader, entry, instance, source);
-    });
-  }
+  // // adjusted asynchronous declarative instantiate fulfillment
+  // // to load transpiler
+  // function loadTranspilerThenFulfillInstantiate(loader, entry, instance, source) {
+  //   return Promise.resolve(instance === undefined && loadTranspiler(loader.loaderObj)).then(function() {
+  //     fulfillInstantiate(loader, entry, instance, source);
+  //   });
+  // }
 
-  // 5.2.1 - TODO out of date
+  // 6.2.1 - TODO out of date
   function requestFetch(loader, key, metadata, entry) {
     entry = entry || ensureRegistered(loader, key, metadata);
 
@@ -464,7 +317,17 @@
     });
   }
 
-  // 5.2.2 - TODO out of date
+  function fulfillFetch(loader, entry, payload) {
+    if (entry.fetchResolve)
+      entry.fetchResolve(payload);
+    else
+      entry.fetch = Promise.resolve(payload);
+      
+    entry.fetchResolve = undefined;
+    entry.state = Math.max(entry.state, TRANSLATE);
+  }
+
+  // 6.2.2 - TODO out of date
   function requestTranslate(loader, key, metadata, entry) {
     entry = entry || ensureRegistered(loader, key, metadata);
 
@@ -503,7 +366,17 @@
     });
   }
 
-  // 5.2.3 - TODO out of date
+  function fulfillTranslate(loader, entry, source) {
+    if (entry.translateResolve)
+      entry.translateResolve(source);
+    else
+      entry.translate = Promise.resolve(source);
+      
+    entry.translateResolve = undefined;
+    entry.state = Math.max(entry.state, INSTANTIATE);
+  }
+
+  // 6.2.3 - TODO out of date
   function requestInstantiate(loader, key, metadata, entry) {
     entry = entry || ensureRegistered(loader, key, metadata);
     
@@ -541,7 +414,7 @@
     });
   }
 
-  // 5.2.4 - TODO out of date
+  // 6.2.4 - TODO out of date; should now be satisfyInstance()
   function requestInstantiateAll(loader, key, metadata, entry) {
     entry = entry || ensureRegistered(loader, key, metadata);
 
@@ -574,7 +447,7 @@
     });
   }
 
-  // 5.2.5 - TODO out of date
+  //  - TODO out of date - replaced by ensureRegistered() and LoadModule()
   function requestLink(loader, key, metadata, entry) {
     entry = entry || ensureRegistered(loader, key, metadata);
 
@@ -618,7 +491,7 @@
     });
   }
 
-  // 5.2.6 - TODO out of date
+  //  - TODO out of date - replaced by ensureRegistered() and LoadModule()
   function requestReady(loader, key, metadata, entry) {
     entry = entry || ensureRegistered(loader, key, metadata);
 
@@ -644,12 +517,10 @@
     });
   }
 
-  // 6. Linking - TODO out of date
+  // 7. Linking - TODO out of date
 
-  // 6.2.1 inlined in 5.2.5 - TODO out of date
-  // 6.2.2 inlined in 5.2.5 - TODO out of date
-
-  // 6.2.3 - TODO out of date
+  // 7.2.1 inlined in 5.2.5 - TODO out of date
+  // 7.2.2 - TODO out of date
   function computeDependencyGraph(entry, result) {
     if (result.indexOf(entry) != -1)
       return;
@@ -674,9 +545,9 @@
   }
 
 
-  // 7. Module Objects - TODO out of date
+  // 8. Module Objects - TODO out of date
 
-  // 7.3 Module Reflection - TODO out of date
+  // 8.3 Module Reflection - TODO out of date
 
   // plain user-facing module object
   function Module(descriptors, executor, evaluate) {
