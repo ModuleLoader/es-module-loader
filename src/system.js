@@ -56,7 +56,7 @@
         }, 0);
 
       xhr.send(null);
-    }
+    };
   }
   else if (cjsMode) {
     var fs;
@@ -65,7 +65,7 @@
         throw 'Only file URLs of the form file: allowed running in Node.';
       fs = fs || require('fs');
       if (isWindows)
-        url = url.replace(/\//g, '\\').substr(8)
+        url = url.replace(/\//g, '\\').substr(8);
       else
         url = url.substr(7);
       fs.readFile(url, function(err, data) {
@@ -74,7 +74,7 @@
         else
           fulfill(data + '');
       });
-    }
+    };
   }
   else {
     throw new TypeError('No environment fetch API available.');
