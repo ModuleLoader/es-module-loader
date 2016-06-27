@@ -15,9 +15,10 @@ Support for static loading of modules from HTML using `<script type="module">` t
 * The WhatWG loader is not finalized and is unstable and liable to change. Consequently, this polyfill is also liable to change. This is unlikely to be implemented in browsers until stable.
 
 ### WhatWG loader status June 2016
-* Defines a `Loader` class in the (new to ES2015) `Reflect` global object, with `import`, `resolve` and `load` prototype methods.
+* 'Provides a pipeline for on-demand, asynchronous loading of JavaScript modules'. This pipeline consists of URL resolution, plus three loading stages.
+* Defines a `Loader` class in the (new to ES2015) `Reflect` global object, with `import`, `resolve` and `load` prototype methods. `import` is the standard method for dynamically importing a module together with its dependencies, and combines `resolve` and `load`. `load` can initiate the loading pipeline at any stage. What loading stages are needed depends on the host environment.
 * The `Loader` class also includes a module `Registry`, which is a `Symbol.iterator`.
-* Introduces a `System` global object, with an instance of `Reflect.Loader` as the `loader` property; this is the default browser loader. In addition to the `Loader` methods, this has `resolve`, `fetch`, `translate` and `instantiate` prototype methods, of which the last two are by default no-ops.
+* Introduces a `System` global object, with an instance of `Reflect.Loader` as the `loader` property; this is the default browser loader. In addition to the `Loader` methods, this has prototype methods corresponding to the pipeline stages: `resolve`, `fetch`, `translate` and `instantiate`. The last two are by default no-ops, but all these methods are programmable hooks, enabling the creation of custom loaders which can intervene in the pipeline by specifying custom code for one or more hooks.
 * Defines a `Module` constructor in the `Reflect` global for dynamic construction of modules from within script or module code.
 
 ### This polyfill
