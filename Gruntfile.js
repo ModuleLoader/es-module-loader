@@ -21,6 +21,7 @@ module.exports = function (grunt) {
       dist: {
         files: {
           'dist/<%= pkg.name %>.src.js': [
+            'src/url-polyfill.js',
             'src/wrapper-start.js',
             'src/loader.js',
             'src/dynamic-only.js',
@@ -28,6 +29,7 @@ module.exports = function (grunt) {
             'src/wrapper-end.js'
           ],
           'dist/<%= pkg.name %>-declarative.src.js': [
+            'src/url-polyfill.js',
             'src/wrapper-start.js',
             'src/loader.js',
             'src/declarative.js',
