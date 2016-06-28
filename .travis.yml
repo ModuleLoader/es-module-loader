@@ -41,5 +41,5 @@ script:
   - "[ $SAUCE_LABS == false ] || npm run test:browser-$PARSER -- --saucelabs $OPTIONS"
 
 branches:
-  except:
-    - 0.50
+  only:
+    - master
