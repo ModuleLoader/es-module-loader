@@ -8,18 +8,18 @@ var System = module.exports.System;
 var filePrefix = 'file:' + (process.platform.match(/^win/) ? '///' : '//');
 try {
   var traceurPath = filePrefix + require.resolve('traceur/bin/traceur.js');
-  System.site.set('traceur', traceurPath);
+  System.loader.site.set('traceur', traceurPath);
 }
 catch(e) {}
 
 try {
   var babelPath = filePrefix + require.resolve('babel/browser.js');
-  System.site.set('babel', babelPath);
+  System.loader.site.set('babel', babelPath);
 }
 catch(e) {}
 
 try {
   var babelCorePath = filePrefix + require.resolve('babel-core/browser.js');
-  System.site.set('babel', babelCorePath);
+  System.loader.site.set('babel', babelCorePath);
 }
 catch(e) {}

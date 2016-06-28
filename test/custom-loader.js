@@ -2,7 +2,9 @@
 
 (function (__global) {
 
-  var customLoader = new System.constructor();
+  var System = __global.System;
+
+  var customLoader = new System.loader.constructor();
   customLoader.hook('resolve', function(name, parentName, metadata) {
     return new Promise(function (resolve, reject) {
       if (name == 'asdfasdf')
@@ -19,7 +21,7 @@
       if (name.substr(0, 5) == 'error')
         resolve(name);
 
-      var normalized = System.resolve(name, parentName, metadata);
+      var normalized = System.loader.resolve(name, parentName, metadata);
       resolve(normalized);
     });
   });
@@ -31,7 +33,7 @@
     if (url == 'error3' || url == 'error4')
       return 'asdf';
 
-    return System.hook('fetch').apply(this, arguments);
+    return System.loader.hook('fetch').apply(this, arguments);
   });
 
   customLoader.hook('translate', function(url, source) {
@@ -51,7 +53,7 @@
     
     // very bad AMD support
     if (source.indexOf('define') == -1)
-      return System.hook('instantiate').apply(this, arguments);
+      return System.loader.hook('instantiate').apply(this, arguments);
 
     var factory, deps;
     var define = function(_deps, _factory) {
