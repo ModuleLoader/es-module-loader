@@ -63,7 +63,7 @@ module.exports = function(config) {
     frameworks: ['mocha', 'expect'],
     files: flatten(files),
     reporters: ['mocha'],
-    browsers: ['Chrome', 'Firefox'],
+    browsers: ['Firefox'], // 'Chrome' disabled for the moment
     client: {
       mocha: {
         reporter: 'html',
@@ -85,7 +85,7 @@ module.exports = function(config) {
         type : 'html',
         dir : 'coverage/'
       },
-      browsers: ['Chrome']
+      browsers: ['Firefox']
     });
   }
 
@@ -94,13 +94,13 @@ module.exports = function(config) {
     config.set({
       singleRun: true,
       reporters: ['dots'],
-      customLaunchers: {
-        'TR_Chrome': {
-          base: 'Chrome',
-          flags: ['--no-sandbox']
-        }
-      },
-      browsers: ['TR_Chrome', 'Firefox']
+      // customLaunchers: {
+      //   'TR_Chrome': {
+      //     base: 'Chrome',
+      //     flags: ['--no-sandbox']
+      //   }
+      // },
+      browsers: ['Firefox'] // 'TR_Chrome', disabled for the moment
     });
   }
 

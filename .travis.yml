@@ -5,6 +5,8 @@ language: node_js
 node_js:
   - '4.4'
   - '6.2'
+addons:
+  firefox: "latest"
 env:
   global:
     - SAUCE_LABS=false PARSER=false OPTIONS=""
@@ -28,7 +30,7 @@ matrix:
     - node_js: "4.4"
       env: SAUCE_LABS=true PARSER="babel" OPTIONS="--native-iterator --force-map-polyfill"
 before_install:
-  - export CHROME_BIN=chromium-browser
+#  - export CHROME_BIN=chromium-browser
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
   - npm update -g
