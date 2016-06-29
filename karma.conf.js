@@ -30,7 +30,7 @@ module.exports = function(config) {
 
   var files = [
     'test/_helper.js',
-    [options.babel ? 'node_modules/regenerator/runtime.js' : ''],
+    [options.babel ? 'node_modules/regenerator-runtime/runtime.js' : ''],
 
     [!options['babel'] ? 'node_modules/traceur/bin/traceur.js' : 'node_modules/babel-core/browser.js'],
 
