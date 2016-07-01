@@ -126,7 +126,7 @@
       return curMatch;
     }
 
-    this.hook('resolve', function(url, parentUrl, metadata) {
+    this.prototype[Loader.resolve] = function(url, parentUrl, metadata) {
       // first check site table
       var sitesUrl = siteLookup(url);
       
@@ -136,20 +136,20 @@
       // then do url normalization
       // NB for performance, test out a normalization cache here
       return new URL(sitesUrl || url, parentUrl).href;
-    });
+    };
 
-    this.hook('fetch', function(url, metadata) {
+    this.prototype[Loader.fetch] = function(url, metadata) {
       return new Promise(function(resolve, reject) {
         fetchURI(url, resolve, reject);
       });
-    });
+    };
 
-    this.hook('translate', function(url, source, metadata) {
+    this.prototype[Loader.translate] = function(url, source, metadata) {
       return source;
-    });
+    };
 
     // defined in transpiler.js or dynamic-only.js
-    this.hook('instantiate', systemInstantiate);
+    this.prototype[Loader.instantiate] = systemInstantiate;
 
     if (this.transpiler)
       setupTranspilers(this);
