@@ -8,7 +8,7 @@ module.exports = function (config) {
       'test/perf.js'
     ],
     reporters: ['benchmark'],
-    browsers: ['Chrome', 'Firefox'],
+    browsers: ['Firefox'], // 'Chrome', disabled for the moment
 
     browserDisconnectTimeout: 10000,
     browserDisconnectTolerance: 2,
@@ -18,13 +18,13 @@ module.exports = function (config) {
 
   if(process.env.TRAVIS){
     config.set({
-      customLaunchers: {
-        'TR_Chrome': {
-          base: 'Chrome',
-          flags: ['--no-sandbox']
-        }
-      },
-      browsers: ['TR_Chrome', 'Firefox']
+      // customLaunchers: {
+      //   'TR_Chrome': {
+      //     base: 'Chrome',
+      //     flags: ['--no-sandbox']
+      //   }
+      // },
+      browsers: ['Firefox'] // 'TR_Chrome', disabled for the moment
     });
   }
 

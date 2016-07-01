@@ -189,11 +189,21 @@
         return entry.module;
       });
 
+    else
+      throw new TypeError('Invalid stage ' + stage);
   };
 
   // 3.3.5
   Object.defineProperty(Loader.prototype, 'registry', {
       get: function() {
+        if (typeof this !== 'object')
+            throw new TypeError('this must be a Loader');
+        // uncomment when Realm is implemented
+        // if (!this._loader.realm)
+        //     throw new TypeError('A Loader must have a realm');
+
+        if (!(this._loader.newRegistry instanceof Registry))
+            throw new TypeError('invalid registry -- must be created during Loader constructor');
         return this._loader.newRegistry;
       }
   });
@@ -206,12 +216,18 @@
     var entry = ensureRegistered(loader, key, metadata);
 
     if (stage == 'fetch') {
+      if (entry.state > FETCH)
+        throw new TypeError(key + ' has already been fetched.');
       fulfillFetch(loader, entry, value);
     }
     else if (stage == 'translate') {
+      if (entry.state > TRANSLATE)
+        throw new TypeError(key + ' has already been translated.');
       fulfillTranslate(loader, entry, value);
     }
     else if (stage == 'instantiate') {
+      if (entry.state > INSTANTIATE)
+        throw new TypeError(key + ' has already been instantiated.');
       fulfillFetch(loader, entry, undefined);
       fulfillTranslate(loader, entry, undefined);
       // NB error propogation
@@ -219,6 +235,8 @@
         loadTranspilerThenFulfillInstantiate(loader, entry, value, source);
       });
     }
+    else
+      throw new TypeError('Invalid stage ' + stage);
   };
 
   // TODO: the Loader no longer has the hook property
@@ -227,6 +245,8 @@
   var hooks = ['resolve', 'fetch', 'translate', 'instantiate'];
   Loader.prototype.hook = function(name, value) {
     var loader = this._loader;
+    if (hooks.indexOf(name) == -1)
+      throw new TypeError(name + ' is not a valid hook.');
     if (value)
       loader[name] = value;
     else
@@ -255,47 +275,65 @@
 
   // 4.4.3
   Registry.prototype.entries = function() {
+    if (typeof this !== 'object')
+      throw new TypeError('cannot get entries of a non-registry');
     return this.registryMap.entries();
   }
 
   // 4.4.4
   Registry.prototype.keys = function() {
+    if (typeof this !== 'object')
+      throw new TypeError('invalid registry');
     return this.registryMap.keys();
   }
 
   // 4.4.5
   Registry.prototype.values = function() {
+    if (typeof this !== 'object')
+      throw new TypeError('invalid registry');
     return this.registryMap.values();
   }
 
   // 4.4.6
   Registry.prototype.get = function(key) {
+    if (typeof this !== 'object')
+      throw new TypeError('invalid registry');
     return this.registryMap.get(key);
   }
 
   // 4.4.7
   Registry.prototype.set = function(key, value) {
+    if (typeof this !== 'object')
+      throw new TypeError('invalid registry');
     this.registryMap.set(key, value);
     return this;
   }
 
   // 4.4.8
   Registry.prototype.has = function(key) {
+    if (typeof this !== 'object')
+      throw new TypeError('invalid registry');
     return this.registryMap.has(key);
   }
 
   // 4.4.9
   Registry.prototype.delete = function(key) {
+    if (typeof this !== 'object')
+      throw new TypeError('invalid registry');
     return this.registryMap.delete(key);
   }
 
   // 4.1.1 - TODO out of date
   function getCurrentStage(entry) {
+    if (typeof entry !== 'object')
+      throw new TypeError('entry is not an object');
     return entry.pipeline[0];
   }
 
   // 4.1.4 - TODO out of date
   function getRegistryEntry(registry, key) {
+    if (typeof registry !== 'object')
+      throw new TypeError('registry is not an object');
 
     var entry = registry._registry.registryData[key];
     if (!entry)
@@ -321,6 +359,10 @@
 
   // 4.4.4 - TODO out of date
   Registry.prototype.install = function(key, module) {
+    if (typeof this !== 'object')
+      throw new TypeError('registry must be an object');
+    if (this._registry.registryData[key])
+      throw new TypeError('Module with key ' + key + ' already exists');
 
     var result = new Promise(function(resolve) {
       resolve(module);
@@ -717,13 +759,248 @@
       this[p] = descriptors[p];
   }
 
-  // ---------- Dynamic-Only Linking Code ----------
-  
-  function transpile() {
-    throw new TypeError('Native ES Module support not included in this loader.');
+  // ---------- Declarative Linking Code ----------
+
+  // ES6-style module binding and execution code
+  function declareModule(entry) {
+    // could consider a try catch around setters here that saves errors to module.error
+    var module = entry.module = ensureModuleRecord(entry.key);
+    var moduleObj = module.module;
+
+    // run the System register declare function
+    // providing the binding export function argument
+    // NB module meta should be an additional argument in future here
+    var registryEntry = entry.declare.call(__global, function(name, value) {
+      // export setter propogation with locking to avoid cycles
+      module.locked = true;
+      moduleObj[name] = value;
+
+      for (var i = 0; i < module.importers.length; i++) {
+        var importerModule = module.importers[i];
+        if (!importerModule.locked) {
+          var importerIndex = importerModule.dependencies.indexOf(module);
+          importerModule.setters[importerIndex](moduleObj);
+        }
+      }
+
+      module.locked = false;
+      return value;
+    });
+
+    module.setters = registryEntry.setters;
+    module.execute = registryEntry.execute;
+
+    // now go through dependencies and declare them in turn, building up the binding graph as we go
+    for (var i = 0; i < entry.dependencies.length; i++) {
+      var depEntry = entry.dependencies[i].value;
+
+      // if dependency not already declared, declare it now
+      // we check module existence over state to stop at circular and dynamic
+      if (!depEntry.module)
+        declareModule(depEntry);
+
+      var depModule = depEntry.module;
+
+      // dynamic -> no setter propogation, but need dependencies and setters to line up
+      if (depModule instanceof Module) {
+        module.dependencies.push(null);
+      }
+      else {
+        module.dependencies.push(depModule);
+        depModule.importers.push(module);
+      }
+
+      // finally run this setter
+      if (module.setters[i])
+        module.setters[i](depModule.module);
+    }
+
+    entry.state = READY;
   }
 
-  function systemInstantiate() {}
+  // execute a module record and all the modules that need it
+  function ensureModuleExecution(module, seen) {
+    if (seen.indexOf(module) != -1)
+      return;
+
+    if (module.error)
+      return module.error;
+
+    seen.push(module);
+
+    var deps = module.dependencies;
+    var err;
+
+    for (var i = 0; i < deps.length; i++) {
+      var dep = deps[i];
+
+      // dynamic modules are null in the ModuleRecord graph
+      if (!dep)
+        continue;
+
+      err = ensureModuleExecution(deps[i], seen);
+      if (err) {
+        module.error = addToError(err, 'Error evaluating ' + dep.key);
+        return module.error;
+      }
+    }
+
+    err = doExecute(module);
+    
+    if (err)
+      module.error = err;
+
+    return err;
+  }
+
+  function doExecute(module) {
+    try {
+      module.execute.call({});
+    }
+    catch(e) {
+      return e;
+    }
+  }
+
+  // module record used for binding and evaluation management
+  var moduleRecords = {};
+  function ensureModuleRecord(key) {
+    return moduleRecords[key] || (moduleRecords[key] = {
+      key: key,
+      dependencies: [],
+      module: new Module({}),
+      importers: [],
+      locked: false,
+      // these are specifically for runtime binding / execution errors
+      error: null
+    });
+  }
+
+// ---------- Transpiler Hooks ----------
+
+  // use Traceur by default
+  Loader.prototype.transpiler = 'traceur';
+
+  var transpilerName, transpilerModule, transpilerResolved;
+
+  // pick up transpilers from globals on constructor
+  function setupTranspilers(loader) {
+    try {
+      if (__global.traceur)
+        loader.install('traceur', new Module({ 'default': __global.traceur }));
+      else if (__global.babel)
+        loader.install('babel', new Module({ 'default': __global.babel }));
+    }
+    catch(e) {}
+  }
+
+  function loadTranspiler(loader) {
+    var transpiler = loader.transpiler;
+
+    if (transpiler === transpilerName && transpilerModule)
+      return;
+
+    transpilerName = transpiler;
+    transpilerModule = transpilerResolved = null;
+    
+    return loader['import'](transpiler).then(function(transpiler) {
+      transpilerModule = transpiler['default'];
+    });
+  }
+
+  function transpile(loader, key, source, metadata) {
+    // transpile to System register and evaluate out the { deps, declare } form
+    // set the __moduleURL temporary meta for contextual imports
+    return evaluateSystemRegister(key, 
+        (transpilerModule.Compiler ? traceurTranspile : babelTranspile)(transpilerModule, key, source, metadata));
+  }
+
+  // transpiler instantiate to ensure transpiler is loaded as a global
+  function systemInstantiate(key, source, metadata) {
+    var loader = this;
+
+    return Promise.resolve(transpilerName === loader.transpiler && transpilerResolved 
+        || loader.resolve(transpilerName = loader.transpiler))
+    .then(function(resolved) {
+      transpilerResolved = resolved;
+      if (transpilerResolved === key)
+        return function() {
+          // avoid Traceur System clobbering
+          var curSystem = __global.System;
+          var curLoader = __global.Reflect.Loader;
+          // load transpiler as a global, not detected as CommonJS
+          __eval('~function(require,exports,module){' + source + '}()', key, __global);
+          __global.System = curSystem;
+          __global.Reflect.Loader = curLoader;
+          return new Module({ 'default': __global[loader.transpiler] });
+        };
+    });
+  };
+
+  function traceurTranspile(traceur, key, source, metadata) {
+    var options = this.traceurOptions || {};
+    options.modules = 'instantiate';
+    options.script = false;
+    options.sourceMaps = 'inline';
+    options.inputSourceMap = metadata.sourceMap;
+    options.filename = key;
+    options.inputSourceMap = metadata.sourceMap;
+    options.moduleName = false;
+
+    var compiler = new traceur.Compiler(options);
+
+    return doTraceurCompile(source, compiler, options.filename);
+  }
+  function doTraceurCompile(source, compiler, filename) {
+    try {
+      return compiler.compile(source, filename);
+    }
+    catch(e) {
+      // traceur throws an error array
+      throw e[0] || e;
+    }
+  }
+
+  function babelTranspile(babel, key, source, metadata) {
+    var options = this.babelOptions || {};
+    options.modules = 'system';
+    options.sourceMap = 'inline';
+    options.filename = key;
+    options.code = true;
+    options.ast = false;
+
+    // encourage a sensible baseline
+    if (!options.blacklist)
+      options.blacklist = ['react'];
+
+    return babel.transform(source, options).code;
+  }
+
+  function evaluateSystemRegister(key, source) {
+    var curSystem = __global.System = __global.System || System;
+
+    var registration;
+
+    // Hijack System .register to set declare function
+    var curRegister = curSystem .register;
+    curSystem .register = function(deps, declare) {
+      registration = {
+        deps: deps,
+        declare: declare
+      };
+    }
+
+    // use {} as this, closes to empty we can get
+    // add "!eval" to end of sourceURL so the source map
+    // can use the original name without conflict
+    __eval('var __moduleURL = "' + key + '";' + source
+        + '\n//# sourceURL=' + key + '!eval', key, {});
+
+    curSystem .register = curRegister;
+    // console.assert(registration);
+    return registration;
+  }
+
 // ---------- System Loader Definition ----------
 
   var System;
@@ -909,6 +1186,49 @@
   }
   base = new URL(base);
 
+// <script type="module"> support
+
+  if (typeof document != 'undefined' && document.getElementsByTagName) {
+    var curScript = document.getElementsByTagName('script');
+    curScript = curScript[curScript.length - 1];
+
+    function completed() {
+      document.removeEventListener('DOMContentLoaded', completed, false );
+      window.removeEventListener('load', completed, false );
+      ready();
+    }
+
+    function ready() {
+      var scripts = document.getElementsByTagName('script');
+      var anonCnt = 0;
+      for (var i = 0; i < scripts.length; i++) {
+        var script = scripts[i];
+        if (script.type == 'module') {
+          var url = script.src;
+
+          // <script type="module" src="file.js"></script>
+          if (url) {
+            System.loader.load(url, 'ready');
+          }
+
+          // <script type="module">import "x"</script>
+          else {
+            System.loader.provide('anon' + ++anonCnt, 'fetch', script.innerHTML.substr(1));
+            System.loader.load('anon' + anonCnt, 'ready');
+          }
+        }
+      }
+    }
+
+    // DOM ready, taken from https://github.com/jquery/jquery/blob/master/src/core/ready.js#L63
+    if (document.readyState === 'complete') {
+      setTimeout(ready);
+    }
+    else if (document.addEventListener) {
+      document.addEventListener('DOMContentLoaded', completed, false);
+      window.addEventListener('load', completed, false);
+    }
+  }
 
   // ---------- Export Definitions ----------  
     

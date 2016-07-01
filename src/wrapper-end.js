@@ -1,16 +1,8 @@
 
   // ---------- Export Definitions ----------  
     
-  var Reflect;
-
   var loader = new SystemLoader();
   loader.constructor = SystemLoader;
-
-  if (cjsMode) {
-    exports.Loader = Loader;
-    exports.Module = Module;
-    exports.SystemLoader = SystemLoader;
-  }
 
   __global.LoaderPolyfill = Loader;
   __global.ModulePolyfill = Module;
@@ -22,5 +14,10 @@
   __global.System = __global.System || {};
   __global.System.global = __global.System.global || __global;
   __global.System.loader = __global.System.loader || loader;
+
+  if (cjsMode) {
+    exports.Reflect = __global.Reflect;
+    exports.System = __global.System;
+  }
 
 })(typeof window != 'undefined' ? window : (typeof WorkerGlobalScope != 'undefined' ? self : global));

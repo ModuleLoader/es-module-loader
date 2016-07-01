@@ -20,13 +20,13 @@
 
           // <script type="module" src="file.js"></script>
           if (url) {
-            System.load(url, 'ready');
+            System.loader.load(url, 'ready');
           }
 
           // <script type="module">import "x"</script>
           else {
-            System.provide('anon' + ++anonCnt, 'fetch', script.innerHTML.substr(1));
-            System.load('anon' + anonCnt, 'ready');
+            System.loader.provide('anon' + ++anonCnt, 'fetch', script.innerHTML.substr(1));
+            System.loader.load('anon' + anonCnt, 'ready');
           }
         }
       }

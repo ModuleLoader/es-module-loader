@@ -17,7 +17,7 @@ describe('System', function () {
     describe('when having no arguments', function () {
 
       it('should throw', function () {
-        expect(function () { System.resolve() })
+        expect(function () { System.loader.resolve() })
           .to.throwException(function (e) {
             expect(e).to.be.a(TypeError);
             expect(e.message).to.match(/URL must be a string/);
@@ -29,23 +29,23 @@ describe('System', function () {
     describe('when having one argument', function () {
 
       it('should normalize to base', function () {
-        expect(System.resolve('d/e/f')).to.equal(base + 'd/e/f');
+        expect(System.loader.resolve('d/e/f')).to.equal(base + 'd/e/f');
       });
 
       it.skip('should "below baseURL"', function () {
-        expect(System.resolve('../../../../e/f')).to.equal(base + 'e/f');
+        expect(System.loader.resolve('../../../../e/f')).to.equal(base + 'e/f');
       });
 
       it('should be backwards compat', function () {
-        expect(System.resolve('./a.js')).to.equal(base + 'a.js');
+        expect(System.loader.resolve('./a.js')).to.equal(base + 'a.js');
       });
 
       it('shouldn\'t change an absolute URL', function () {
-        expect(System.resolve('file:///example.org/a/b.html')).to.equal('file:///example.org/a/b.html');
+        expect(System.loader.resolve('file:///example.org/a/b.html')).to.equal('file:///example.org/a/b.html');
       });
 
       it('should resolve an embedded path', function () {
-        expect(System.resolve('a/b/../c')).to.equal(base + 'a/c');
+        expect(System.loader.resolve('a/b/../c')).to.equal(base + 'a/c');
       });
 
     });
@@ -55,14 +55,14 @@ describe('System', function () {
       var referrer = base + 'dir/path';
 
       it('should support relative path', function () {
-        expect(System.resolve('d/e/f', referrer)).to.equal(base + 'dir/d/e/f');
-        expect(System.resolve('./d/e/f', referrer)).to.equal(base + 'dir/d/e/f');
-        expect(System.resolve('../e/f', referrer)).to.equal(base + 'e/f');
+        expect(System.loader.resolve('d/e/f', referrer)).to.equal(base + 'dir/d/e/f');
+        expect(System.loader.resolve('./d/e/f', referrer)).to.equal(base + 'dir/d/e/f');
+        expect(System.loader.resolve('../e/f', referrer)).to.equal(base + 'e/f');
       });
 
       it('should resolve the path with relative parent', function () {
-        expect(System.resolve('./a/b', base + 'c')).to.equal(base + 'a/b');
-        expect(System.resolve('./a/b', base + 'c/d')).to.equal(base + 'c/a/b');
+        expect(System.loader.resolve('./a/b', base + 'c')).to.equal(base + 'a/b');
+        expect(System.loader.resolve('./a/b', base + 'c/d')).to.equal(base + 'c/a/b');
       });
 
     });
@@ -71,42 +71,42 @@ describe('System', function () {
   describe('#sites', function () {
 
     it('should resolve exact site matches', function () {
-      System.site({
+      System.loader.site({
         jquery: '/jquery.js'
       });
 
-      expect(System.resolve('jquery')).to.equal(origin + 'jquery.js');
-      expect(System.resolve('jquery/nomatch')).to.equal(base + 'jquery/nomatch');
+      expect(System.loader.resolve('jquery')).to.equal(origin + 'jquery.js');
+      expect(System.loader.resolve('jquery/nomatch')).to.equal(base + 'jquery/nomatch');
     });
 
     it('sites table items can be added, checked and removed', function () {
       
-      System.site.set('jquery', 'custom-jquery');
+      System.loader.site.set('jquery', 'custom-jquery');
 
-      expect(System.site.has('jquery')).to.be.ok();
+      expect(System.loader.site.has('jquery')).to.be.ok();
 
-      expect(System.site.get('jquery')).to.equal('custom-jquery');
+      expect(System.loader.site.get('jquery')).to.equal('custom-jquery');
       
-      expect(System.resolve('jquery')).to.equal(base + 'custom-jquery');
+      expect(System.loader.resolve('jquery')).to.equal(base + 'custom-jquery');
       
-      System.site['delete']('jquery');
+      System.loader.site['delete']('jquery');
       
-      expect(System.resolve('jquery')).to.equal(base + 'jquery');
+      expect(System.loader.resolve('jquery')).to.equal(base + 'jquery');
 
-      expect(!System.site.has('jquery')).to.be.ok();
+      expect(!System.loader.site.has('jquery')).to.be.ok();
 
     });
 
     it('should resolve wildcard site matches', function() {
 
-      System.site['delete']('jquery');
-      System.site({
+      System.loader.site['delete']('jquery');
+      System.loader.site({
         'jquery/*': '/path/to/jquery/*.js'
       });
 
-      expect(System.resolve('jquery')).to.equal(base + 'jquery');
-      expect(System.resolve('jquery/sub')).to.equal(origin + 'path/to/jquery/sub.js');
-      expect(System.resolve('jquery/sub/path')).to.equal(origin + 'path/to/jquery/sub/path.js');
+      expect(System.loader.resolve('jquery')).to.equal(base + 'jquery');
+      expect(System.loader.resolve('jquery/sub')).to.equal(origin + 'path/to/jquery/sub.js');
+      expect(System.loader.resolve('jquery/sub/path')).to.equal(origin + 'path/to/jquery/sub/path.js');
 
     });
 

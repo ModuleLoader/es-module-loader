@@ -33,7 +33,7 @@
   &lt;script>
     function buttonClick() {
       // dynamic loading API
-      System.import('test2').then(function(module) {
+      System.loader.import('test2').then(function(module) {
         new module.Foo();
       });
     }
@@ -59,7 +59,7 @@
   <script>
     function buttonClick() {
       // dynamic loading API
-      System.import('./test2.js').then(function(module) {
+      System.loader.import('./test2.js').then(function(module) {
         new module.Foo();
       });
     }
