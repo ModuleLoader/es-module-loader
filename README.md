@@ -38,7 +38,7 @@ Support for static loading of modules from HTML using `<script type="module">` t
 * What was previously in the `System` object, for example `System.import`, is now in `System.loader` (applications can of course supply an alias to ease the transition).
 * The previous `normalize` and `locate` methods have now been combined into the `resolve` method.
 * The `Module` constructor has been moved to the `Reflect` object.
-* Although the WhatWG loader will eventually define a `site` object, which will probably include some kind of module name/URL mapping, this is not currently defined and so is not included in the current polyfill; this means there is no longer any `baseURL` or `paths` support. For compatibility with module scripts, the default loader only supports relative URLs `/`, `./` and `../` in `import` statements (this is relative to the URL of the importing module).
+* Although the WhatWG loader will eventually define a `site` object, which will probably include some kind of module name/URL mapping, this is not currently defined and so is not included in the current polyfill; this means there is no longer any `baseURL` or `paths` support. For compatibility with module scripts, the default loader supports absolute URLs and relative URLs starting with `/`, `./` and `../` in `import` statements (this is relative to the URL of the importing module).
 
 For an example of approaches for using the loader in production, see [SystemJs](https://github.com/systemjs/systemjs/) which hooks in functionality such as supporting ES6 modules through the System.register transpiled format and its own custom module resolution mechanism.
 
