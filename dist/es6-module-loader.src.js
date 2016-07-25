@@ -99,14 +99,35 @@ global.URLPolyfill = URLPolyfill;
   })();
 
   function addToError(err, msg) {
-    if (err instanceof Error) {
-      err.message = msg + '\n\t' + err.message;
-      Error.call(err, err.message);
+    // parse the stack removing loader code lines for simplification
+    if (!err.originalErr) {
+      var stack = (err.stack || err.message || err).split('\n');
+      var newStack = [];
+      for (var i = 0; i < stack.length; i++) {
+        if (typeof $__curScript == 'undefined' || stack[i].indexOf($__curScript.src) == -1)
+          newStack.push(stack[i]);
+      }
     }
-    else {
-      err = msg + '\n\t' + err;
-    }
-    return err;
+
+    var newMsg = (newStack ? newStack.join('\n\t') : err.message) + '\n\t' + msg;
+
+    // Convert file:/// URLs to paths in Node
+    if (!isBrowser)
+      newMsg = newMsg.replace(isWindows ? /file:\/\/\//g : /file:\/\//g, '');
+
+    var newErr = new Error(newMsg, err.fileName, err.lineNumber);
+    
+    // Node needs stack adjustment for throw to show message
+    if (!isBrowser)
+      newErr.stack = newMsg;
+    // Clearing the stack stops unnecessary loader lines showing
+    else
+      newErr.stack = null;
+    
+    // track the original error
+    newErr.originalErr = err.originalErr || err;
+
+    return newErr;
   }
 
   function __eval(source, debugName, context) {
@@ -861,7 +882,9 @@ function logloads(loads) {
     load: function(name) {
       var loader = this._loader;
       if (loader.modules[name])
-        return Promise.resolve();
+        return Promise.resolve().then(function(){
+          return loader.modules[name].module;
+        });
       return loader.importPromises[name] || createImportPromise(this, name, new Promise(asyncStartLoadPartwayThrough({
         step: 'locate',
         loader: loader,
@@ -878,14 +901,20 @@ function logloads(loads) {
     module: function(source, options) {
       var load = createLoad();
       load.address = options && options.address;
-      var linkSet = createLinkSet(this._loader, load);
-      var sourcePromise = Promise.resolve(source);
+      load.name = options && options.name;
       var loader = this._loader;
-      var p = linkSet.done.then(function() {
-        return evaluateLoadedModule(loader, load);
-      });
-      proceedToTranslate(loader, load, sourcePromise);
-      return p;
+      if (!this._loader.modules[load.name]) {
+        var linkSet = createLinkSet(this._loader, load);
+        var sourcePromise = Promise.resolve(source);
+        var p = linkSet.done.then(function () {
+          return evaluateLoadedModule(loader, load);
+        });
+        proceedToTranslate(loader, load, sourcePromise);
+        return p;
+      } else
+        return Promise.resolve().then(function(){
+          return loader.modules[load.name].module;
+        });
     },
     // 26.3.3.12
     newModule: function (obj) {
