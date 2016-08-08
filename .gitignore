@@ -5,3 +5,4 @@ coverage
 .DS_Store
 npm-debug.log
 .lvimrc
+dist

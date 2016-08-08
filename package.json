@@ -22,50 +22,16 @@
     }
   ],
   "devDependencies": {
-    "babel-core": "^4.7.16",
-    "core-js": "^1.2.1",
-    "expect.js": "^0.3.1",
-    "gesalakacula": "^1.0.0",
-    "grunt": "~0.4.1",
-    "grunt-contrib-concat": "^0.5.0",
-    "grunt-contrib-jshint": "~0.6.0",
-    "grunt-contrib-uglify": "~0.6.0",
-    "grunt-preprocess": "^5.0.1",
-    "karma": "^0.12.28",
-    "karma-benchmark": "^0.4.0",
-    "karma-benchmark-reporter": "^0.1.1",
-    "karma-chrome-launcher": "^0.1.7",
-    "karma-coverage": "^0.2.7",
-    "karma-expect": "^1.1.0",
-    "karma-firefox-launcher": "^0.1.3",
-    "karma-mocha": "^0.1.10",
-    "karma-mocha-reporter": "^0.3.1",
-    "karma-sauce-launcher": "^0.2.10",
-    "minimist": "^1.1.0",
-    "mocha": "^2.0.1",
-    "regenerator": "^0.8.9",
-    "traceur": "0.0.90"
+    "rollup": "^0.34.7"
   },
   "keywords": [
-    "script",
+    "modules",
+    "module loader",
     "loader",
-    "es6",
-    "harmony"
+    "es modules"
   ],
-  "engines": {
-    "node": ">=0.8.0"
-  },
   "scripts": {
-    "test": "npm run test:node && npm run test:browser",
-    "test:node": "mocha test/_node-traceur.js && mocha test/_node-babel.js",
-    "test:browser": "npm run test:browser-traceur && npm run test:browser-babel && npm run test:browser:native-iterator && npm run test:browser:map-polyfill",
-    "test:browser-traceur": "karma start --single-run",
-    "test:browser-babel": "karma start --single-run --babel",
-    "test:browser:perf": "karma start karma-benchmark.conf.js --single-run",
-    "test:browser:native-iterator": "karma start --single-run --native-iterator && karma start --single-run --babel --native-iterator",
-    "test:browser:map-polyfill": "karma start --single-run --babel --native-iterator --force-map-polyfill && karma start --single-run --babel --force-map-polyfill"
-  },
-  "dependencies": {
-    "when": "^3.7.2"
+    "build": "rollup -c",
+    "test": "node test/test.js"
   }
 }
