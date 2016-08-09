@@ -2,7 +2,7 @@
 export function loadModuleScripts(loader) {
   if (typeof document != 'undefined' && document.getElementsByTagName) {
     function ready() {
-      document.removeEventListener('DOMContentLoaded', completed, false );
+      document.removeEventListener('DOMContentLoaded', ready, false );
 
       var anonCnt = 0;
 
