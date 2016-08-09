@@ -5,6 +5,14 @@ import { loadModuleScripts } from './core/module-scripts.js';
 
 function SystemRegisterLoader(baseKey) {
   RegisterLoader.apply(this, arguments);
+  
+  // ensure System.register is available
+  global.System = global.System || {};
+  global.System.register = function() {
+    loader.register.apply(loader, arguments);
+  };
+
+  // support <script type="module"> tag in browsers
   loadModuleScripts(this);
 }
 SystemRegisterLoader.prototype = Object.create(RegisterLoader.prototype);
@@ -20,12 +28,6 @@ SystemRegisterLoader.prototype.normalize = function(key, parent, metadata) {
 // so we load the module name as a URL, and expect that to run System.register
 SystemRegisterLoader.prototype.instantiate = function(key, metadata) {
   var loader = this;
-
-  // ensure System.register is available
-  global.System = global.System || {};
-  global.System.register = function() {
-    loader.register.apply(loader, arguments);
-  };
 
   if (isNode) {
     require(key);
