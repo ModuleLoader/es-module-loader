@@ -19,6 +19,34 @@ To build run `rollup -c` to generate the `dist/system-register-only.js` loader b
 
 Run `node test/test.js` to see this built version of the loader loading a `System.register` module file.
 
+### Spec Differences
+
+The loader API in `core/loader-polyfill.js` matches the API of the current WhatWG specification as closely as possible.
+
+A best-effort implementation of the upcoming loader simplification changes has been made.
+
+Error handling is implemented as in the HTML specification for module loading, such that rejections reject the current load tree, but
+are immediately removed from the registry to allow further loads to retry loading.
+
+Instead of storing a registry of ModuleStatus objects, we store a registry of Module Namespace objects.
+
+The reason for this is that asynchronous rejection of registry entries as a source of truth leads to partial inconsistent rejection states
+(it is possible for the tick between the rejection of one load and its parent to have to deal with an overlapping in-progress tree),
+so in order to have a predictable load error rejection process, loads are only stored in the registry as fully-linked Namespace objects
+and not ModuleStatus objects as promises for Namespace objects (Module.evaluate is still supported though).
+
+### Normalize and Instantiate hooks
+
+These hooks are not in the spec, but defined here and as an abstraction provided by this project to create custom loaders.
+
+See the `system-register-only.js` source file for an example of how these hooks are used to construct a loader.
+
+### Tracing API
+
+When `loader.trace = true` is set, `loader.loads` provides a simple tracing API.
+
+Also not in the spec, this allows useful tooling to build on top of the loader.
+
 ## License
 Licensed under the MIT license.
 
