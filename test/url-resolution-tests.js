@@ -12,6 +12,20 @@ describe('Simple normalization tests', function() {
   it('Should be able to resolve to plain names', function() {
     assert.equal(resolveUrlToParentIfNotPlain('../../asdf/./asdf/.asdf/asdf', 'a/b/c/d'), 'a/asdf/asdf/.asdf/asdf');
   });
+  it('Should support resolving plain URI forms', function() {
+    assert.equal(resolveUrlToParentIfNotPlain('./asdf', 'npm:lodash/'), 'npm:lodash/asdf');
+  });
+  it('Should not support backtracking below base in plain URI forms', function() {
+    var thrown = false;
+    try {
+      resolveUrlToParentIfNotPlain('../../../asdf', 'npm:lodash');
+    }
+    catch(e) {
+      thrown = true;
+    }
+    if (!thrown)
+      throw new Error('Test should have thrown a RangeError exception');
+  });
 });
 
 var fs = require('fs');
@@ -57,6 +71,10 @@ describe('URL resolution selected WhatWG URL spec tests', function() {
 
     // we don't support automatically working out that file URLs always need to be ///
     if (test.input == '//' && !test.failure && test.base.startsWith('file:///'))
+      return;
+
+    // we don't fail on the cases that should fail for resolving against package:x/y, as we support and treat this as a plain parent normalization
+    if (test.input.indexOf(':') == -1 && test.base.indexOf(':') != -1 && test.base[test.base.indexOf(':') + 1] != '/' && test.failure && test.input.indexOf('/') == -1 && test.input.indexOf('.') == -1)
       return;
 
     // we don't do whitespace trimming, so handle it here

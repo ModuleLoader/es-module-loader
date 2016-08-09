@@ -30,16 +30,12 @@ export function resolveUrlToParentIfNotPlain(relUrl, parentUrl) {
   }
   // relative-url
   else if (relUrl[0] === '.' && (relUrl[1] === '/' || relUrl[1] === '.' && relUrl[2] === '/') || relUrl[0] === '/') {
-    var parentIsURL = !!parentProtocol;
-
-    // invalid form to accept an authority state -> cannot relative resolve (eg dataURI)
-    if (parentIsURL && parentUrl[parentProtocol.length] !== '/')
-      throwResolveError();
+    var parentIsPlain = !parentProtocol || parentUrl[parentProtocol.length] !== '/';
 
     // read pathname from parent if a URL
     // pathname taken to be part after leading "/"
     var pathname;
-    if (!parentIsURL) {
+    if (parentIsPlain) {
       // resolving to a plain parent -> skip standard URL prefix, and treat entire parent as pathname
       pathname = parentUrl;
     }
@@ -58,12 +54,16 @@ export function resolveUrlToParentIfNotPlain(relUrl, parentUrl) {
       pathname = parentUrl.substr(parentProtocol.length + 1);
     }
 
-    if (relUrl[0] === '/')
-      return parentUrl.substr(0, parentUrl.length - pathname.length - 1) + relUrl;
+    if (relUrl[0] === '/') {
+      if (parentIsPlain)
+        throwResolveError();
+      else
+        return parentUrl.substr(0, parentUrl.length - pathname.length - 1) + relUrl;
+    }
     
     // join together and split for removal of .. and . segments
     // looping the string instead of anything fancy for perf reasons
-    // '../../../../../z' resolved to 'x/y' is just 'z' regardless of parentIsURL
+    // '../../../../../z' resolved to 'x/y' is just 'z' regardless of parentIsPlain
     var segmented = pathname.substr(0, pathname.lastIndexOf('/') + 1) + relUrl;
 
     var output = [];
@@ -83,11 +83,17 @@ export function resolveUrlToParentIfNotPlain(relUrl, parentUrl) {
         // ../ segment
         if (segmented[i + 1] === '.' && (segmented[i + 2] === '/' || i + 2 === segmented.length)) {
           output.pop();
+          // this is the plain URI backtracking error (../, package:x -> error)
+          if (parentIsPlain && output.length === 0)
+            throwResolveError();
           i += 2;
           continue;
         }
         // ./ segment
         else if (segmented[i + 1] === '/' || i + 1 === segmented.length) {
+          // this is the plain URI backtracking error (./, package:x -> error)
+          if (parentIsPlain && output.length === 0)
+            throwResolveError();
           i += 1;
           continue;
         }
