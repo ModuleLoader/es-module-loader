@@ -1,10 +1,12 @@
 import RegisterLoader from './core/register-loader.js';
-import { isBrowser, isNode, baseURI, envGlobal as global } from './core/common.js';
+import { isBrowser, isNode, envGlobal as global } from './core/common.js';
 import { scriptLoad } from './core/fetch.js';
 import { loadModuleScripts } from './core/module-scripts.js';
 
 function SystemRegisterLoader(baseKey) {
   RegisterLoader.apply(this, arguments);
+
+  var loader = this;
   
   // ensure System.register is available
   global.System = global.System || {};

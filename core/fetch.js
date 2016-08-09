@@ -1,3 +1,5 @@
+import { isWindows } from './common.js';
+
 /*
  * Script loading
  */
@@ -125,7 +127,7 @@ else if (typeof self != 'undefined' && typeof self.fetch != 'undefined') {
     fetch(url, opts)
     .then(function(res) {
       if (res.ok)
-        return r.text();
+        return res.text();
       else
         throw new Error('Fetch error: ' + r.status + ' ' + r.statusText);
     })

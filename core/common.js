@@ -50,7 +50,7 @@ if (typeof document != 'undefined' && document.getElementsByTagName) {
   }
 }
 else if (typeof location != 'undefined') {
-  baseURI = __global.location.href;
+  baseURI = location.href;
 }
 
 // sanitize out the hash and querystring

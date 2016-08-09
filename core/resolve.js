@@ -1,7 +1,14 @@
+import { isNode } from './common.js';
+
 /*
  * Optimized URL normalization assuming a syntax-valid URL parent
  */ 
 export function resolveUrlToParentIfNotPlain(relUrl, parentUrl) {
+
+  function throwResolveError() {
+    throw new RangeError('Unable to resolve "' + relUrl + '" to ' + parentUrl);
+  }
+
   var protocolIndex = relUrl.indexOf(':');
   if (protocolIndex !== -1) {
     if (isNode) {
@@ -29,7 +36,7 @@ export function resolveUrlToParentIfNotPlain(relUrl, parentUrl) {
     // invalid form to accept an authority state -> cannot relative resolve (eg dataURI)
     // (if parent URL is actually missing the // when expected then that is an input error for this function)
     if (parentIsURL && (parentUrl[parentProtocol.length] !== '/' || parentUrl[parentProtocol.length + 1] !== '/'))
-      throw new RangeError('Unable to resolve "' + relUrl + '" to ' + parentUrl);
+      throwResolveError();
 
     // read pathname from parent
     var pathname = parentIsURL ? parentUrl.substr(parentProtocol.length + 2) : parentUrl;
