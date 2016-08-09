@@ -17,7 +17,9 @@ This loader will load `System.register` module files in both the browser and Nod
 
 To build run `npm run build` to generate the `dist/loader-system-register.js` and `dist/loader-babel-node.js` loader build files.
 
-Run `node test/test.js` to see this built version of the loader loading a `System.register` module file.
+See the `example` folder for some demonstrations of the example loaders.
+
+The tests run via `npm run test`.
 
 ### Spec Differences
 

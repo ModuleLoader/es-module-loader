@@ -4,4 +4,4 @@ System.register([], function($__export) {
       hello: 'world'
     });
   };
-})
+});

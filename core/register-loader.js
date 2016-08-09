@@ -14,7 +14,7 @@ export var emptyModule = new ModuleNamespace({});
  * - hookable higher-level normalize with metadata argument
  * - instantiate hook with metadata arugment returning a ModuleNamespace or undefined for es module loading
  * - loader error behaviour as in HTML and loader specs, clearing failed modules from registration cache synchronously
- * - build tracing support by providing a .trace object format
+ * - build tracing support by providing a .trace=true and .loads object format
  */
 function RegisterLoader(baseKey) {
   Loader.apply(this, arguments);
@@ -185,6 +185,9 @@ function instantiateAllDeps(loader, load, seen) {
       var existingNamespace = loader.registry.get(resolvedDepKey);
       if (existingNamespace) {
         esLinkRecord.dependencyInstantiations[i] = existingNamespace;
+        // run setter to reference the module
+        if (esLinkRecord.setters[i])
+          esLinkRecord.setters[i](existingNamespace);
         return Promise.resolve();
       }
 
@@ -196,7 +199,6 @@ function instantiateAllDeps(loader, load, seen) {
       return instantiate(loader, resolvedDepKey)
       .then(function(instantiation) {
         // instantiation is either a load record or a module namespace
-
         esLinkRecord.dependencyInstantiations[i] = instantiation;
 
         // dynamic module or circular
@@ -207,6 +209,10 @@ function instantiateAllDeps(loader, load, seen) {
 
         // register setter with dependency
         instantiation.importerSetters.push(esLinkRecord.setters[i]);
+
+        // run setter now to pick up the first bindings from the dependency
+        if (esLinkRecord.setters[i])
+          esLinkRecord.setters[i](instantiation.esLinkRecord.moduleObj);
 
         // if not already linked, instantiate dependencies
         if (instantiation.esLinkRecord)
