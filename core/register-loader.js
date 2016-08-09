@@ -96,7 +96,10 @@ RegisterLoader.prototype[Loader.instantiate] = function(key) {
     return instantiateAllDeps(loader, instantiated, [])
     .then(function() {
       if (loader.execute)
-        ensureEvaluated(loader, instantiated, []);
+        var err = ensureEvaluated(loader, instantiated, []);
+      if (err)
+        return Promise.reject(err);
+
       if (loader.trace)
         traceLoadRecord(loader, instantiated, []);
       return instantiated.module || emptyModule;

@@ -61,12 +61,14 @@ NodeBabelLoader.prototype.instantiate = function(key, metadata) {
       // transform source with Babel
       var output = babel.transform(source, {
         compact: false,
-        filename: fileUrlToPath(key),
+        filename: key + '!transpiled',
+        sourceFileName: key,
+        moduleIds: false,
         sourceMaps: 'inline',
         plugins: [require('babel-plugin-transform-es2015-modules-systemjs')]
       });
 
-      eval(output.code);
+      eval(output.code + '\n//# sourceURL=' + key + '!transpiled');
       loader.processRegisterQueue(key);
       
       resolve();
