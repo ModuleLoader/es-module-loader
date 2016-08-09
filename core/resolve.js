@@ -12,7 +12,6 @@ export function resolveUrlToParentIfNotPlain(relUrl, parentUrl) {
   var protocolIndex = relUrl.indexOf(':');
   if (protocolIndex !== -1) {
     if (isNode) {
-      // Node optimization
       // Windows filepath compatibility (unique to SystemJS, not in URL spec at all)
       // C:\x becomes file:///c:/x (we don't support C|\x)
       if (relUrl[1] === ':' && relUrl[2] === '\\' && relUrl[0].match(/a-z/i) && parentUrl.substr(0, 5) === 'file:')
@@ -42,10 +41,10 @@ export function resolveUrlToParentIfNotPlain(relUrl, parentUrl) {
     var pathname = parentIsURL ? parentUrl.substr(parentProtocol.length + 2) : parentUrl;
     // parse out auth and host
     if (parentProtocol !== 'file:')
-      pathname = pathname.substr(pathname.indexOf('/') + 1);
+      pathname = pathname.substr(pathname.indexOf('/'));
 
     if (relUrl[0] === '/')
-      return parentUrl.substr(0, parentUrl.length - pathname.length - 1) + relUrl;
+      return parentUrl.substr(0, parentUrl.length - pathname.length) + relUrl;
     
     // join together and split for removal of .. and . segments
     // looping the string instead of anything fancy for perf reasons

@@ -174,9 +174,9 @@ function instantiateAllDeps(loader, load, seen) {
   // normalize dependencies
   for (var i = 0; i < esLinkRecord.dependencies.length; i++) (function(i) {
     // this resolve can potentially be cached on the link record, should be a measured optimization
-    instantiateDepsPromises[i] = loader[RESOLVE](esLinkRecord.dependencies[i], key)
+    instantiateDepsPromises[i] = loader[RESOLVE](esLinkRecord.dependencies[i], load.key)
     .catch(function(err) {
-      throw addToError(err, 'Resolving ' + esLinkRecord.dependencies[i] + ' to ' + key);
+      throw addToError(err, 'Resolving ' + esLinkRecord.dependencies[i] + ' to ' + load.key);
     })
     .then(function(resolvedDepKey) {
       var existingNamespace = loader.registry.get(resolvedDepKey);
@@ -399,7 +399,7 @@ function ensureEvaluated(loader, load, seen) {
 
     // ES load
     else if (seen.indexOf(depLoad) === -1)
-      err = ensureEvaluated(depLoad, seen);
+      err = ensureEvaluated(loader, depLoad, seen);
 
     if (err)
       // we should really know the dependency resolved name for the namespace case, but oh well

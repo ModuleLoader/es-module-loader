@@ -22,6 +22,8 @@
     }
   ],
   "devDependencies": {
+    "babel-core": "^6.13.2",
+    "babel-plugin-transform-es2015-modules-systemjs": "^6.12.0",
     "rollup": "^0.34.7"
   },
   "keywords": [
@@ -31,7 +33,7 @@
     "es modules"
   ],
   "scripts": {
-    "build": "rollup -c",
+    "build": "rollup -c --environment loader:system-register && rollup -c --environment loader:node-babel",
     "test": "node test/test.js"
   }
 }

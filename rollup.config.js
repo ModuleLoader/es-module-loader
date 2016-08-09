@@ -1,6 +1,11 @@
+process.env.loader = process.env.loader || 'system-register';
+
 export default {
-  entry: 'system-register-only.js',
+  entry: `loader-${process.env.loader}.js`,
   format: 'umd',
-  moduleName: 'SystemRegisterLoader',
-  dest: 'dist/system-register-only.js'
+  moduleName: `${('Loader-' + process.env.loader).replace(/-./g, (part) => part[1].toUpperCase())}`,
+  dest: `dist/loader-${process.env.loader}.js`,
+
+  // skip rollup warnings (specifically the eval warning)
+  onwarn: function() {}
 };
