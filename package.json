@@ -1,29 +1,29 @@
 {
-  "name": "es6-module-loader",
-  "description": "An ES6 Module Loader shim",
+  "name": "es-module-loader",
+  "description": "An ES Module Loader shim",
   "version": "1.0.0-alpha",
-  "homepage": "https://github.com/ModuleLoader/es6-module-loader",
+  "homepage": "https://github.com/ModuleLoader/es-module-loader",
   "author": {
     "name": "Guy Bedford, Luke Hoban, Addy Osmani",
-    "email": "addyosmani@gmail.com",
     "url": "https://github.com/ModuleLoader"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ModuleLoader/es6-module-loader"
+    "url": "https://github.com/ModuleLoader/es-module-loader"
   },
   "bugs": {
-    "url": "https://github.com/ModuleLoader/es6-module-loader/issues"
+    "url": "https://github.com/ModuleLoader/es-module-loader/issues"
   },
   "licenses": [
     {
       "type": "MIT",
-      "url": "https://github.com/ModuleLoader/es6-module-loader/blob/master/LICENSE-MIT"
+      "url": "https://github.com/ModuleLoader/es-module-loader/blob/master/LICENSE-MIT"
     }
   ],
   "devDependencies": {
     "babel-core": "^6.13.2",
     "babel-plugin-transform-es2015-modules-systemjs": "^6.12.0",
+    "benchmark": "^2.1.1",
     "mocha": "^3.0.2",
     "rollup": "^0.34.7"
   },
@@ -35,6 +35,7 @@
   ],
   "scripts": {
     "build": "rollup -c --environment loader:system-register && rollup -c --environment loader:node-babel",
-    "test": "node test/runner.js"
+    "test": "node test/runner.js",
+    "bench": "node bench/runner.js"
   }
 }

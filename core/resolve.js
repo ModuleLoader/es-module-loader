@@ -14,7 +14,7 @@ export function resolveUrlToParentIfNotPlain(relUrl, parentUrl) {
     if (isNode) {
       // Windows filepath compatibility (unique to SystemJS, not in URL spec at all)
       // C:\x becomes file:///c:/x (we don't support C|\x)
-      if (relUrl[1] === ':' && relUrl[2] === '\\' && relUrl[0].match(/a-z/i) && parentUrl.substr(0, 5) === 'file:')
+      if (relUrl[1] === ':' && relUrl[2] === '\\' && relUrl[0].match(/[a-z]/i) && parentUrl.substr(0, 5) === 'file:')
         return 'file:///' + relUrl.replace(/\\/g, '/');
     }
     return relUrl;
@@ -33,48 +33,70 @@ export function resolveUrlToParentIfNotPlain(relUrl, parentUrl) {
     var parentIsURL = !!parentProtocol;
 
     // invalid form to accept an authority state -> cannot relative resolve (eg dataURI)
-    // (if parent URL is actually missing the // when expected then that is an input error for this function)
-    if (parentIsURL && (parentUrl[parentProtocol.length] !== '/' || parentUrl[parentProtocol.length + 1] !== '/'))
+    if (parentIsURL && parentUrl[parentProtocol.length] !== '/')
       throwResolveError();
 
-    // read pathname from parent
-    var pathname = parentIsURL ? parentUrl.substr(parentProtocol.length + 2) : parentUrl;
-    // parse out auth and host
-    if (parentProtocol !== 'file:')
-      pathname = pathname.substr(pathname.indexOf('/'));
+    // read pathname from parent if a URL
+    // pathname taken to be part after leading "/"
+    var pathname;
+    if (!parentIsURL) {
+      // resolving to a plain parent -> skip standard URL prefix, and treat entire parent as pathname
+      pathname = parentUrl;
+    }
+    else if (parentUrl[parentProtocol.length + 1] === '/') {
+      // resolving to a :// so we need to read out the auth and host
+      if (parentProtocol !== 'file:') {
+        pathname = parentUrl.substr(parentProtocol.length + 2);
+        pathname = pathname.substr(pathname.indexOf('/') + 1);
+      }
+      else {
+        pathname = parentUrl.substr(8);
+      }
+    }
+    else {
+      // resolving to :/ so pathname is the /... part
+      pathname = parentUrl.substr(parentProtocol.length + 1);
+    }
 
     if (relUrl[0] === '/')
-      return parentUrl.substr(0, parentUrl.length - pathname.length) + relUrl;
+      return parentUrl.substr(0, parentUrl.length - pathname.length - 1) + relUrl;
     
     // join together and split for removal of .. and . segments
     // looping the string instead of anything fancy for perf reasons
     // '../../../../../z' resolved to 'x/y' is just 'z' regardless of parentIsURL
     var segmented = pathname.substr(0, pathname.lastIndexOf('/') + 1) + relUrl;
+
     var output = [];
     var segmentIndex = undefined;
     for (var i = 0; i < segmented.length; i++) {
+      // busy reading a segment - only terminate on '/'
       if (segmentIndex !== undefined) {
         if (segmented[i] === '/') {
           output.push(segmented.substr(segmentIndex, i - segmentIndex));
           segmentIndex = undefined;
         }
+        continue;
       }
-      else if (segmented[i] === '.') {
+
+      // new segment - check if it is relative
+      if (segmented[i] === '.') {
         // ../ segment
-        if (segmented[i + 1] === '.' && segmented[i + 2] === '/') {
+        if (segmented[i + 1] === '.' && (segmented[i + 2] === '/' || i + 2 === segmented.length)) {
           output.pop();
           i += 2;
+          continue;
         }
         // ./ segment
-        else if (segmented[i + 1] === '/') {
+        else if (segmented[i + 1] === '/' || i + 1 === segmented.length) {
           i += 1;
+          continue;
         }
       }
-      // standard character
-      else {
-        segmentIndex = i;
-      }
+
+      // it is the start of a new segment
+      segmentIndex = i;
     }
+    // finish reading out the last segment
     if (segmentIndex !== undefined)
       output.push(segmented.substr(segmentIndex, i - segmentIndex));
     
