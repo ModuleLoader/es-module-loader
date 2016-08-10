@@ -6,7 +6,8 @@ export var isWorker = typeof window === 'undefined' && typeof self !== 'undefine
 export var isWindows = typeof process !== 'undefined' && typeof process.platform === 'string' && process.platform.match(/^win/);
 export var isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
 
-export var envGlobal = typeof self !== 'undefined' ? self : global;
+var envGlobal = typeof self !== 'undefined' ? self : global;
+export { envGlobal as global }
 
 export function pathToFileUrl(filePath) {
   return 'file://' + (isWindows ? '/' : '') + filePath;
