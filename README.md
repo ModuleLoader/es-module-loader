@@ -53,18 +53,18 @@ Also not in the spec, this allows useful tooling to build on top of the loader.
 ### Spec Differences
 
 The loader API in `core/loader-polyfill.js` matches the API of the current WhatWG specification as closely as possible.
-
 A best-effort implementation of the upcoming loader simplification changes has been made.
 
 Error handling is implemented as in the HTML specification for module loading, such that rejections reject the current load tree, but
 are immediately removed from the registry to allow further loads to retry loading.
 
-Instead of storing a registry of ModuleStatus objects, we store a registry of Module Namespace objects.
-
-The reason for this is that asynchronous rejection of registry entries as a source of truth leads to partial inconsistent rejection states
+- Instead of storing a registry of ModuleStatus objects, we store a registry of Module Namespace objects. The reason for this is that asynchronous rejection of registry entries as a source of truth leads to partial inconsistent rejection states
 (it is possible for the tick between the rejection of one load and its parent to have to deal with an overlapping in-progress tree),
 so in order to have a predictable load error rejection process, loads are only stored in the registry as fully-linked Namespace objects
 and not ModuleStatus objects as promises for Namespace objects (Module.evaluate is still supported though).
+- `Loader` and `Module` are available as named exports from `core/loader-polyfill.js` but are not by default exported to the `global.Reflect` object.
+  This is to allow individual loader implementations to determine their own impact on the environment.
+- A constructor argument is added to the loader that takes the environment baseKey to be used as the default normalization parent.
 
 ## License
 Licensed under the MIT license.
