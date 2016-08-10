@@ -20,7 +20,8 @@ Some examples of common use case module loaders built with this project are prov
 
 This project exposes a public API in the `core` folder.
 
-The main API file is `import RegisterLoader from 'es-module-loader/core/register-loader.js'` which provides the base loader class.
+The minimal polyfill loader is provided in `core/loader-polyfill.js`. On top of this the main API file is 
+`import RegisterLoader from 'es-module-loader/core/register-loader.js'` which provides the base loader class.
 
 Helper functions are available in `core/resolve.js`, `core/common.js`, `core/fetch.js` and everything that is exported can be considered
 part of the publicly versioned API of this project.
@@ -30,7 +31,10 @@ provided by the `rollup.config.js` file in the example loader repos.
 
 ### Normalize and Instantiate hooks
 
-These hooks are not in the spec, but defined here and as an abstraction provided by this project to create custom loaders.
+Implementing a loader on top of the `RegisterLoader` base class involves extending that class and providing `normalize` and `instantiate` prototype
+methods.
+
+These hooks are not in the spec, but defined here and as an abstraction provided by this project to make it easy to create custom loaders.
 
 Pending further documentation, see the example loaders listed above for how these hooks can be used.
 
