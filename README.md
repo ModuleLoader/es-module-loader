@@ -52,5 +52,5 @@ Also not in the spec, this allows useful tooling to build on top of the loader.
 ## License
 Licensed under the MIT license.
 
-[travis-url]: https://travis-ci.org/ModuleLoader/es6-module-loader
-[travis-image]: https://travis-ci.org/ModuleLoader/es6-module-loader.svg?branch=master
+[travis-url]: https://travis-ci.org/ModuleLoader/es-module-loader
+[travis-image]: https://travis-ci.org/ModuleLoader/es-module-loader.svg?branch=master
