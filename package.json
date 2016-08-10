@@ -20,15 +20,10 @@
       "url": "https://github.com/ModuleLoader/es-module-loader/blob/master/LICENSE-MIT"
     }
   ],
-  "bin": {
-    "node-esml": "bin/node-esml.js"
-  },
   "devDependencies": {
-    "babel-core": "^6.13.2",
-    "babel-plugin-transform-es2015-modules-systemjs": "^6.12.0",
     "benchmark": "^2.1.1",
     "mocha": "^3.0.2",
-    "rollup": "^0.34.7"
+    "node-es-module-loader": "^0.1.1"
   },
   "keywords": [
     "modules",
@@ -37,8 +32,7 @@
     "es modules"
   ],
   "scripts": {
-    "build": "rollup -c --environment loader:system-register && rollup -c --environment loader:node",
-    "test": "node test/runner.js",
-    "bench": "node bench/runner.js"
+    "test": "node-esml test/runner.js",
+    "bench": "node-esml bench/runner.js"
   }
 }

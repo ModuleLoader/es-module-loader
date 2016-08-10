@@ -1,16 +1,12 @@
-var LoaderNodeBabel = require('../dist/loader-node.js');
-var loader = new LoaderNodeBabel(process.cwd());
+import fs from 'fs';
+import path from 'path';
+import Benchmark from 'benchmark';
 
-var fs = require('fs');
 var benchmarks = fs.readdirSync('bench').filter(function(testName) {
   return testName != 'runner.js' && testName.endsWith('.js')
 });
 
-var path = require('path');
-
 function runNextBenchmark() {
-  var Benchmark = require('benchmark');
-
   var nextBenchmark = benchmarks.shift();
 
   if (!nextBenchmark)
