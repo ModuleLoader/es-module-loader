@@ -37,8 +37,7 @@ export function scriptLoad(src, resolve, reject) {
 /*
  * Source loading
  */
-var envFetch;
-export default envFetch;
+export var envFetch;
 
 if (typeof XMLHttpRequest != 'undefined')
   envFetch = xhrFetch;
