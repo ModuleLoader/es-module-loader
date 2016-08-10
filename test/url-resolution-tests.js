@@ -25,6 +25,18 @@ describe('Simple normalization tests', function() {
     if (!thrown)
       throw new Error('Test should have thrown a RangeError exception');
   });
+  it('Should support "." for resolution', function() {
+    assert.equal(resolveUrlToParentIfNotPlain('.', 'https://www.google.com/asdf/asdf'), 'https://www.google.com/asdf/');
+  });
+  it('Should support ".." resolution', function() {
+    assert.equal(resolveUrlToParentIfNotPlain('..', 'https://www.google.com/asdf/asdf/asdf'), 'https://www.google.com/asdf/');
+  });
+  it('Should support "./" for resolution', function() {
+    assert.equal(resolveUrlToParentIfNotPlain('./', 'https://www.google.com/asdf/asdf'), 'https://www.google.com/asdf/');
+  });
+  it('Should support "../" resolution', function() {
+    assert.equal(resolveUrlToParentIfNotPlain('../', 'https://www.google.com/asdf/asdf/asdf'), 'https://www.google.com/asdf/');
+  });
 });
 
 import fs from 'fs';

@@ -29,7 +29,8 @@ export function resolveUrlToParentIfNotPlain(relUrl, parentUrl) {
     return parentProtocol + relUrl;
   }
   // relative-url
-  else if (relUrl[0] === '.' && (relUrl[1] === '/' || relUrl[1] === '.' && relUrl[2] === '/') || relUrl[0] === '/') {
+  else if (relUrl[0] === '.' && (relUrl[1] === '/' || relUrl[1] === '.' && (relUrl[2] === '/' || relUrl.length === 2) || relUrl.length === 1)
+      || relUrl[0] === '/') {
     var parentIsPlain = !parentProtocol || parentUrl[parentProtocol.length] !== '/';
 
     // read pathname from parent if a URL
@@ -83,20 +84,26 @@ export function resolveUrlToParentIfNotPlain(relUrl, parentUrl) {
         // ../ segment
         if (segmented[i + 1] === '.' && (segmented[i + 2] === '/' || i + 2 === segmented.length)) {
           output.pop();
-          // this is the plain URI backtracking error (../, package:x -> error)
-          if (parentIsPlain && output.length === 0)
-            throwResolveError();
           i += 2;
-          continue;
         }
         // ./ segment
         else if (segmented[i + 1] === '/' || i + 1 === segmented.length) {
-          // this is the plain URI backtracking error (./, package:x -> error)
-          if (parentIsPlain && output.length === 0)
-            throwResolveError();
           i += 1;
+        }
+        else {
+          // the start of a new segment (just like below)
+          segmentIndex = i;
           continue;
         }
+
+        // this is the plain URI backtracking error (./, package:x -> error)
+        if (parentIsPlain && output.length === 0)
+          throwResolveError();
+        
+        // if we end with a . or a .. then we end with a trailing "/"
+        if (i === segmented.length || i === segmented.length - 1)
+          output.push('');
+        continue;
       }
 
       // it is the start of a new segment
