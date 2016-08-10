@@ -6,15 +6,15 @@ Provides a polyfill and low-level API for the [WhatWG loader spec](https://githu
 
 Some examples of common use case module loaders built with this project are provided below:
 
-- https://github.com/ModuleLoader/browser-es-module-loader
+- [Browser ES Module Loader](https://github.com/ModuleLoader/browser-es-module-loader):
   A demonstration-only loader to load ES modules in the browser including support for the `<script type="module">` tag.
 
-- https://github.com/ModuleLoader/system-register-loader
-  A highly-optimized production loader that only loads `System.register` modules.
-
-- https://github.com/ModuleLoader/node-es-module-loader
+- [Node ES Module Loader](https://github.com/ModuleLoader/node-es-module-loader)
   Allows loading ES modules with CommonJS interop in Node via `node-esml module/path.js` in line with the current Node 
   plans for implementing ES modules. Used to run the tests and benchmarks in this project.
+
+- [System Register Loader](https://github.com/ModuleLoader/system-register-loader):
+  A highly-optimized production loader that only loads `System.register` modules.
 
 ### Spec Differences
 
