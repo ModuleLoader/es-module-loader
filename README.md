@@ -1,25 +1,20 @@
 # ES Module Loader Polyfill [![Build Status][travis-image]][travis-url]
 
-Dynamically loads ES modules in browsers and [NodeJS](#nodejs-use) with support for loading existing and custom module formats through loader hooks.
+Provides a polyfill and low-level API for the [WhatWG loader spec](https://github.com/whatwg/loader) to create a custom module loaders.
 
-This project implements dynamic module loading as per the newly redrafted specification at [WhatWG loader spec](https://github.com/whatwg/loader). It replaces the 0.* branch, which implements the previous ES6-specified loader API at [2014-08-24 ES6 Specification Draft Rev 27, Section 15](http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts#august_24_2014_draft_rev_27).
+### Module Loader Examples
 
-### System Register Only Build
+Some examples of common use case module loaders built with this project are provided below:
 
-The core project is contained in the `core` folder.
+- https://github.com/ModuleLoader/browser-es-module-loader
+  A demonstration-only loader to load ES modules in the browser including support for the `<script type="module">` tag.
 
-The `loader-system-register.js` file is an illustrative build of how this project can be used to create any type of custom loader.
+- https://github.com/ModuleLoader/system-register-loader
+  A highly-optimized production loader that only loads `System.register` modules.
 
-This loader will load `System.register` module files in both the browser and Node, as well as supporting `<script type="module">` tags that point to System.register modules.
-
-
-#### Building and Running
-
-To build run `npm run build` to generate the `dist/loader-system-register.js` and `dist/loader-babel-node.js` loader build files.
-
-See the `example` folder for some demonstrations of the example loaders.
-
-The tests run via `npm run test`.
+- https://github.com/ModuleLoader/node-es-module-loader
+  Allows loading ES modules with CommonJS interop in Node via `node-esml module/path.js` in line with the current Node 
+  plans for implementing ES modules. Used to run the tests and benchmarks in this project.
 
 ### Spec Differences
 
@@ -41,7 +36,7 @@ and not ModuleStatus objects as promises for Namespace objects (Module.evaluate 
 
 These hooks are not in the spec, but defined here and as an abstraction provided by this project to create custom loaders.
 
-See the `loader-system-register.js` source file for an example of how these hooks are used to construct a loader.
+Pending further documentation, see the example loaders listed above for how these hooks can be used.
 
 ### Tracing API
 
