@@ -1,6 +1,6 @@
 import { Loader, Module, PrivateInternalModuleNamespace as ModuleNamespace } from './loader-polyfill.js';
 import { resolveUrlToParentIfNotPlain } from './resolve.js';
-import { addToError, envGlobal as global } from './common.js';
+import { addToError, global } from './common.js';
 
 export default RegisterLoader;
 
