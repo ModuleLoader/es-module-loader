@@ -16,6 +16,12 @@ Some examples of common use case module loaders built with this project are prov
 - [System Register Loader](https://github.com/ModuleLoader/system-register-loader):
   A highly-optimized production loader that only loads `System.register` modules.
 
+### Installation
+
+```
+npm install es-module-loader --save-dev
+```
+
 ### Creating a Loader
 
 This project exposes a public API in the `core` folder.
