@@ -6,7 +6,7 @@ import { resolveUrlToParentIfNotPlain } from './core/resolve.js';
 import { nodeFetch } from './core/fetch.js';
 
 /*
- * Node Babel loader
+ * Node loader
  *
  * Implements the Node EPS proposal at https://github.com/nodejs/node-eps/blob/master/002-es6-modules.md
  *

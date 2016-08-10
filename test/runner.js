@@ -1,4 +1,4 @@
-var LoaderNodeBabel = require('../dist/loader-node-babel.js');
+var LoaderNodeBabel = require('../dist/loader-node.js');
 
 var loader = new LoaderNodeBabel(process.cwd());
 

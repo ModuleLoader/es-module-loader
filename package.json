@@ -37,7 +37,7 @@
     "es modules"
   ],
   "scripts": {
-    "build": "rollup -c --environment loader:system-register && rollup -c --environment loader:node-babel",
+    "build": "rollup -c --environment loader:system-register && rollup -c --environment loader:node",
     "test": "node test/runner.js",
     "bench": "node bench/runner.js"
   }

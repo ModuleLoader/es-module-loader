@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-var LoaderNodeBabel = require('../dist/loader-node-babel.js');
+var LoaderNodeBabel = require('../dist/loader-node.js');
 var path = require('path');
 
 var filename = process.argv[2];
