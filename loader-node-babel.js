@@ -92,8 +92,10 @@ function tryNodeLoad(path) {
     return require(path);
   }
   catch(e) {
-    if (e instanceof SyntaxError && (e.message.indexOf('Unexpected token export') !== -1 || 
-        e.message.indexOf('Unexpected token import') !== -1))
+    if (e instanceof SyntaxError && 
+        (e.message.indexOf('Unexpected token export') !== -1 || 
+        e.message.indexOf('Unexpected token import') !== -1 ||
+        e.message.indexOf('Unexpected reserved word') !== -1))
       return;
     throw e;
   }
