@@ -86,8 +86,6 @@ else {
  */
 var errArgs = new Error(0, '_').fileName == '_';
 
-scriptSrc ='asdf';
-
 export function addToError(err, msg) {
   // parse the stack removing loader code lines for simplification
   if (!err.originalErr) {
