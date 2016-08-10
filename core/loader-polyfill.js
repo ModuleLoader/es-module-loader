@@ -190,6 +190,7 @@ function Module(descriptors, executor, evaluate) {
 
   return ns;
 };
+// 8.4.2
 Module.prototype = null;
 
 // 8.4.1 Module.evaluate
