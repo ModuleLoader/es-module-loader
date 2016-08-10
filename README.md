@@ -16,6 +16,30 @@ Some examples of common use case module loaders built with this project are prov
 - [System Register Loader](https://github.com/ModuleLoader/system-register-loader):
   A highly-optimized production loader that only loads `System.register` modules.
 
+### Creating a Loader
+
+This project exposes a public API in the `core` folder.
+
+The main API file is `import RegisterLoader from 'es-module-loader/core/register-loader.js'` which provides the base loader class.
+
+Helper functions are available in `core/resolve.js`, `core/common.js`, `core/fetch.js` and everything that is exported can be considered
+part of the publicly versioned API of this project.
+
+Any tool can be used to build the loader distribution file - [Rollup](http://rollupjs.org) is used to do these builds in the example loaders above,
+provided by the `rollup.config.js` file in the example loader repos.
+
+### Normalize and Instantiate hooks
+
+These hooks are not in the spec, but defined here and as an abstraction provided by this project to create custom loaders.
+
+Pending further documentation, see the example loaders listed above for how these hooks can be used.
+
+### Tracing API
+
+When `loader.trace = true` is set, `loader.loads` provides a simple tracing API.
+
+Also not in the spec, this allows useful tooling to build on top of the loader.
+
 ### Spec Differences
 
 The loader API in `core/loader-polyfill.js` matches the API of the current WhatWG specification as closely as possible.
@@ -31,18 +55,6 @@ The reason for this is that asynchronous rejection of registry entries as a sour
 (it is possible for the tick between the rejection of one load and its parent to have to deal with an overlapping in-progress tree),
 so in order to have a predictable load error rejection process, loads are only stored in the registry as fully-linked Namespace objects
 and not ModuleStatus objects as promises for Namespace objects (Module.evaluate is still supported though).
-
-### Normalize and Instantiate hooks
-
-These hooks are not in the spec, but defined here and as an abstraction provided by this project to create custom loaders.
-
-Pending further documentation, see the example loaders listed above for how these hooks can be used.
-
-### Tracing API
-
-When `loader.trace = true` is set, `loader.loads` provides a simple tracing API.
-
-Also not in the spec, this allows useful tooling to build on top of the loader.
 
 ## License
 Licensed under the MIT license.
