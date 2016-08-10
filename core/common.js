@@ -4,9 +4,22 @@
 export var isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
 export var isWorker = typeof window === 'undefined' && typeof self !== 'undefined' && typeof importScripts !== 'undefined';
 export var isWindows = typeof process !== 'undefined' && typeof process.platform === 'string' && process.platform.match(/^win/);
-export var isNode = typeof require !== 'undefined' && typeof process !== 'undefined' && !process.browser;
+export var isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
 
 export var envGlobal = typeof self !== 'undefined' ? self : global;
+
+export function pathToFileUrl(filePath) {
+  return 'file://' + (isWindows ? '/' : '') + filePath;
+}
+
+export function fileUrlToPath(fileUrl) {
+  if (fileUrl.substr(0, 7) !== 'file://')
+    throw new RangeError(fileUrl + ' is not a valid file url');
+  if (isWindows)
+    return fileUrl.substr(8).replace(/\//g, '/');
+  else
+    return fileUrl.substr(7);
+}
 
 /*
  * Path to loader itself
@@ -113,7 +126,7 @@ export function addToError(err, msg) {
  */
 var hasSymbol = typeof Symbol !== 'undefined';
 export function createSymbol(name) {
-  return hasSymbol ? Symbol() : name;
+  return hasSymbol ? Symbol() : '@@' + name;
 }
 
 /*

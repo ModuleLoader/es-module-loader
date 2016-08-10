@@ -42,7 +42,7 @@ export default envFetch;
 
 if (typeof XMLHttpRequest != 'undefined')
   envFetch = xhrFetch;
-else if (typeof require !== 'undefined' && typeof process !== 'undefined')
+else if (typeof module !== 'undefined' && module.require && typeof process !== 'undefined')
   envFetch = fsFetch;
 else if (typeof self !== 'undefined' && self.fetch)
   envFetch = fetchFetch;
@@ -97,7 +97,7 @@ var fs;
 export function nodeFetch(url, authorization, fulfill, reject) {
   if (url.substr(0, 8) != 'file:///')
     throw new Error('Unable to fetch "' + url + '". Only file URLs of the form file:/// allowed running in Node.');
-  fs = fs || require('fs');
+  fs = fs || module.require('fs');
   if (isWindows)
     url = url.replace(/\//g, '\\').substr(8);
   else

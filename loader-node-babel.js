@@ -1,21 +1,24 @@
 import RegisterLoader from './core/register-loader.js';
+import { PrivateInternalModuleNamespace as ModuleNamespace } from './core/loader-polyfill.js';
 
-import { isNode, isWindows, baseURI } from './core/common.js';
+import { isNode, baseURI, pathToFileUrl, fileUrlToPath } from './core/common.js';
 import { resolveUrlToParentIfNotPlain } from './core/resolve.js';
 import { nodeFetch } from './core/fetch.js';
 
 /*
- * Example Babel loader
+ * Node Babel loader
  *
- * Used to run local loader tests
+ * Implements the Node EPS proposal at https://github.com/nodejs/node-eps/blob/master/002-es6-modules.md
  *
- * Loads all sources as text, converts into System.register with Babel
+ * Follows the NodeJS resolution algorithm, loading modules first as CJS and then falling back to ES
+ * on failure. This effectively provides the "export {}" assumption to load an ES module.
+ *
+ * Does not currently support the "module" package.json proposal described in the second paragraph at 
+ *   https://github.com/nodejs/node-eps/blob/master/002-es6-modules.md#51-determining-if-source-is-an-es-module
+ * Does not allow any loading of ES modules from within CommonJS itself
  * 
- * Alternative Babel options can be set with a .babelrc file
- * 
- * This example loader doesn't provide more fine-grained loading behaviour than that.
+ * Alternative Babel options can be set with a local .babelrc file
  */
-
 var babel, path;
 
 function NodeBabelLoader(baseKey) {
@@ -40,21 +43,27 @@ function NodeBabelLoader(baseKey) {
 NodeBabelLoader.prototype = Object.create(RegisterLoader.prototype);
 
 // normalize is never given a relative name like "./x", that part is already handled
-// so we just need to do plain name normalization here
-// for this loader, identity is enough to get URL-like normalization
 NodeBabelLoader.prototype.normalize = function(key, parent, metadata) {
-  return key;
-};
+  var resolved = require.resolve(key.substr(0, 5) === 'file:' ? fileUrlToPath(key) : key);
 
-function fileUrlToPath(fileUrl) {
-  return fileUrl.substr(7 + isWindows).replace(/\//g, path.sep);
-}
+  // core modules are returned as plain non-absolute paths
+  return path.isAbsolute(resolved) ? pathToFileUrl(resolved) : resolved;
+};
 
 // instantiate just needs to run System.register
 // so we fetch the source, convert into the Babel System module format, then evaluate it
 NodeBabelLoader.prototype.instantiate = function(key, metadata) {
   var loader = this;
 
+  // first, try to load the module as CommonJS
+  var nodeModule = tryNodeLoad(key.substr(0, 5) === 'file:' ? fileUrlToPath(key) : key);
+
+  if (nodeModule)
+    return Promise.resolve(new ModuleNamespace({
+      default: nodeModule
+    }));
+
+  // otherwise, load as ES with Babel converting into System.register
   return new Promise(function(resolve, reject) {
     nodeFetch(key, undefined, function(source) {
 
@@ -68,12 +77,26 @@ NodeBabelLoader.prototype.instantiate = function(key, metadata) {
         plugins: [require('babel-plugin-transform-es2015-modules-systemjs')]
       });
 
-      eval(output.code + '\n//# sourceURL=' + key + '!transpiled');
+      // evaluate without require, exports and module variables
+      // we leave module in for now to allow module.require access
+      eval('var require,exports;' + output.code + '\n//# sourceURL=' + key + '!transpiled');
       loader.processRegisterQueue(key);
       
       resolve();
     }, reject);
   });
 };
+
+function tryNodeLoad(path) {
+  try {
+    return require(path);
+  }
+  catch(e) {
+    if (e instanceof SyntaxError && (e.message.indexOf('Unexpected token export') !== -1 || 
+        e.message.indexOf('Unexpected token import') !== -1))
+      return;
+    throw e;
+  }
+}
 
 export default NodeBabelLoader;

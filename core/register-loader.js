@@ -201,8 +201,15 @@ function instantiateAllDeps(loader, load, seen) {
         // instantiation is either a load record or a module namespace
         esLinkRecord.dependencyInstantiations[i] = instantiation;
 
-        // dynamic module or circular
-        if (instantiation instanceof ModuleNamespace || seen.indexOf(instantiation) !== -1)
+        // dynamic module
+        if (instantiation instanceof ModuleNamespace) {
+          if (esLinkRecord.setters[i])
+            esLinkRecord.setters[i](instantiation);
+          return Promise.resolve();
+        }
+
+        // circular
+        if (seen.indexOf(instantiation) !== -1)
           return Promise.resolve();
 
         // es module load
@@ -435,7 +442,9 @@ function ensureEvaluated(loader, load, seen) {
 
 function esEvaluate(esLinkRecord) {
   try {
-    esLinkRecord.execute.call(global);
+    // {} is the closest we can get to call(undefined)
+    // this should really be blocked earlier though
+    esLinkRecord.execute.call({});
   }
   catch(err) {
     return err;

@@ -20,6 +20,9 @@
       "url": "https://github.com/ModuleLoader/es-module-loader/blob/master/LICENSE-MIT"
     }
   ],
+  "bin": {
+    "node-esml": "bin/node-esml.js"
+  },
   "devDependencies": {
     "babel-core": "^6.13.2",
     "babel-plugin-transform-es2015-modules-systemjs": "^6.12.0",

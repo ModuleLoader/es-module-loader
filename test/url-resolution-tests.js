@@ -1,6 +1,5 @@
 import { resolveUrlToParentIfNotPlain } from '../core/resolve.js';
-
-var assert = require('assert');
+import assert from 'assert';
 
 describe('Simple normalization tests', function() {
   it('Should resolve windows paths as file:/// URLs', function() {
@@ -28,7 +27,7 @@ describe('Simple normalization tests', function() {
   });
 });
 
-var fs = require('fs');
+import fs from 'fs';
 var testCases = eval('(' + fs.readFileSync('test/fixtures/url-resolution-cases.json') + ')');
 
 describe('URL resolution selected WhatWG URL spec tests', function() {  

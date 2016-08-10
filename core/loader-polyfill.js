@@ -29,11 +29,11 @@ Loader.prototype.import = function(key, parent) {
   });
 };
 // 3.3.3
-var RESOLVE = Loader.resolve = createSymbol('@@resolve');
+var RESOLVE = Loader.resolve = createSymbol('resolve');
 
 // instantiate sets the namespace into the registry
 // it is up to implementations to ensure instantiate is debounced properly
-var INSTANTIATE = Loader.instantiate = createSymbol('@@instantiate');
+var INSTANTIATE = Loader.instantiate = createSymbol('instantiate');
 
 Loader.prototype.resolve = function(key, parent) {
   return this[RESOLVE](key, parent)
