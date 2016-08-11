@@ -1,6 +1,6 @@
 # ES Module Loader Polyfill [![Build Status][travis-image]][travis-url]
 
-Provides a polyfill and [low-level API](#loader-api) for the [WhatWG loader spec](https://github.com/whatwg/loader) to create a custom module loaders.
+Provides a polyfill and [low-level API](#loader-hooks) for the [WhatWG loader spec](https://github.com/whatwg/loader) to create a custom module loaders.
 
 Supports the [System.register module format](https://github.com/ModuleLoader/es-module-loader/blob/master/docs/system-register.md) to provide identical module loading semantics as ES modules in environments today.
 
@@ -175,6 +175,8 @@ and not ModuleStatus objects as promises for Namespace objects (Module.evaluate 
 - `Loader` and `Module` are available as named exports from `core/loader-polyfill.js` but are not by default exported to the `global.Reflect` object.
   This is to allow individual loader implementations to determine their own impact on the environment.
 - A constructor argument is added to the loader that takes the environment baseKey to be used as the default normalization parent.
+- An internal `Loader.prototype[Loader.instantiate]` hook is used as well as the `Loader.prototype[Loader.resolve]` hook
+  in order to ensure that uses of `loader.resolve` do not have to result in module loading and execution, as discussed in https://github.com/whatwg/loader/issues/147#issuecomment-232314879.
 
 ## License
 Licensed under the MIT license.

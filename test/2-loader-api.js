@@ -39,7 +39,7 @@ describe('Loader Polyfill API', function() {
     assert.equal(loader.registry.has('asdf'), false);
   });
 
-  it('Should support Module construction and execution', function() {
+  it('Should support Module construction, evaluation and mutation', function() {
     var evaluated = false;
     var mutator;
     var module = new Module({
