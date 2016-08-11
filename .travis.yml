@@ -7,4 +7,5 @@ node_js:
 before_install:
   - npm install
 script:
+  - npm run make-test
   - npm run test

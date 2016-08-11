@@ -6,3 +6,4 @@ coverage
 npm-debug.log
 .lvimrc
 dist
+test/fixtures/register-modules

@@ -5,338 +5,224 @@ import SystemRegisterLoader from './fixtures/system-register-loader.js';
 describe('System Register Loader', function() {
   var loader = new SystemRegisterLoader(path.resolve('test/fixtures/register-modules') + path.sep);
 
-  it('Should be an instance of itself', function() {
-    assert(loader instanceof SystemRegisterLoader);
+  describe('Simple tests', function() {
+
+    it('Should be an instance of itself', function() {
+      assert(loader instanceof SystemRegisterLoader);
+    });
+
+    it('Should import a module', async function() {
+      var m = await loader.import('./no-imports.js');
+      assert(m);
+      assert.equal(m.asdf, 'asdf');
+    });
+
+    it('Should import a module cached', async function() {
+      var m1 = await loader.import('./no-imports.js');
+      var m2 = await loader.import('./no-imports.js');
+      assert.equal(m1.asdf, 'asdf');
+      assert.equal(m1, m2);
+    });
+
+    it('should import an es module with its dependencies', async function() {
+      var m = await loader.import('./es6-withdep.js');
+      assert.equal(m.p, 'p');
+    });
+
+    it('should import without bindings', async function() {
+      var m = await loader.import('./direct.js');
+      assert(!!m);
+    });
+
+    it('should support various es syntax', async function() {
+      var m = await loader.import('./es6-file.js');
+
+      assert.equal(typeof m.q, 'function');
+
+      var thrown = false;
+      try {
+        new m.q().foo();
+      }
+      catch(e) {
+        thrown = true;
+        assert.equal(e, 'g');
+      }
+
+      if (!thrown)
+        throw new Error('Supposed to throw');
+    });
+
+    it('should resolve various import syntax', async function() {
+      var m = await loader.import('./import.js');
+      assert.equal(typeof m.a, 'function');
+      assert.equal(m.b, 4);
+      assert.equal(m.c, 5);
+      assert.equal(m.d, 4);
+      assert.equal(typeof m.q, 'object');
+      assert.equal(typeof m.q.foo, 'function');
+    });
+
+    it('should support __moduleName', async function() {
+      var m = await loader.import('./moduleName.js');
+      assert.equal(m.name, './moduleName');
+      assert.equal(m.address, System.baseURL + './moduleName.js');
+    });
   });
 
-  it('Should import a module', async function() {
-    var m = await loader.import('./no-imports.js');
-    assert(m);
-    assert.equal(m.asdf, 'asdf');
+  describe('Circular dependencies', function() {
+
+    it('should resolve circular dependencies', async function() {
+      var m1 = await loader.import('./circular1.js');
+      var m2 = await loader.import('./circular2.js');
+
+
+      assert.equal(m1.variable1, 'test circular 1');
+      assert.equal(m2.variable2, 'test circular 2');
+
+      assert.equal(m2.output, 'test circular 1');
+      assert.equal(m1.output, 'test circular 2');
+      assert.equal(m2.output1, 'test circular 2');
+      assert.equal(m1.output2, 'test circular 1');
+    });
+
+    it('should update circular dependencies', async function() {
+      var m = await loader.import('./even.js');
+      assert.equal(m.counter, 1);
+      assert(m.even(10));
+      assert.equal(m.counter, 7);
+      assert(!m.even(15));
+      assert.equal(m.counter, 15);
+    });
+
+  });
+
+  describe('Loading order', function() {
+    async function assertLoadOrder(module, order) {
+      await loader.import('./' + module);
+      order.forEach(function(name) {
+        assert.equal(m[name], module);
+      });
+    }
+
+    it('should load in order (a)', async function() {
+      await assertLoadOrder('a.js', ['a', 'b']);
+    });
+
+    it('should load in order (c)', async function() {
+      await assertLoadOrder('c.js', ['c', 'a', 'b']);
+    });
+
+    it('should load in order (s)', async function() {
+      await assertLoadOrder('s.js', ['s', 'c', 'a', 'b']);
+    });
+
+    it('should load in order (_a)', async function() {
+      await assertLoadOrder('_a.js', ['b', 'd', 'g', 'a']);
+    });
+
+    it('should load in order (_e)', async function() {
+      await assertLoadOrder('_e.js', ['c', 'e']);
+    });
+
+    it('should load in order (_f)', async function() {
+      await assertLoadOrder('_f.js', ['g', 'f']);
+    });
+
+    it('should load in order (_h)', async function() {
+      await assertLoadOrder('_h.js', ['i', 'a', 'h']);
+    });
+  });
+
+  describe('Export variations', function () {
+    it('should resolve different export syntax', async function() {
+      var m = await loader.import('./export.js');
+      assert.equal(m.p, 5);
+      assert.equal(typeof m.foo, 'function');
+      assert.equal(typeof m.q, 'object');
+      assert.equal(typeof m.default, 'function');
+      assert.equal(m.s, 4);
+      assert.equal(m.t, 4);
+      assert.equal(typeof m.m, 'object');
+    });
+
+    it('should resolve "export default"', async function() {
+      var m = await loader.import('./export-default.js');
+      assert.equal(m.default(), 'test');
+    });
+
+    it('should support simple re-exporting', async function() {
+      var m = await loader.import('./reexport1.js');
+      assert.equal(m.p, 5);
+    });
+
+    it('should support re-exporting binding', async function() {
+      var m = await loader.import('./reexport-binding.js');
+      assert.equal(m.p, 4);
+    });
+
+    it('should support re-exporting with a new name', async function() {
+      var m = await loader.import('./reexport2.js');
+      assert.equal(m.q, 4);
+      assert.equal(m.z, 5);
+    });
+
+    it('should support re-exporting', async function() {
+      var m = await loader.import('./export-star.js');
+      assert.equal(m.foo, 'foo');
+      assert.equal(m.bar, 'bar');
+    });
+
+    it('should support re-exporting overwriting', async function() {
+      var m = await loader.import('./export-star2.js');
+      assert.equal(m.bar, 'bar');
+      assert.equal(typeof m.foo, 'function');
+    });
   });
 });
 
 /*
-describe('System', function () {
-  
-  describe('#import', function () {
 
-    describe('an ES5 script', function () {
+describe('errors', function () {
 
-      it('should import a ES5 script', function (done) {
-        
-      });
+  function supposedToFail() {
+    assert.equal(false, 'should not be successful').to.be.ok();
+  }
 
-      it('should import a ES5 script once loaded', function (done) {
-        System.import(base + 'test/syntax/script.js')
-        .then(function () {
-          return System.import(base + 'test/syntax/script.js').
-            then(function (m) {
-              expect(!!m).to.be.ok();
-            });
-        })
-        .then(done, done);
-      });
-
-    });
-
-    describe('an ES6 script', function () {
-
-      it('should import an ES6 script', function (done) {
-        System.import(base + 'test/syntax/es6.js')
-        .then(function (m) {
-          expect(m.p).to.equal('p');
-        })
-        .then(done, done);
-      });
-
-      it('should import an ES6 script with its dependencies', function (done) {
-        System.import(base + 'test/syntax/es6-withdep.js')
-        .then(function (m) {
-          expect(m.p).to.equal('p');
-        })
-        .then(done, done);
-      });
-
-      (ie ? it.skip : it)('should import an ES6 script with a generator', function (done) {
-        System.import(base + 'test/syntax/es6-generator.js')
-        .then(function (m) {
-          expect(!!m.generator).to.be.ok();
-        })
-        .then(done, done);
-      });
-
-      it('should import without bindings', function (done) {
-        System.import(base + 'test/syntax/direct.js')
-        .then(function (m) {
-          expect(!!m).to.be.ok();
-        })
-        .then(done, done);
-      });
-
-      it('should support es6 various syntax', function (done) {
-        System.import(base + 'test/syntax/es6-file.js')
-        .then(function (m) {
-
-          expect(m.q).to.be.a('function');
-
-          expect(function () { (new m.q()).foo(); })
-            .to.throwException(function (e) {
-              expect(e).to.equal('g');
-            });
-
-        })
-        .then(done, done);
-      });
-
-    });
-
-    describe('with circular dependencies', function () {
-
-      (System.transpiler == 'traceur' ? it : it.skip)('should resolve circular dependencies', function (done) {
-        System.import(base + 'test/syntax/circular1.js')
-        .then(function (m1) {
-          return System.import(base + 'test/syntax/circular2.js').then(function (m2) {
-            expect(m1.variable1).to.equal('test circular 1');
-            expect(m2.variable2).to.equal('test circular 2');
-
-            expect(m2.output, 'The module 2 output is the module 1 variable')
-              .to.equal('test circular 1');
-            expect(m1.output, 'The module 1 output is the module 2 variable')
-              .to.equal('test circular 2');
-            expect(m2.output1, 'The module 2 output1 is the module 1 output')
-              .to.equal('test circular 2');
-            expect(m1.output2, 'The module 1 output2 is the module 2 output')
-              .to.equal('test circular 1');
-          });
-        })
-        .then(done, done);
-      });
-
-
-      it('should update circular dependencies', function (done) {
-        System.import(base + 'test/syntax/even.js')
-        .then(function (m) {
-          expect(m.counter, 'Counter initially at 1').to.be.equal(1);
-          expect(m.even(10), 'Must be an even number').to.be.ok();
-          expect(m.counter, 'Counter sould now be at 7').to.be.equal(7);
-          expect(m.even(15), 'Must be an odd number').to.not.be.ok();
-          expect(m.counter, 'Counter sould now be at 15').to.be.equal(15);
-        })
-        .then(done, done);
-      });
-
-    });
-
-    describe('loading order', function () {
-
-      function expectedOrder(file, order, done) {
-        System.import(base + 'test/loads/' + file)
-        .then(function (m) {
-          order.forEach(function (letter) {
-            expect(m[letter], 'The "' + letter + '" file wasn\'t loaded')
-              .to.equal(letter);
-          });
-
-        })
-        .then(done, done);
-      }
-
-      it('should load in order (a)', function (done) {
-        expectedOrder('a.js', ['a', 'b'], done)
-      });
-
-      it('should load in order (c)', function (done) {
-        expectedOrder('c.js', ['c', 'a', 'b'], done)
-      });
-
-      it('should load in order (s)', function (done) {
-        expectedOrder('s.js', ['s', 'c', 'a', 'b'], done)
-      });
-
-      it('should load in order (_a)', function (done) {
-        expectedOrder('_a.js', ['b', 'd', 'g', 'a'], done)
-      });
-
-      it('should load in order (_e)', function (done) {
-        expectedOrder('_e.js', ['c', 'e'], done)
-      });
-
-      it('should load in order (_f)', function (done) {
-        expectedOrder('_f.js', ['g', 'f'], done)
-      });
-
-      it('should load in order (_h)', function (done) {
-        expectedOrder('_h.js', ['i', 'a', 'h'], done)
-      });
-
-    });
-
-
-    describe('errors', function () {
-
-      function supposedToFail() {
-        expect(false, 'should not be successful').to.be.ok();
-      }
-
-      it('should throw if on syntax error', function (done) {
-        System.import(base + 'test/loads/main.js')
-        .then(supposedToFail)
-        .catch(function(e) {
-          expect(e)
-            .to.be.equal('dep error\n\tError evaluating ' + base + 'test/loads/deperror.js\n\tError evaluating ' + base + 'test/loads/main.js');
-        })
-        .then(done, done);
-      });
-
-      it('should throw what the script throws', function (done) {
-        System.import(base + 'test/loads/deperror.js')
-        .then(supposedToFail)
-        .catch(function(e) {
-          expect(e)
-            .to.be.equal('dep error\n\tError evaluating ' + base + 'test/loads/deperror.js');
-        })
-        .then(done, done);
-      });
-
-
-      it('404 error', function (done) {
-        System.import(base + 'test/loads/load-non-existent.js')
-        .then(supposedToFail)
-        .catch(function (e) {
-          var b = typeof window == 'undefined' ? base.substr(7) : base;
-          var e;
-          if (typeof window == 'undefined') {
-            e = e.toString().substr(14);
-            if (e.substr(26, 1) == ',')
-              e = e.substr(27);
-          }
-          expect(e.toString())
-            .to.be.equal((typeof window == 'undefined' ? ' open \'' : 'Error: GET ') + b + 'test/loads/non-existent.js' + (typeof window == 'undefined' ? '\'' : ' 404 (Not Found)') + '\n\tFetching ' + base + 'test/loads/non-existent.js\n\tLoading ' + base + 'test/loads/load-non-existent.js');
-        })
-        .then(done, done);
-      });
-
-    });
-
-    describe('es6 export syntax overview', function () {
-      it('should resolve different export syntax', function (done) {
-        System.import(base + 'test/syntax/export.js')
-        .then(function (m) {
-          expect(m.p, 'should export a number').to.be.equal(5);
-          expect(m.foo, 'should export a function').to.be.a('function');
-          expect(m.q, 'should export an object').to.be.an('object');
-          expect(m.default, 'should export a default function')
-            .to.be.a('function');
-          expect(m.s, 'should export a set of variable').to.be.equal(4);
-          expect(m.t, 'should export a specifier number').to.be.equal(4);
-          expect(m.m, 'should export a specifier object ').to.be.an('object');
-        })
-        .then(done, done);
-      });
-    });
-
-    describe('es6 export default syntax', function () {
-      it('should resolve "export default"', function (done) {
-        System.import(base + 'test/syntax/export-default.js')
-        .then(function (m) {
-          expect(m.default()).to.be.equal('test');
-        })
-        .then(done, done);
-      });
-    });
-
-    describe('es6 export re-exporting', function () {
-      it('should support simple re-exporting', function (done) {
-        System.import(base + 'test/syntax/reexport1.js')
-        .then(function (m) {
-          expect(m.p, 'should export 5 from the "./export"').to.be.equal(5);
-        })
-        .then(done, done);
-      });
-
-      it('should support re-exporting binding', function (done) {
-        System.import(base + 'test/syntax/reexport-binding.js')
-        .then(function () {
-          return System.import(base + 'test/syntax/rebinding.js').then(function (m) {
-            expect(m.p, 'should export "p" from the "./rebinding"')
-              .to.be.equal(4);
-          });
-        })
-        .then(done, done);
-      });
-
-      it('should support re-exporting with a new name', function (done) {
-        System.import(base + 'test/syntax/reexport2.js')
-        .then(function (m) {
-          expect(m.q, 'should export "t" as "q" from the "./export"')
-            .to.be.equal(4);
-          expect(m.z, 'should export "q" as "z" from the "./export"')
-            .to.be.equal(5);
-        })
-        .then(done, done);
-      });
-
-      it('should support re-exporting', function (done) {
-        System.import(base + 'test/syntax/export-star.js')
-        .then(function (m) {
-          expect(m.foo, 'should export a function').to.be.equal('foo');
-          expect(m.bar, 'should re-export export-star bar variable')
-            .to.be.equal('bar');
-        })
-        .then(done, done);
-      });
-
-      (System.transpiler != 'traceur' ? it.skip : it)('should support re-exporting overwriting', function (done) {
-        System.import(base + 'test/syntax/export-star2.js')
-        .then(function (m) {
-          expect(m.bar, 'should re-export "./export-star" bar variable')
-            .to.be.equal('bar');
-          expect(m.foo, 'should overwrite "./star-dep" foo variable with a function')
-            .to.be.a('function');
-        })
-        .then(done, done);
-      });
-    });
-
-    //
-
-    describe('es6 import syntax overview', function () {
-      it('should resolve different import syntax', function (done) {
-        System.import(base + 'test/syntax/import.js')
-        .then(function (m) {
-          expect(m.a, 'should export "d" as "a" from the "./export"')
-            .to.be.a('function');
-          expect(m.b, 'should export "p" as "b" for "s" as "p" from "./reexport1"')
-            .to.be.equal(4);
-          expect(m.c, 'should export "z" as "c" with "z" from "./reexport2"')
-            .to.be.equal(5);
-          expect(m.d, 'should export "r" as "d" for "q" as "r" from the "./reexport2"')
-            .to.be.equal(4);
-          expect(m.q, 'should export "q" as "*" from the "./reexport1"')
-            .to.be.an('object');
-          expect(m.q.foo, 'should access the "foo" function of "./reexport1" through "q" ad "*" ')
-            .to.be.a('function');
-        })
-        .then(done, done);
-      });
-    });
-
-    //
-
-    describe('a script with metas', function () {
-      // NB module name meta
-      it.skip('should support module name meta', function (done) {
-        System.import(base + 'test/loader/moduleName.js')
-        .then(function (m) {
-          expect(m.name).to.be.equal('test/loader/moduleName');
-          expect(m.address)
-            .to.be.equal(System.baseURL + 'test/loader/moduleName.js');
-        })
-        .then(done, done);
-      });
-    });
-
+  it('should throw if on syntax error', async function() {
+    var m = await loader.import('./main.js');
+    .then(supposedToFail)
+    .catch(function(e) {
+      assert.equal(e)
+        .to.be.equal('dep error\n\tError evaluating ' + './deperror.js\n\tError evaluating ' + './main.js');
+    })
   });
+
+  it('should throw what the script throws', async function() {
+    var m = await loader.import('./deperror.js');
+    .then(supposedToFail)
+    .catch(function(e) {
+      assert.equal(e)
+        .to.be.equal('dep error\n\tError evaluating ' + './deperror.js');
+    })
+  });
+
+
+  it('404 error', async function() {
+    var m = await loader.import('./load-non-existent.js');
+    .then(supposedToFail)
+    .catch(function (e) {
+      var b = typeof window == 'undefined' ? base.substr(7) : base;
+      var e;
+      if (typeof window == 'undefined') {
+        e = e.toString().substr(14);
+        if (e.substr(26, 1) == ',')
+          e = e.substr(27);
+      }
+      assert.equal(e.toString())
+        .to.be.equal((typeof window == 'undefined' ? ' open \'' : 'Error: GET ') + b + './non-existent.js' + (typeof window == 'undefined' ? '\'' : ' 404 (Not Found)') + '\n\tFetching ' + './non-existent.js\n\tLoading ' + './load-non-existent.js');
+    })
+  });
+
 });
+
 */

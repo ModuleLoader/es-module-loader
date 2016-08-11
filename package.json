@@ -22,6 +22,7 @@
   ],
   "devDependencies": {
     "babel-plugin-transform-async-to-generator": "^6.8.0",
+    "babel-plugin-transform-es2015-modules-systemjs": "^6.12.0",
     "benchmark": "^2.1.1",
     "mocha": "^3.0.2",
     "node-es-module-loader": "^0.1.1"
@@ -33,6 +34,7 @@
     "es modules"
   ],
   "scripts": {
+    "make-test": "babel test/fixtures/es-modules --out-dir test/fixtures/register-modules",
     "test": "node-esml test/runner.js",
     "test-inspect": "node --inspect node_modules/.bin/node-esml test/runner.js",
     "bench": "node-esml bench/runner.js"
