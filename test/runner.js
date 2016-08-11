@@ -9,12 +9,24 @@ var tests = fs.readdirSync('test').filter(function(testName) {
   return testName != 'runner.js' && testName.endsWith('.js');
 });
 
-Promise.all(tests.map((test) => loader.import(path.resolve('test/' + test))))
+runNextTests()
 .then(function() {
-  runner.run();
+  runner.run()
 })
 .catch(function(err) {
   setTimeout(function() {
     throw err;
   });
 });
+
+function runNextTests() {
+  var test = tests.shift();
+
+  if (!test)
+    return Promise.resolve();
+
+  return loader.import(path.resolve('test/' + test))
+  .then(function() {
+    return runNextTests();
+  });
+}
