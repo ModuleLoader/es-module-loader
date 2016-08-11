@@ -2,6 +2,10 @@
 
 Provides a polyfill and [low-level API](#loader-api) for the [WhatWG loader spec](https://github.com/whatwg/loader) to create a custom module loaders.
 
+Supports the [System.register module format](https://github.com/ModuleLoader/es-module-loader/blob/master/docs/system-register.md) to provide identical module loading semantics as ES modules in environments today.
+
+ES6 Module Loader Polyfill, the previous version of this project built to the [outdated ES6 loader specification](http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts#august_24_2014_draft_rev_27) is available at the [0.17 branch](https://github.com/ModuleLoader/es-module-loader/tree/0.17).
+
 ### Module Loader Examples
 
 Some examples of common use case module loaders built with this project are provided below:
