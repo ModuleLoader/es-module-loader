@@ -84,6 +84,7 @@ Loader.prototype.load = function(key, parent) {
  * Registry has been adjusted to use Namespace objects over ModuleStatus objects
  * as part of simplifying loader API implementation
  */
+var iteratorSupport = typeof Symbol !== 'undefined' && Symbol.iterator;
 function Registry() {
   this._registry = {};
 }
@@ -92,31 +93,35 @@ Registry.prototype.constructor = function() {
   throw new TypeError('Custom registries cannot be created.');
 };
 
-if (typeof Symbol !== 'undefined' && Symbol.iterator) {
+if (iteratorSupport) {
   // 4.4.2
   Registry.prototype[Symbol.iterator] = function() {
-    var self = this;
-    return arrayValues(Object.keys(this).map(function(key) {
-      return [key, self[key]]
+    return this.entries()[Symbol.iterator]();
+  };
+
+  // 4.4.3
+  Registry.prototype.entries = function() {
+    var registry = this._registry;
+    return arrayValues(Object.keys(registry).map(function(key) {
+      return [key, registry[key]];
     }));
   };
-  // 4.4.3
-  Registry.prototype.entries = Registry.prototype[Symbol.iterator];
 }
+
 // 4.4.4
 Registry.prototype.keys = function() {
-  return arrayValues(Object.keys(this));
+  return arrayValues(Object.keys(this._registry));
 };
 // 4.4.5
 Registry.prototype.values = function() {
-  var self = this;
-  return arrayValues(Object.keys(this).map(function(key) {
-    return self[key];
+  var registry = this._registry;
+  return arrayValues(Object.keys(registry).map(function(key) {
+    return registry[key];
   }));
 };
 // 4.4.6
 Registry.prototype.get = function(key) {
-  return this._registry[key] || undefined;
+  return this._registry[key];
 };
 // 4.4.7
 Registry.prototype.set = function(key, namespace) {

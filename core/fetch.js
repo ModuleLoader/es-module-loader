@@ -42,7 +42,7 @@ export var envFetch;
 if (typeof XMLHttpRequest != 'undefined')
   envFetch = xhrFetch;
 else if (typeof module !== 'undefined' && module.require && typeof process !== 'undefined')
-  envFetch = fsFetch;
+  envFetch = nodeFetch;
 else if (typeof self !== 'undefined' && self.fetch)
   envFetch = fetchFetch;
 

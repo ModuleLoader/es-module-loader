@@ -33,6 +33,7 @@
   ],
   "scripts": {
     "test": "node-esml test/runner.js",
+    "test-inspect": "node --inspect node_modules/.bin/node-esml test/runner.js",
     "bench": "node-esml bench/runner.js"
   }
 }
