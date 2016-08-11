@@ -1,4 +1,4 @@
-import { Loader, Module, PrivateInternalModuleNamespace as ModuleNamespace } from './loader-polyfill.js';
+import { Loader, Module, InternalModuleNamespace as ModuleNamespace } from './loader-polyfill.js';
 import { resolveUrlToParentIfNotPlain } from './resolve.js';
 import { addToError, global } from './common.js';
 
@@ -291,13 +291,24 @@ function createESLinkRecord(dependencies, setters, module, moduleObj, execute) {
  * Places the status into the registry and a load into the loads list
  */
 RegisterLoader.prototype.register = function(key, deps, declare) {
+  // anonymous modules go onto the register queue
   if (typeof declare === 'undefined') {
     declare = deps;
     deps = key;
     key = undefined;
+    this._registerQueue.push([key, deps, declare]);
+    return;
   }
 
-  this._registerQueue.push([key, deps, declare]);
+  // relative named defines go onto the queue
+  else if (key[0] === '.' && (key[1] === '/' || key[1] === '.' && key[2] === '/')) {
+    this._registerQueue.push([key, deps, declare]);
+  }
+
+  // all other named defines, can be directly processed
+  else {
+    registerModule(key, deps, declare);
+  }
 };
 
 RegisterLoader.prototype.processRegisterQueue = function(contextKey) {
@@ -306,70 +317,67 @@ RegisterLoader.prototype.processRegisterQueue = function(contextKey) {
 
   for (var i = 0; i < this._registerQueue.length; i++) {
     var registration = this._registerQueue[i];
-
-    var anonymous = registration[0] === undefined;
-
     var key = registration[0];
-    var deps = registration[1];
-    var declare = registration[2];
-
-    key = anonymous ? contextKey : resolveUrlToParentIfNotPlain(key, contextKey) || key;
-
-    var load = getOrCreateLoadRecord(this, key);
-
-    // usually registrations will overwrite the existing registrations present in the registry
-    // unless this load already has a load record in progress or completed
-    if (load.module || load.esLinkRecord && load.esLinkRecord.startedLinking)
-      continue;
-
-    var importerSetters = [];
-
-    var moduleObj = {};
-
-    var locked = false;
-
-    var declared = declare.call(global, function(name, value) {
-      // export setter propogation with locking to avoid cycles
-      if (locked)
-        return;
-      locked = true;
-
-      if (typeof name == 'object') {
-        for (var p in name)
-          moduleObj[p] = name[p];
-      }
-      else {
-        moduleObj[name] = value;
-      }
-
-      for (var i = 0; i < importerSetters.length; i++)
-        // this object should be a defined module object
-        // but in order to do that we need the exports returned by declare
-        // for now we assume no exports in the implementation
-        importerSetters[i](moduleObj);
-
-      locked = false;
-      return value;
-    }, new ContextualLoader(this, key));
-
-    var setters, execute;
-
-    if (typeof declared !== 'function') {
-      setters = declared.setters;
-      execute = declared.execute;
-    }
-    else {
-      setters = [],
-      execute = declared;
-    }
-
-    // TODO, pass module when we can create it here already via exports
-    load.importerSetters = importerSetters;
-    load.esLinkRecord = createESLinkRecord(deps, setters, undefined, moduleObj, execute);
+    registration[0] = key === undefined ? contextKey : resolveUrlToParentIfNotPlain(key, contextKey) || key;
+    registerModule.apply(this, registration);
   }
 
   this._registerQueue = [];
 };
+
+function registerModule(key, deps, declare) {
+  var load = getOrCreateLoadRecord(this, key);
+
+  // usually registrations will overwrite the existing registrations present in the registry
+  // unless this load already has a load record in progress or completed
+  if (load.module || load.esLinkRecord && load.esLinkRecord.startedLinking)
+    return;
+
+  var importerSetters = [];
+
+  var moduleObj = {};
+
+  var locked = false;
+
+  var declared = declare.call(global, function(name, value) {
+    // export setter propogation with locking to avoid cycles
+    if (locked)
+      return;
+    locked = true;
+
+    if (typeof name == 'object') {
+      for (var p in name)
+        moduleObj[p] = name[p];
+    }
+    else {
+      moduleObj[name] = value;
+    }
+
+    for (var i = 0; i < importerSetters.length; i++)
+      // this object should be a defined module object
+      // but in order to do that we need the exports returned by declare
+      // for now we assume no exports in the implementation
+      importerSetters[i](moduleObj);
+
+    locked = false;
+    return value;
+  }, new ContextualLoader(this, key));
+
+  var setters, execute;
+
+  if (typeof declared !== 'function') {
+    setters = declared.setters;
+    execute = declared.execute;
+  }
+  else {
+    setters = [],
+    execute = declared;
+  }
+
+  // TODO, pass module when we can create it here already via exports
+  load.importerSetters = importerSetters;
+  load.esLinkRecord = createESLinkRecord(deps, setters, undefined, moduleObj, execute);
+}
 
 // ContextualLoader class
 // backwards-compatible with previous System.register context argument by exposing .id

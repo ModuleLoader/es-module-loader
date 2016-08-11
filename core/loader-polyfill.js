@@ -1,5 +1,5 @@
 import { arrayValues, createSymbol, addToError } from './common.js';
-export { Loader, Module, ModuleNamespace as PrivateInternalModuleNamespace }
+export { Loader, Module, ModuleNamespace as InternalModuleNamespace }
 
 /*
  * 3. Reflect.Loader
