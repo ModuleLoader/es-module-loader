@@ -99,12 +99,12 @@ For example:
 ```
 
 When using the anonymous form of System.register - `loader.register(deps, declare)`, in order to know
-the context in which it was called, it is necessary to call the `loader.processRegisterQueue(contextKey)` method:
+the context in which it was called, it is necessary to call the `loader.processRegisterContext(contextKey)` method:
 
 ```javascript
   instantiate(key, metadata) {
     this.register(deps, declare);
-    this.processRegisterQueue(key);
+    this.processRegisterContext(key);
     return undefined;
   }
 ```

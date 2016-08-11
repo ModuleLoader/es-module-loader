@@ -130,9 +130,6 @@ function instantiate(loader, key) {
       return instantiation;
     }
 
-    // es module -> take register queue if not already
-    loader.processRegisterQueue(key);
-
     // es module not already linked with no link record
     if (!load.esLinkRecord && !load.importerSetters)
       throw new TypeError('Module instantiation did not call an anonymous or correctly named System.register');
@@ -311,7 +308,7 @@ RegisterLoader.prototype.register = function(key, deps, declare) {
   }
 };
 
-RegisterLoader.prototype.processRegisterQueue = function(contextKey) {
+RegisterLoader.prototype.processRegisterContext = function(contextKey) {
   if (!this._registerQueue.length)
     return;
 
