@@ -17,13 +17,24 @@ describe('Simple normalization tests', function() {
   it('Should not support backtracking below base in plain URI forms', function() {
     var thrown = false;
     try {
-      resolveUrlToParentIfNotPlain('../../../asdf', 'npm:lodash');
+      resolveUrlToParentIfNotPlain('../asdf', 'npm:lodash/path');
     }
     catch(e) {
       thrown = true;
     }
     if (!thrown)
       throw new Error('Test should have thrown a RangeError exception');
+  });
+  it('Should not support backtracking exactly to the base in plain URI forms', function() {
+    var thrown = false;
+    try {
+      resolveUrlToParentIfNotPlain('../', 'npm:lodash/asdf/y');
+    }
+    catch(e) {
+      thrown = true;
+    }
+    if (thrown)
+      throw new Error('Test should not have thrown a RangeError exception');
   });
   it('Should support "." for resolution', function() {
     assert.equal(resolveUrlToParentIfNotPlain('.', 'https://www.google.com/asdf/asdf'), 'https://www.google.com/asdf/');
@@ -36,6 +47,12 @@ describe('Simple normalization tests', function() {
   });
   it('Should support "../" resolution', function() {
     assert.equal(resolveUrlToParentIfNotPlain('../', 'https://www.google.com/asdf/asdf/asdf'), 'https://www.google.com/asdf/');
+  });
+  it('Should leave a trailing "/"', function() {
+    assert.equal(resolveUrlToParentIfNotPlain('./asdf/', 'file:///x/y'), 'file:///x/asdf/');
+  });
+  it('Should leave a trailing "//"', function() {
+    assert.equal(resolveUrlToParentIfNotPlain('./asdf//', 'file:///x/y'), 'file:///x/asdf//');
   });
 });
 

@@ -18,6 +18,8 @@ function Loader(baseKey) {
 Loader.prototype.constructor = Loader;
 // 3.3.2
 Loader.prototype.import = function(key, parent) {
+  if (typeof key !== 'string')
+    throw new TypeError('Loader import method must be passed a module key string');
   var execute = this.execute;
   return this.load(key, parent)
   .then(function(module) {

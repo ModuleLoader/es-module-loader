@@ -1,25 +1,30 @@
-//
+import assert from 'assert';
+import path from 'path';
+import SystemRegisterLoader from './fixtures/system-register-loader.js';
 
-describe('System', function () {
+describe('System Register Loader', function() {
+  var loader = new SystemRegisterLoader(path.resolve('test/fixtures/register-modules') + path.sep);
 
-  describe('prerequisite', function () {
-
-    it('should be a instance of Loader', function () {
-      expect(System).to.be.a(Reflect.Loader);
-    });
-
+  it('Should be an instance of itself', function() {
+    assert(loader instanceof SystemRegisterLoader);
   });
 
+  it('Should import a module', async function() {
+    var m = await loader.import('./no-imports.js');
+    assert(m);
+    assert.equal(m.asdf, 'asdf');
+  });
+});
+
+/*
+describe('System', function () {
+  
   describe('#import', function () {
 
     describe('an ES5 script', function () {
 
       it('should import a ES5 script', function (done) {
-        System.import(base + 'test/syntax/script.js')
-        .then(function (m) {
-          expect(!!m).to.be.ok();
-        })
-        .then(done, done);
+        
       });
 
       it('should import a ES5 script once loaded', function (done) {
@@ -333,76 +338,5 @@ describe('System', function () {
     });
 
   });
-  
-  describe('#System.provide', function () {
-
-    it('System.provide source', function(done) {
-      var oldResolve = System.hook('resolve');
-      System.hook('resolve', function(url) {
-        if (url == 'slave') {
-          return new Promise(function(resolve, reject) {
-            System.provide('slave', 'fetch', 'export var p = 5;');
-            setTimeout(function() {
-              resolve('slave');
-            }, 1);
-          });
-        }
-        return oldResolve.apply(this, arguments);
-      });
-
-      System.import(base + 'test/loader/master.js').then(function(m) {
-        expect(m.p).to.be.equal(5);
-      }).then(reset, reset);
-
-      function reset() {
-        done.apply(this, arguments);
-        System.hook('resolve', oldResolve);
-      }
-    });
-
-  });
-
-  describe('get Loader.prototype.registry', function () {
-      it('returns the registry object', function () {
-          expect(System.registry).to.be.an('object');
-      });
-
-      describe('strict correctness', function () {
-        it('throws with an invalid registry', function () {
-          var oldRegistry = System.registry;
-          System._loader.newRegistry = 'invalid registry';
-          expect(function() {
-            return System.registry;
-          }).to.throwException(function(ex) {
-              expect(ex).to.be.a(TypeError);
-          });
-
-          System._loader.newRegistry = oldRegistry;
-        });
-      });
-  });
-
-  describeIf(
-    typeof window != 'undefined' && window.Worker && !ie,
-    'with Web Worker', function () {
-      it('should loading inside of a Web Worker', function (done) {
-        var worker = new Worker(base + 'test/worker/worker-' + System.transpiler + '.js');
-        worker.onmessage = function (e) {
-          expect(e.data).to.be.equal('p');
-          done();
-        };
-      });
-    });
-
-  describeIf(
-    typeof window != 'undefined',
-    'with script type "module"', function () {
-      it('should load the module on the document "load" event', function (done) {
-        setTimeout(function(){ // wait for script processing first
-          expect(window.anon).to.be.a('function');
-          done();
-        }, 0);
-      });
-
-    });
 });
+*/

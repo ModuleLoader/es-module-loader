@@ -69,11 +69,12 @@ export function resolveUrlToParentIfNotPlain(relUrl, parentUrl) {
 
     var output = [];
     var segmentIndex = undefined;
+
     for (var i = 0; i < segmented.length; i++) {
       // busy reading a segment - only terminate on '/'
       if (segmentIndex !== undefined) {
         if (segmented[i] === '/') {
-          output.push(segmented.substr(segmentIndex, i - segmentIndex));
+          output.push(segmented.substr(segmentIndex, i - segmentIndex + 1));
           segmentIndex = undefined;
         }
         continue;
@@ -82,26 +83,26 @@ export function resolveUrlToParentIfNotPlain(relUrl, parentUrl) {
       // new segment - check if it is relative
       if (segmented[i] === '.') {
         // ../ segment
-        if (segmented[i + 1] === '.' && (segmented[i + 2] === '/' || i + 2 === segmented.length)) {
+        if (segmented[i + 1] === '.' && (segmented[i + 2] === '/' || i === segmented.length - 2)) {
           output.pop();
           i += 2;
         }
         // ./ segment
-        else if (segmented[i + 1] === '/' || i + 1 === segmented.length) {
+        else if (segmented[i + 1] === '/' || i === segmented.length - 1) {
           i += 1;
         }
         else {
-          // the start of a new segment (just like below)
+          // the start of a new segment as below
           segmentIndex = i;
           continue;
         }
 
-        // this is the plain URI backtracking error (./, package:x -> error)
+        // this is the plain URI backtracking error (../, package:x -> error)
         if (parentIsPlain && output.length === 0)
           throwResolveError();
         
-        // if we end with a . or a .. then we end with a trailing "/"
-        if (i === segmented.length || i === segmented.length - 1)
+        // trailing . or .. segment
+        if (i === segmented.length)
           output.push('');
         continue;
       }
@@ -111,9 +112,9 @@ export function resolveUrlToParentIfNotPlain(relUrl, parentUrl) {
     }
     // finish reading out the last segment
     if (segmentIndex !== undefined)
-      output.push(segmented.substr(segmentIndex, i - segmentIndex));
+      output.push(segmented.substr(segmentIndex, segmented.length - segmentIndex));
     
-    return parentUrl.substr(0, parentUrl.length - pathname.length) + output.join('/');
+    return parentUrl.substr(0, parentUrl.length - pathname.length) + output.join('');
   }
   
   // plain name -> return undefined
