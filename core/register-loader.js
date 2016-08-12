@@ -304,7 +304,7 @@ RegisterLoader.prototype.register = function(key, deps, declare) {
 
   // all other named defines, can be directly processed
   else {
-    registerModule(key, deps, declare);
+    registerModule.call(this, key, deps, declare);
   }
 };
 

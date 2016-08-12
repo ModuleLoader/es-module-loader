@@ -20,7 +20,7 @@ export function resolveUrlToParentIfNotPlain(relUrl, parentUrl) {
     return relUrl;
   }
 
-  var parentProtocol = parentUrl.substr(0, parentUrl.indexOf(':') + 1);
+  var parentProtocol = parentUrl && parentUrl.substr(0, parentUrl.indexOf(':') + 1);
 
   // protocol-relative
   if (relUrl[0] === '/' && relUrl[1] === '/') {
@@ -38,6 +38,8 @@ export function resolveUrlToParentIfNotPlain(relUrl, parentUrl) {
     var pathname;
     if (parentIsPlain) {
       // resolving to a plain parent -> skip standard URL prefix, and treat entire parent as pathname
+      if (parentUrl === undefined)
+        throwResolveError();
       pathname = parentUrl;
     }
     else if (parentUrl[parentProtocol.length + 1] === '/') {
