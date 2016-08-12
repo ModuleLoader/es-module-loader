@@ -1,5 +1,45 @@
-import { arrayValues, createSymbol, LoaderError } from './common.js';
+import { LoaderError } from './common.js';
 export { Loader, Module, ModuleNamespace as InternalModuleNamespace }
+
+/*
+ * Simple Symbol() shim
+ */
+var hasSymbol = typeof Symbol !== 'undefined';
+function createSymbol(name) {
+  return hasSymbol ? Symbol() : '@@' + name;
+}
+
+/*
+ * Simple Array values shim
+ */
+function arrayValues(arr) {
+  if (arr.values)
+    return arr.values();
+  
+  if (typeof Symbol === 'undefined' || !Symbol.iterator)
+    throw new Error('Cannot return values iterator unless Symbol.iterator is defined');
+
+  var iterable = {};
+  iterable[Symbol.iterator] = function() {
+    var keys = Object.keys(arr);
+    var keyIndex = 0;
+    return {
+      next: function() {
+        if (keyIndex < keys.length)
+          return {
+            value: arr[keys[keyIndex++]],
+            done: false
+          };
+        else
+          return {
+            value: undefined,
+            done: true
+          };
+      }
+    };
+  };
+  return iterable;
+}
 
 /*
  * 3. Reflect.Loader

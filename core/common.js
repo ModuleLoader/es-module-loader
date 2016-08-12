@@ -23,33 +23,6 @@ export function fileUrlToPath(fileUrl) {
 }
 
 /*
- * Path to loader itself
- */
-export var loaderSrc;
-
-if (isBrowser) {
-  if (document.currentScript)
-    loaderSrc = document.currentScript.src;
-  
-  var scripts = document.getElementsByTagName('script');
-  var curScript = scripts.length && scripts[scripts.length - 1];
-  if (curScript && !curScript.defer && !curScript.async)
-    loaderSrc = curScript.src;
-}
-else if (isWorker) {
-  try {
-    throw new Error('_');
-  } catch (e) {
-    e.stack.replace(/(?:at|@).*(http.+):[\d]+:[\d]+/, function(m, url) {
-      loaderSrc = url;
-    });
-  }
-}
-else if (typeof __filename != 'undefined') {
-  loaderSrc = __filename;
-}
-
-/*
  * Environment baseURI
  */
 export var baseURI;
@@ -98,58 +71,29 @@ export function LoaderError(message, childErr) {
     this.stack = childErr.originalErr ? childErr.originalErr.stack : childErr.stack;
     this.originalErr = childErr.originalErr || childErr;
 
-    // NB test if this actually works!?
-    // filename and line support
-    if (errArgs && childErr && childErr.fileName)
-      Error.call(this, message, childErr.fileName, childErr.lineNumber);
+    // filename and line support in Firefox (no longer LoaderError: text though unfortunately)
+    if (errArgs && childErr.fileName) {
+      var err = new Error(this.message, childErr.fileName, childErr.lineNumber);
+      err.__proto__ = LoaderError;
+      err.originalErr = this.originalErr;
+      return err;
+    }
   }
   else {
     this.message = message;
-    if (Error.captureStackTrace)
+    if (Error.captureStackTrace) {
       Error.captureStackTrace(this, LoaderError);
-    else
+    }
+    // firefox case
+    else if (errArgs) {
+      var err = new Error(message);
+      err.__proto__ = LoaderError;
+      return err;
+    }
+    else {
       this.stack = new Error().stack;
+    }
   }
 }
 LoaderError.prototype = Object.create(Error.prototype);
 LoaderError.prototype.constructor = LoaderError;
-
-/*
- * Simple Symbol() shim
- */
-var hasSymbol = typeof Symbol !== 'undefined';
-export function createSymbol(name) {
-  return hasSymbol ? Symbol() : '@@' + name;
-}
-
-/*
- * Simple Array values shim
- */
-export function arrayValues(arr) {
-  if (arr.values)
-    return arr.values();
-  
-  if (typeof Symbol === 'undefined' || !Symbol.iterator)
-    throw new Error('Cannot return values iterator unless Symbol.iterator is defined');
-
-  var iterable = {};
-  iterable[Symbol.iterator] = function() {
-    var keys = Object.keys(arr);
-    var keyIndex = 0;
-    return {
-      next: function() {
-        if (keyIndex < keys.length)
-          return {
-            value: arr[keys[keyIndex++]],
-            done: false
-          };
-        else
-          return {
-            value: undefined,
-            done: true
-          };
-      }
-    };
-  };
-  return iterable;
-}
