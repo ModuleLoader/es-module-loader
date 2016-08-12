@@ -82,43 +82,37 @@ else {
 }
 
 /*
- * Error chaining for loader stacks
+ * LoaderError with chaining for loader stacks
  */
 var errArgs = new Error(0, '_').fileName == '_';
+export function LoaderError(message, childErr) {
+  this.name = 'LoaderError';
 
-export function addToError(err, msg) {
-  // parse the stack removing loader code lines for simplification
-  if (!err.originalErr) {
-    var stack = (err.stack || err.message || err).toString().split('\n');
-    var newStack;
+  if (childErr) {
+    // Convert file:/// URLs to paths in Node
+    if (!isBrowser)
+      message = message.replace(isWindows ? /file:\/\/\//g : /file:\/\//g, '');
 
-    // if the error stack doesn't start in SystemJS, skip the SystemJS stack part
-    newStack = [];
-    for (var i = 0; i < stack.length; i++)
-      if (loaderSrc && stack[i].indexOf(loaderSrc) === -1)
-        newStack.push(stack[i]);
+    this.message = (childErr.message || childErr) + '\n\t' + message;
+
+    this.stack = childErr.originalErr ? childErr.originalErr.stack : childErr.stack;
+    this.originalErr = childErr.originalErr || childErr;
+
+    // NB test if this actually works!?
+    // filename and line support
+    if (errArgs && childErr && childErr.fileName)
+      Error.call(this, message, childErr.fileName, childErr.lineNumber);
   }
-
-  var newMsg = '(SystemJS) ' + (newStack ? newStack.join('\n\t') : err.message.substr(11)) + '\n\t' + msg;
-
-  // Convert file:/// URLs to paths in Node
-  if (!isBrowser)
-    newMsg = newMsg.replace(isWindows ? /file:\/\/\//g : /file:\/\//g, '');
-
-  var newErr = errArgs ? new Error(newMsg, err.fileName, err.lineNumber) : new Error(newMsg);
-  
-  // Node needs stack adjustment for throw to show message
-  if (!isBrowser)
-    newErr.stack = newMsg;
-  // Clearing the stack stops unnecessary loader lines showing
-  else
-    newErr.stack = null;
-  
-  // track the original error
-  newErr.originalErr = err.originalErr || err;
-
-  return newErr;
+  else {
+    this.message = message;
+    if (Error.captureStackTrace)
+      Error.captureStackTrace(this, LoaderError);
+    else
+      this.stack = new Error().stack;
+  }
 }
+LoaderError.prototype = Object.create(Error.prototype);
+LoaderError.prototype.constructor = LoaderError;
 
 /*
  * Simple Symbol() shim

@@ -1,7 +1,7 @@
 import assert from 'assert';
 import path from 'path';
 import SystemRegisterLoader from './fixtures/system-register-loader.js';
-import { pathToFileUrl } from '../core/common.js';
+import { pathToFileUrl, fileUrlToPath } from '../core/common.js';
 
 describe('System Register Loader', function() {
   var loader = new SystemRegisterLoader(path.resolve('test/fixtures/register-modules') + path.sep);
@@ -181,51 +181,41 @@ describe('System Register Loader', function() {
       assert.equal(typeof m.foo, 'function');
     });
   });
-});
 
-/*
+  describe('Errors', function () {
 
-describe('errors', function () {
+    var testPath = fileUrlToPath(loader.key);
 
-  function supposedToFail() {
-    assert.equal(false, 'should not be successful').to.be.ok();
-  }
-
-  it('should throw if on syntax error', async function() {
-    var m = await loader.import('./main.js');
-    .then(supposedToFail)
-    .catch(function(e) {
-      assert.equal(e)
-        .to.be.equal('dep error\n\tError evaluating ' + './deperror.js\n\tError evaluating ' + './main.js');
-    })
-  });
-
-  it('should throw what the script throws', async function() {
-    var m = await loader.import('./deperror.js');
-    .then(supposedToFail)
-    .catch(function(e) {
-      assert.equal(e)
-        .to.be.equal('dep error\n\tError evaluating ' + './deperror.js');
-    })
-  });
-
-
-  it('404 error', async function() {
-    var m = await loader.import('./load-non-existent.js');
-    .then(supposedToFail)
-    .catch(function (e) {
-      var b = typeof window == 'undefined' ? base.substr(7) : base;
-      var e;
-      if (typeof window == 'undefined') {
-        e = e.toString().substr(14);
-        if (e.substr(26, 1) == ',')
-          e = e.substr(27);
+    async function getImportError(module) {
+      try {
+        await loader.import(module);
       }
-      assert.equal(e.toString())
-        .to.be.equal((typeof window == 'undefined' ? ' open \'' : 'Error: GET ') + b + './non-existent.js' + (typeof window == 'undefined' ? '\'' : ' 404 (Not Found)') + '\n\tFetching ' + './non-existent.js\n\tLoading ' + './load-non-existent.js');
-    })
+      catch(e) {
+        return e.toString();
+      }
+      throw new Error('Test supposed to fail');
+    }
+
+    it('should throw if on syntax error', async function() {
+      var err = await getImportError('./main.js');
+      assert.equal(err, 'LoaderError: dep error\n\tEvaluating ' + testPath + 'deperror.js\n\tEvaluating ' + testPath + 'main.js\n\tLoading ./main.js');
+    });
+
+    it('should throw what the script throws', async function() {
+      var err = await getImportError('./deperror.js');
+      assert.equal(err, 'LoaderError: dep error\n\tEvaluating ' + testPath + 'deperror.js\n\tLoading ./deperror.js');
+    });
+
+    it('404 error', async function() {
+      var err = await getImportError('./load-non-existent.js');
+      var lines = err.split('\n\t');
+      assert(lines[0].startsWith('LoaderError: '));
+      assert(lines[0].endsWith('open \'' + testPath + 'non-existent.js\''));
+      assert.equal(lines[1], 'Instantiating ' + testPath + 'non-existent.js');
+      assert.equal(lines[2], 'Loading ' + testPath + 'load-non-existent.js');
+      assert.equal(lines[3], 'Loading ./load-non-existent.js');
+    });
+
   });
 
 });
-
-*/

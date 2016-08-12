@@ -176,7 +176,7 @@ and not ModuleStatus objects as promises for Namespace objects (Module.evaluate 
   This is to allow individual loader implementations to determine their own impact on the environment.
 - A constructor argument is added to the loader that takes the environment baseKey to be used as the default normalization parent.
 - An internal `Loader.prototype[Loader.instantiate]` hook is used as well as the `Loader.prototype[Loader.resolve]` hook
-  in order to ensure that uses of `loader.resolve` do not have to result in module loading and execution, as discussed in https://github.com/whatwg/loader/issues/147#issuecomment-232314879.
+  in order to ensure that uses of `loader.resolve` do not have to result in module loading and execution, as discussed in https://github.com/whatwg/loader/issues/147#issuecomment-230407764.
 
 ## License
 Licensed under the MIT license.

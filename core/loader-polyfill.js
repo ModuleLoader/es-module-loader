@@ -1,4 +1,4 @@
-import { arrayValues, createSymbol, addToError } from './common.js';
+import { arrayValues, createSymbol, LoaderError } from './common.js';
 export { Loader, Module, ModuleNamespace as InternalModuleNamespace }
 
 /*
@@ -40,7 +40,7 @@ var INSTANTIATE = Loader.instantiate = createSymbol('instantiate');
 Loader.prototype.resolve = function(key, parent) {
   return this[RESOLVE](key, parent)
   .catch(function(err) {
-    addToError(err, 'Resolving ' + key + (parent ? ' to ' + parent : ''));
+    throw new LoaderError('Resolving ' + key + (parent ? ' to ' + parent : ''), err);
   });
 };
 
@@ -72,8 +72,7 @@ Loader.prototype.load = function(key, parent) {
     });
   })
   .catch(function(err) {
-    addToError(err, 'Loading ' + key + (resolvedKey ? ' as ' + resolvedKey : '') + (parent ? ' from ' + parent : ''));
-    throw err;
+    throw new LoaderError('Loading ' + key + (resolvedKey ? ' as ' + resolvedKey : '') + (parent ? ' from ' + parent : ''), err);
   });
 };
 
