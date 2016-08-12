@@ -648,6 +648,44 @@ function declareBundle(loader) {
   });
 }
 
+async function declaredSystemJSLoader() {
+  var curSystem = global.System;
+  var SystemJS = (await loader.import('systemjs')).default;
+  global.System = curSystem;
+  var sjsLoader = new SystemJS.constructor();
+  declareBundle(sjsLoader);
+  return sjsLoader;
+}
+
+async function declaredRegisterLoader() {
+  var loader = new RegisterLoader();
+  loader.normalize = function(key) { return key; };
+  declareBundle(loader);
+  return loader;
+}
+
+suite.add('Importing a single registered module with SystemJS', async function() {
+  var loader = await declaredSystemJSLoader();
+  await loader.import('no-imports.js');
+});
+
+suite.add('Importing a single registered module with RegisterLoader', async function() {
+  var loader = await declaredRegisterLoader();
+  await loader.import('no-imports.js');
+});
+
+suite.add('Importing a module with deps with RegisterLoader', async function() {
+  var loader = await declaredRegisterLoader();
+  await loader.import('es6-withdep.js');
+});
+
+suite.add('Importing a module with deps with SystemJS', async function() {
+  var loader = await declaredSystemJSLoader();
+  await loader.import('es6-withdep.js');
+});
+
+
+
 var toImport = [
   'no-imports.js',
   'es6-withdep.js',
@@ -674,32 +712,3 @@ var toImport = [
   'export-star.js',
   'export-star2.js'
 ];
-function doImports(loader) {
-  return Promise.all(toImport.map(function(name) {
-    return loader.import(name);
-  }));
-}
-
-suite.add('Importing a bundle', async function() {
-  var loader = new RegisterLoader();
-  loader.normalize = function(key) { return key; };
-  declareBundle(loader);
-  return doImports(loader)
-  .catch(function(err) {
-    console.log(err);
-    throw err;
-  });
-});
-
-suite.add('Importing with SystemJS', async function() {
-  var curSystem = global.System;
-  var SystemJS = require('systemjs');
-  global.System = curSystem;
-  var loader = new SystemJS.constructor();
-  declareBundle(loader);
-  return doImports(loader)
-  .catch(function(err) {
-    console.log(err);
-    throw err;
-  });
-})

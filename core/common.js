@@ -2,9 +2,8 @@
  * Environment
  */
 export var isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
-export var isWorker = typeof window === 'undefined' && typeof self !== 'undefined' && typeof importScripts !== 'undefined';
-export var isWindows = typeof process !== 'undefined' && typeof process.platform === 'string' && process.platform.match(/^win/);
 export var isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
+export var isWindows = typeof process !== 'undefined' && typeof process.platform === 'string' && process.platform.match(/^win/);
 
 var envGlobal = typeof self !== 'undefined' ? self : global;
 export { envGlobal as global }
@@ -68,7 +67,11 @@ export function LoaderError(message, childErr) {
 
     this.message = (childErr.message || childErr) + '\n\t' + message;
 
-    this.stack = childErr.originalErr ? childErr.originalErr.stack : childErr.stack;
+    // node doesn't show the message otherwise
+    if (isNode)
+      this.stack = this.message;
+    else
+      this.stack = childErr.originalErr ? childErr.originalErr.stack : childErr.stack;
     this.originalErr = childErr.originalErr || childErr;
 
     // filename and line support in Firefox (no longer LoaderError: text though unfortunately)

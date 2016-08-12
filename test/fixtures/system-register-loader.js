@@ -1,7 +1,6 @@
 import RegisterLoader from '../../core/register-loader.js';
-import { isBrowser, isNode, global, baseURI } from '../../core/common.js';
+import { isBrowser, isNode, global, baseURI, fileUrlToPath } from '../../core/common.js';
 import { resolveUrlToParentIfNotPlain } from '../../core/resolve.js';
-import { scriptLoad, nodeFetch } from '../../core/fetch.js';
 
 /*
  * Example System Register loader
@@ -36,26 +35,86 @@ SystemRegisterLoader.prototype.normalize = function(key, parent, metadata) {
   return key;
 };
 
+var fs;
+
 // instantiate just needs to run System.register
 // so we load the module name as a URL, and expect that to run System.register
 SystemRegisterLoader.prototype.instantiate = function(key, metadata) {
-  var loader = this;
+  var thisLoader = this;
 
   return new Promise(function(resolve, reject) {
     if (isNode)
-      nodeFetch(key, undefined, function(source) {
-        eval(source);
-        loader.processRegisterContext(key);
-        resolve();
-      }, reject);
+      Promise.resolve(fs || (fs = typeof require !== 'undefined' ? require('fs') : loader.import('fs').then(m => m.default)))
+      .then(function(fs) {
+        fs.readFile(fileUrlToPath(key), function(err, source) {
+          if (err)
+            return reject(err);
+
+          (0, eval)(source.toString());
+          thisLoader.processRegisterContext(key);
+          resolve();
+        });
+      });
     else if (isBrowser)
       scriptLoad(key, function() {
-        loader.processRegisterContext(key);
+        thisLoader.processRegisterContext(key);
         resolve();
       }, reject);
     else
       throw new Error('No fetch system defined for this environment.');
   });
 };
+
+function nodeFetch(url, authorization, fulfill, reject) {
+  if (url.substr(0, 8) != 'file:///')
+    throw new Error('Unable to fetch "' + url + '". Only file URLs of the form file:/// allowed running in Node.');
+  fs = fs || module.require('fs');
+  if (isWindows)
+    url = url.replace(/\//g, '\\').substr(8);
+  else
+    url = url.substr(7);
+  return fs.readFile(url, function(err, data) {
+    if (err) {
+      return reject(err);
+    }
+    else {
+      // Strip Byte Order Mark out if it's the leading char
+      var dataString = data + '';
+      if (dataString[0] === '\ufeff')
+        dataString = dataString.substr(1);
+
+      fulfill(dataString);
+    }
+  });
+}
+
+function scriptLoad(src, resolve, reject) {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.charset = 'utf-8';
+  script.async = true;
+
+  script.addEventListener('load', load, false);
+  script.addEventListener('error', error, false);
+
+  script.src = src;
+  document.head.appendChild(script);
+
+  function load() {
+    resolve();
+    cleanup();
+  }
+
+  function error(err) {
+    cleanup();
+    reject(new Error('Fetching ' + src));
+  }
+
+  function cleanup() {
+    script.removeEventListener('load', load, false);
+    script.removeEventListener('error', error, false);
+    document.head.removeChild(script);
+  }
+}
 
 export default SystemRegisterLoader;

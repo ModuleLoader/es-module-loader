@@ -20,7 +20,7 @@ function runNextBenchmark() {
   .then(function() {
     return new Promise(function(resolve, reject) {
       suite.on('cycle', function(event) {
-        console.log(String(event.target));
+        console.log(event.target.error ? event.target.error : String(event.target));
       });
 
       suite.on('complete', function(event) {

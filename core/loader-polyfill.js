@@ -1,4 +1,4 @@
-import { LoaderError } from './common.js';
+import { baseURI, LoaderError } from './common.js';
 export { Loader, Module, ModuleNamespace as InternalModuleNamespace }
 
 /*
@@ -48,7 +48,7 @@ function arrayValues(arr) {
  */
 // 3.1.1
 function Loader(baseKey) {
-  this.key = baseKey;
+  this.key = baseKey || baseURI;
   this.registry = new Registry();
 
   // evaluation flag to allow for tracing loaders

@@ -19,8 +19,11 @@ export var emptyModule = new ModuleNamespace({});
 function RegisterLoader(baseKey) {
   Loader.apply(this, arguments);
 
-  // System.register registration queue
-  this._registerQueue = [];
+  // System.register registration cache
+  this._registerCache = {};
+
+  // last anonymous System.register call
+  this._registeredLastAnon = undefined;
 
   // in-flight es module load records
   this._registerRegistry = {};
@@ -130,9 +133,8 @@ function instantiate(loader, key) {
       return instantiation;
     }
 
-    // es module not already linked with no link record
-    if (!load.esLinkRecord && !load.importerSetters)
-      throw new TypeError('Module instantiation did not call an anonymous or correctly named System.register');
+    // run the cached loader.register declaration if there is one
+    ensureRegisterLinkRecord.call(loader, load);
 
     // metadata no longer needed
     if (!loader.trace)
@@ -158,9 +160,6 @@ function instantiateAllDeps(loader, load, seen) {
     return Promise.resolve();
 
   var esLinkRecord = load.esLinkRecord;
-
-  // note that we've started linking this record
-  esLinkRecord.startedLinking = true;
 
   // no dependencies shortpath
   if (!esLinkRecord.dependencies.length)
@@ -255,7 +254,7 @@ function clearLoadErrors(loader, load) {
 
     if (depLoad.esLinkRecord && depLoad.esLinkRecord.error) {
       // unregister setters for es dependency load records
-      var setterIndex = depLoad.importerSetters.indexOf(esLinkRecord.setters[i]);
+      var setterIndex = depLoad.importerSetters.indexOf(esLinkRecord.setters[index]);
       depLoad.importerSetters.splice(setterIndex, 1);
 
       // provides a circular reference check
@@ -267,7 +266,6 @@ function clearLoadErrors(loader, load) {
 
 function createESLinkRecord(dependencies, setters, module, moduleObj, execute) {
   return {
-    startedLinking: false,
     dependencies: dependencies,
 
     error: undefined,
@@ -288,47 +286,36 @@ function createESLinkRecord(dependencies, setters, module, moduleObj, execute) {
  * Places the status into the registry and a load into the loads list
  */
 RegisterLoader.prototype.register = function(key, deps, declare) {
-  // anonymous modules go onto the register queue
-  if (typeof declare === 'undefined') {
-    declare = deps;
-    deps = key;
-    key = undefined;
-    this._registerQueue.push([key, deps, declare]);
-    return;
-  }
+  // anonymous modules get stored as lastAnon
+  if (declare === undefined)
+    this._registeredLastAnon = [key, deps];
 
-  // relative named defines go onto the queue
-  else if (key[0] === '.' && (key[1] === '/' || key[1] === '.' && key[2] === '/')) {
-    this._registerQueue.push([key, deps, declare]);
-  }
-
-  // all other named defines, can be directly processed
-  else {
-    registerModule.call(this, key, deps, declare);
-  }
+  // everything else registers into the register cache
+  else
+    this._registerCache[key] = [deps, declare];
 };
 
 RegisterLoader.prototype.processRegisterContext = function(contextKey) {
-  if (!this._registerQueue.length)
+  if (!this._registeredLastAnon)
     return;
 
-  for (var i = 0; i < this._registerQueue.length; i++) {
-    var registration = this._registerQueue[i];
-    var key = registration[0];
-    registration[0] = key === undefined ? contextKey : resolveUrlToParentIfNotPlain(key, contextKey) || key;
-    registerModule.apply(this, registration);
-  }
-
-  this._registerQueue = [];
+  this._registerCache[contextKey] = this._registeredLastAnon;
+  this._registeredLastAnon = undefined;
 };
 
-function registerModule(key, deps, declare) {
-  var load = getOrCreateLoadRecord(this, key);
-
-  // usually registrations will overwrite the existing registrations present in the registry
-  // unless this load already has a load record in progress or completed
-  if (load.module || load.esLinkRecord && load.esLinkRecord.startedLinking)
+function ensureRegisterLinkRecord(load) {
+  // ensure we already have a link record
+  if (load.esLinkRecord)
     return;
+
+  var key = load.key;
+
+  var registrationPair = this._registerCache[key];
+
+  if (!registrationPair)
+    throw new TypeError('Module instantiation did not call an anonymous or correctly named System.register');
+
+  this._registerCache[key] = undefined;
 
   var importerSetters = [];
 
@@ -336,11 +323,10 @@ function registerModule(key, deps, declare) {
 
   var locked = false;
 
-  var declared = declare.call(global, function(name, value) {
+  var declared = registrationPair[1].call(global, function(name, value) {
     // export setter propogation with locking to avoid cycles
     if (locked)
       return;
-    locked = true;
 
     if (typeof name == 'object') {
       for (var p in name)
@@ -350,13 +336,16 @@ function registerModule(key, deps, declare) {
       moduleObj[name] = value;
     }
 
-    for (var i = 0; i < importerSetters.length; i++)
-      // this object should be a defined module object
-      // but in order to do that we need the exports returned by declare
-      // for now we assume no exports in the implementation
-      importerSetters[i](moduleObj);
+    if (importerSetters.length) {
+      locked = true;
+      for (var i = 0; i < importerSetters.length; i++)
+        // this object should be a defined module object
+        // but in order to do that we need the exports returned by declare
+        // for now we assume no exports in the implementation
+        importerSetters[i](moduleObj);
 
-    locked = false;
+      locked = false;
+    }
     return value;
   }, new ContextualLoader(this, key));
 
@@ -373,7 +362,7 @@ function registerModule(key, deps, declare) {
 
   // TODO, pass module when we can create it here already via exports
   load.importerSetters = importerSetters;
-  load.esLinkRecord = createESLinkRecord(deps, setters, undefined, moduleObj, execute);
+  load.esLinkRecord = createESLinkRecord(registrationPair[0], setters, undefined, moduleObj, execute);
 }
 
 // ContextualLoader class
