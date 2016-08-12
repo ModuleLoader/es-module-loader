@@ -690,3 +690,16 @@ suite.add('Importing a bundle', async function() {
     throw err;
   });
 });
+
+suite.add('Importing with SystemJS', async function() {
+  var curSystem = global.System;
+  var SystemJS = require('systemjs');
+  global.System = curSystem;
+  var loader = new SystemJS.constructor();
+  declareBundle(loader);
+  return doImports(loader)
+  .catch(function(err) {
+    console.log(err);
+    throw err;
+  });
+})

@@ -26,7 +26,8 @@
     "babel-plugin-transform-es2015-modules-systemjs": "^6.12.0",
     "benchmark": "^2.1.1",
     "mocha": "^3.0.2",
-    "node-es-module-loader": "^0.1.1"
+    "node-es-module-loader": "^0.1.1",
+    "systemjs": "^0.19.36"
   },
   "keywords": [
     "modules",

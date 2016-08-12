@@ -30,7 +30,7 @@ function runNextBenchmark() {
 
       suite.on('error', reject);
 
-      suite.run({ async: true });
+      suite.run({ async: true, maxTime: 1, minSamples: 1 });
     });
   })
   .then(function() {
