@@ -205,18 +205,18 @@ function instantiateAllDeps(loader, load, seen) {
           return Promise.resolve();
         }
 
-        // circular
-        if (seen.indexOf(instantiation) !== -1)
-          return Promise.resolve();
-
-        // es module load
-
         // register setter with dependency
         instantiation.importerSetters.push(esLinkRecord.setters[i]);
 
         // run setter now to pick up the first bindings from the dependency
         if (esLinkRecord.setters[i])
           esLinkRecord.setters[i](instantiation.esLinkRecord.moduleObj);
+
+        // circular
+        if (seen.indexOf(instantiation) !== -1)
+          return Promise.resolve();
+
+        // es module load
 
         // if not already linked, instantiate dependencies
         if (instantiation.esLinkRecord)
@@ -423,8 +423,7 @@ function ensureEvaluated(loader, load, seen) {
       err = ensureEvaluated(loader, depLoad, seen);
 
     if (err)
-      // we should really know the dependency resolved name for the namespace case, but oh well
-      return addToError(err, 'Evaluating ' + (depLoad.key || esLinkRecord.dependencies[i]));
+      return addToError(err, 'Evaluating ' + load.key);
   }
 
   // es load record evaluation

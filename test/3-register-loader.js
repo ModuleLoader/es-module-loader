@@ -1,6 +1,7 @@
 import assert from 'assert';
 import path from 'path';
 import SystemRegisterLoader from './fixtures/system-register-loader.js';
+import { pathToFileUrl } from '../core/common.js';
 
 describe('System Register Loader', function() {
   var loader = new SystemRegisterLoader(path.resolve('test/fixtures/register-modules') + path.sep);
@@ -64,12 +65,12 @@ describe('System Register Loader', function() {
 
     it('should support __moduleName', async function() {
       var m = await loader.import('./moduleName.js');
-      assert.equal(m.name, './moduleName');
-      assert.equal(m.address, System.baseURL + './moduleName.js');
+      assert.equal(m.name, pathToFileUrl(path.resolve('test/fixtures/register-modules/moduleName.js')));
     });
   });
 
   describe('Circular dependencies', function() {
+
 
     it('should resolve circular dependencies', async function() {
       var m1 = await loader.import('./circular1.js');
@@ -85,7 +86,8 @@ describe('System Register Loader', function() {
       assert.equal(m1.output2, 'test circular 1');
     });
 
-    it('should update circular dependencies', async function() {
+    // pending https://github.com/babel/babel/pull/3650
+    it.skip('should update circular dependencies', async function() {
       var m = await loader.import('./even.js');
       assert.equal(m.counter, 1);
       assert(m.even(10));
@@ -97,10 +99,10 @@ describe('System Register Loader', function() {
   });
 
   describe('Loading order', function() {
-    async function assertLoadOrder(module, order) {
-      await loader.import('./' + module);
-      order.forEach(function(name) {
-        assert.equal(m[name], module);
+    async function assertLoadOrder(module, exports) {
+      var m = await loader.import('./' + module);
+      exports.forEach(function(name) {
+        assert.equal(m[name], name);
       });
     }
 
@@ -156,7 +158,8 @@ describe('System Register Loader', function() {
     });
 
     it('should support re-exporting binding', async function() {
-      var m = await loader.import('./reexport-binding.js');
+      await loader.import('./reexport-binding.js');
+      var m = await loader.import('./rebinding.js');
       assert.equal(m.p, 4);
     });
 
@@ -172,7 +175,7 @@ describe('System Register Loader', function() {
       assert.equal(m.bar, 'bar');
     });
 
-    it('should support re-exporting overwriting', async function() {
+    it.skip('should support re-exporting overwriting', async function() {
       var m = await loader.import('./export-star2.js');
       assert.equal(m.bar, 'bar');
       assert.equal(typeof m.foo, 'function');

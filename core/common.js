@@ -25,28 +25,28 @@ export function fileUrlToPath(fileUrl) {
 /*
  * Path to loader itself
  */
-export var scriptSrc;
+export var loaderSrc;
 
 if (isBrowser) {
   if (document.currentScript)
-    scriptSrc = document.currentScript.src;
+    loaderSrc = document.currentScript.src;
   
   var scripts = document.getElementsByTagName('script');
   var curScript = scripts.length && scripts[scripts.length - 1];
   if (curScript && !curScript.defer && !curScript.async)
-    scriptSrc = curScript.src;
+    loaderSrc = curScript.src;
 }
 else if (isWorker) {
   try {
     throw new Error('_');
   } catch (e) {
     e.stack.replace(/(?:at|@).*(http.+):[\d]+:[\d]+/, function(m, url) {
-      scriptSrc = url;
+      loaderSrc = url;
     });
   }
 }
 else if (typeof __filename != 'undefined') {
-  scriptSrc = __filename;
+  loaderSrc = __filename;
 }
 
 /*
@@ -95,7 +95,7 @@ export function addToError(err, msg) {
     // if the error stack doesn't start in SystemJS, skip the SystemJS stack part
     newStack = [];
     for (var i = 0; i < stack.length; i++)
-      if (scriptSrc && stack[i].indexOf(scriptSrc) === -1)
+      if (loaderSrc && stack[i].indexOf(loaderSrc) === -1)
         newStack.push(stack[i]);
   }
 
