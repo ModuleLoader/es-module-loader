@@ -44,6 +44,10 @@ RegisterLoader.prototype.normalize = function(key, parentKey, metadata) {
 
 RegisterLoader.prototype.instantiate = function(key, metadata) {};
 
+// this function is an optimization to allow loader extensions to 
+// implement it to set the metadata object shape upfront to ensure
+// it can run as a single hidden class throughout the normalize
+// and instantiate pipeline hooks in the js engine
 RegisterLoader.prototype.createMetadata = function() {
   return {};
 };
