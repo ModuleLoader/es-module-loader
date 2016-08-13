@@ -198,18 +198,18 @@ describe('System Register Loader', function() {
 
     it('should throw if on syntax error', async function() {
       var err = await getImportError('./main.js');
-      assert.equal(err, 'LoaderError: dep error\n\tEvaluating ' + testPath + 'deperror.js\n\tEvaluating ' + testPath + 'main.js\n\tLoading ./main.js');
+      assert.equal(err, 'Error: dep error\n\tEvaluating ' + testPath + 'deperror.js\n\tEvaluating ' + testPath + 'main.js\n\tLoading ./main.js');
     });
 
     it('should throw what the script throws', async function() {
       var err = await getImportError('./deperror.js');
-      assert.equal(err, 'LoaderError: dep error\n\tEvaluating ' + testPath + 'deperror.js\n\tLoading ./deperror.js');
+      assert.equal(err, 'Error: dep error\n\tEvaluating ' + testPath + 'deperror.js\n\tLoading ./deperror.js');
     });
 
     it('404 error', async function() {
       var err = await getImportError('./load-non-existent.js');
       var lines = err.split('\n\t');
-      assert(lines[0].startsWith('LoaderError: '));
+      assert(lines[0].startsWith('Error: '));
       assert(lines[0].endsWith('open \'' + testPath + 'non-existent.js\''));
       assert.equal(lines[1], 'Instantiating ' + testPath + 'non-existent.js');
       assert.equal(lines[2], 'Loading ' + testPath + 'load-non-existent.js');
