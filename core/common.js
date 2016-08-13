@@ -57,7 +57,7 @@ else {
  * LoaderError with chaining for loader stacks
  */
 var errArgs = new Error(0, '_').fileName == '_';
-function loaderErrorCheckErrorMessageAboveForLoaderStack(childErr, newMessage) {
+function LoaderError__Check_error_message_above_for_loader_stack(childErr, newMessage) {
   // Convert file:/// URLs to paths in Node
   if (!isBrowser)
     newMessage = newMessage.replace(isWindows ? /file:\/\/\//g : /file:\/\//g, '');
@@ -80,4 +80,4 @@ function loaderErrorCheckErrorMessageAboveForLoaderStack(childErr, newMessage) {
 
   return err;
 }
-export { loaderErrorCheckErrorMessageAboveForLoaderStack as addToError }
+export { LoaderError__Check_error_message_above_for_loader_stack as addToError }
