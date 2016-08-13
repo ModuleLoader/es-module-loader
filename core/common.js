@@ -57,46 +57,27 @@ else {
  * LoaderError with chaining for loader stacks
  */
 var errArgs = new Error(0, '_').fileName == '_';
-export function LoaderError(message, childErr) {
-  this.name = 'LoaderError';
+function loaderErrorCheckErrorMessageAboveForLoaderStack(childErr, newMessage) {
+  // Convert file:/// URLs to paths in Node
+  if (!isBrowser)
+    newMessage = newMessage.replace(isWindows ? /file:\/\/\//g : /file:\/\//g, '');
 
-  if (childErr) {
-    // Convert file:/// URLs to paths in Node
-    if (!isBrowser)
-      message = message.replace(isWindows ? /file:\/\/\//g : /file:\/\//g, '');
+  var message = (childErr.message || childErr) + '\n\t' + newMessage;
 
-    this.message = (childErr.message || childErr) + '\n\t' + message;
+  var err;
+  if (errArgs && childErr.fileName)
+    err = new Error(message, childErr.fileName, childErr.lineNumber);
+  else
+    err = new Error(message);
 
-    // node doesn't show the message otherwise
-    if (isNode)
-      this.stack = this.message;
-    else
-      this.stack = childErr.originalErr ? childErr.originalErr.stack : childErr.stack;
-    this.originalErr = childErr.originalErr || childErr;
+  // node doesn't show the message otherwise
+  if (isNode)
+    err.stack = message;
+  else
+    err.stack = childErr.originalErr ? childErr.originalErr.stack : childErr.stack;
 
-    // filename and line support in Firefox (no longer LoaderError: text though unfortunately)
-    if (errArgs && childErr.fileName) {
-      var err = new Error(this.message, childErr.fileName, childErr.lineNumber);
-      err.__proto__ = LoaderError;
-      err.originalErr = this.originalErr;
-      return err;
-    }
-  }
-  else {
-    this.message = message;
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, LoaderError);
-    }
-    // firefox case
-    else if (errArgs) {
-      var err = new Error(message);
-      err.__proto__ = LoaderError;
-      return err;
-    }
-    else {
-      this.stack = new Error().stack;
-    }
-  }
+  err.originalErr = childErr.originalErr || childErr;
+
+  return err;
 }
-LoaderError.prototype = Object.create(Error.prototype);
-LoaderError.prototype.constructor = LoaderError;
+export { loaderErrorCheckErrorMessageAboveForLoaderStack as addToError }

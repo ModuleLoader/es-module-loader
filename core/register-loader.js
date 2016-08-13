@@ -1,6 +1,6 @@
 import { Loader, Module, InternalModuleNamespace as ModuleNamespace } from './loader-polyfill.js';
 import { resolveUrlToParentIfNotPlain } from './resolve.js';
-import { LoaderError, global } from './common.js';
+import { addToError, global } from './common.js';
 
 export default RegisterLoader;
 
@@ -143,7 +143,7 @@ function instantiate(loader, key) {
     return load;
   })
   .catch(function(err) {
-    err = new LoaderError('Instantiating ' + load.key, err);
+    err = addToError(err, 'Instantiating ' + load.key);
 
     // immediately clear the load record for an instantiation error
     if (loader._registerRegistry[load.key] === load)
@@ -175,7 +175,7 @@ function instantiateAllDeps(loader, load, seen) {
     // this resolve can potentially be cached on the link record, should be a measured optimization
     instantiateDepsPromises[i] = loader[RESOLVE](esLinkRecord.dependencies[i], load.key)
     .catch(function(err) {
-      throw new LoaderError('Resolving ' + esLinkRecord.dependencies[i] + ' to ' + load.key, err);
+      throw addToError(err, 'Resolving ' + esLinkRecord.dependencies[i] + ' to ' + load.key);
     })
     .then(function(resolvedDepKey) {
       var existingNamespace = loader.registry.get(resolvedDepKey);
@@ -226,7 +226,7 @@ function instantiateAllDeps(loader, load, seen) {
 
   return Promise.all(instantiateDepsPromises)
   .catch(function(err) {
-    err = new LoaderError('Loading ' + load.key, err);
+    err = addToError(err, 'Loading ' + load.key);
 
     // throw up the instantiateAllDeps stack
     // loads are then synchonously cleared at the top-level through the helper below
@@ -412,7 +412,7 @@ function ensureEvaluated(loader, load, seen) {
       err = ensureEvaluated(loader, depLoad, seen);
 
     if (err)
-      return new LoaderError('Evaluating ' + load.key, err);
+      return addToError(err, 'Evaluating ' + load.key);
   }
 
   // es load record evaluation
@@ -422,7 +422,7 @@ function ensureEvaluated(loader, load, seen) {
     loader.registry.delete(load.key);
     if (loader._registerRegistry[load.key] === load)
       loader._registerRegistry[load.key] = undefined;
-    return new LoaderError('Evaluating ' + load.key, err);
+    return addToError(err, 'Evaluating ' + load.key);
   }
 
   load.module = new ModuleNamespace(esLinkRecord.moduleObj);

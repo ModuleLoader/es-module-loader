@@ -1,4 +1,4 @@
-import { baseURI, LoaderError } from './common.js';
+import { baseURI, addToError } from './common.js';
 export { Loader, Module, ModuleNamespace as InternalModuleNamespace }
 
 /*
@@ -80,7 +80,7 @@ var INSTANTIATE = Loader.instantiate = createSymbol('instantiate');
 Loader.prototype.resolve = function(key, parent) {
   return this[RESOLVE](key, parent)
   .catch(function(err) {
-    throw new LoaderError('Resolving ' + key + (parent ? ' to ' + parent : ''), err);
+    throw addToError(err, 'Resolving ' + key + (parent ? ' to ' + parent : ''));
   });
 };
 
@@ -112,7 +112,7 @@ Loader.prototype.load = function(key, parent) {
     });
   })
   .catch(function(err) {
-    throw new LoaderError('Loading ' + key + (resolvedKey ? ' as ' + resolvedKey : '') + (parent ? ' from ' + parent : ''), err);
+    throw addToError(err, 'Loading ' + key + (resolvedKey ? ' as ' + resolvedKey : '') + (parent ? ' from ' + parent : ''));
   });
 };
 
