@@ -43,9 +43,11 @@ RegisterLoader.prototype.constructor = RegisterLoader;
 // aren't exposed to end-users
 RegisterLoader.normalize = 'normalize';
 RegisterLoader.instantiate = 'instantiate';
+RegisterLoader.createMetadata = 'createMetadata';
 
+// default normalize is the WhatWG style normalizer
 RegisterLoader.prototype.normalize = function(key, parentKey, metadata) {
-  return key;
+  return resolveUrlToParentIfNotPlain(key, parentKey);
 };
 
 RegisterLoader.prototype.instantiate = function(key, metadata) {};
@@ -63,18 +65,25 @@ var RESOLVE = Loader.resolve;
 RegisterLoader.prototype[RESOLVE] = function(key, parentKey) {
   var loader = this;
 
-  var resolved = resolveUrlToParentIfNotPlain(key, parentKey);
-
   // normalization shortpath if already in the registry or loading
-  if (resolved && (loader.registry.has(resolved) || loader._registerRegistry[resolved]))
-    return Promise.resolve(resolved);
+  if (key && (loader.registry.has(key) || loader._registerRegistry[key]))
+    return Promise.resolve(key);
 
   var metadata = this.createMetadata();
-  return Promise.resolve(loader.normalize(resolved || key, parentKey, metadata))
+  return Promise.resolve(loader.normalize(key, parentKey, metadata))
   .then(function(resolvedKey) {
+    if (typeof resolvedKey !== 'string') {
+      if (resolvedKey === undefined)
+        throw new RangeError('No resolution normalizing "' + key + '" to ' + parentKey);
+
+      // allow a non-string resolve for use cases like conditionals
+      return resolvedKey;
+    }
+    
     // we create the in-progress load record already here to store the normalization metadata
     if (!loader.registry.has(resolvedKey))
-      getOrCreateLoadRecord(loader, resolvedKey).metadata = metadata;
+      getOrCreateLoadRecord(loader, resolvedKey, metadata);
+
     return resolvedKey;
   });
 };
@@ -84,10 +93,10 @@ RegisterLoader.prototype[RESOLVE] = function(key, parentKey) {
 // this record represents that waiting period, and when set, we then populate
 // the esLinkRecord record into this load record.
 // instantiate is a promise for a module namespace or undefined
-function getOrCreateLoadRecord(loader, key) {
+function getOrCreateLoadRecord(loader, key, metadata) {
   return loader._registerRegistry[key] || (loader._registerRegistry[key] = {
     key: key,
-    metadata: undefined,
+    metadata: metadata,
 
     instantiatePromise: undefined,
 

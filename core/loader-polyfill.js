@@ -51,6 +51,7 @@ function Loader(baseKey) {
   this.key = baseKey || baseURI;
   this.registry = new Registry();
 
+  // NB deprecate
   // evaluation flag to allow for tracing loaders
   this.execute = true;
 }

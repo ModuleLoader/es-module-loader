@@ -57,14 +57,16 @@ class MyCustomLoader extends RegisterLoader {
   /*
    * Default normalize hook
    */
-  normalize(key, parentKey, metadata) {
+  [RegisterLoader.normalize](key, parentKey, metadata) {
+    // parent normalize is sync, providing relative normalization only
+    var relativeResolved = super[RegisterLoader.normalize](key, parentKey, metadata) || key;
     return key;
   }
 
   /*
    * Default instantiate hook
    */
-  instantiate(key, metadata) {
+  [RegisterLoader.instantiate](key, metadata) {
     return undefined;
   }
 }
@@ -92,7 +94,7 @@ When instantiate returns `undefined`, it is assumed that the module key has alre
 For example:
 
 ```javascript
-  instantate(key, metadata) {
+  [RegisterLoader.instantate](key, metadata) {
     this.register(key, deps, declare);
     return undefined;
   }
@@ -102,7 +104,7 @@ When using the anonymous form of System.register - `loader.register(deps, declar
 the context in which it was called, it is necessary to call the `loader.processRegisterContext(contextKey)` method:
 
 ```javascript
-  instantiate(key, metadata) {
+  [RegisterLoader.instantiate](key, metadata) {
     this.register(deps, declare);
     this.processRegisterContext(key);
     return undefined;
