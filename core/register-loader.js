@@ -38,6 +38,8 @@ RegisterLoader.prototype = Object.create(Loader.prototype);
 RegisterLoader.prototype.constructor = RegisterLoader;
 
 // these are implementation specific
+// NB consider moving these to symbols as Loader.prototype[Loader.normalize]
+// and Loader.prototype[Loader.instantiate] as they shouldn't be exposed to end-users
 RegisterLoader.prototype.normalize = function(key, parentKey, metadata) {
   return key;
 };
