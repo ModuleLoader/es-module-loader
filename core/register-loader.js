@@ -488,7 +488,7 @@ function traceLoadRecord(loader, load, seen) {
     metadata: load.metadata
   };
 
-  load.esLinkRecord.dependencies.forEach(function(dep) {
+  load.esLinkRecord.dependencyInstantiations.forEach(function(dep) {
     if (seen.indexOf(dep) === -1)
       traceLoadRecord(loader, dep, seen);
   });
