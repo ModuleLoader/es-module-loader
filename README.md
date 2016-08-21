@@ -60,7 +60,7 @@ class MyCustomLoader extends RegisterLoader {
   [RegisterLoader.normalize](key, parentKey, metadata) {
     // parent normalize is sync, providing relative normalization only
     var relativeResolved = super[RegisterLoader.normalize](key, parentKey, metadata) || key;
-    return key;
+    return relativeResolved;
   }
 
   /*
