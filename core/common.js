@@ -70,11 +70,14 @@ function LoaderError__Check_error_message_above_for_loader_stack(childErr, newMe
   else
     err = new Error(message);
 
-  // node doesn't show the message otherwise
+
+  var stack = childErr.originalErr ? childErr.originalErr.stack : childErr.stack;
+  
   if (isNode)
-    err.stack = message;
+    // node doesn't show the message otherwise
+    err.stack = message + '\n' + stack;
   else
-    err.stack = childErr.originalErr ? childErr.originalErr.stack : childErr.stack;
+    err.stack = stack;
 
   err.originalErr = childErr.originalErr || childErr;
 
