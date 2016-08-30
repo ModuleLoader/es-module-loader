@@ -197,6 +197,11 @@ function instantiateAllDeps(loader, load, seen) {
       throw addToError(err, 'Resolving ' + esLinkRecord.dependencies[i] + ' to ' + load.key);
     })
     .then(function(resolvedDepKey) {
+      if (loader.trace) {
+        esLinkRecord.depMap = esLinkRecord.depMap || {};
+        esLinkRecord.depMap[esLinkRecord.dependencies[i]] = resolvedDepKey;
+      }
+
       var existingNamespace = loader.registry.get(resolvedDepKey);
       if (existingNamespace) {
         esLinkRecord.dependencyInstantiations[i] = existingNamespace;
@@ -204,11 +209,6 @@ function instantiateAllDeps(loader, load, seen) {
         if (esLinkRecord.setters[i])
           esLinkRecord.setters[i](existingNamespace);
         return Promise.resolve();
-      }
-
-      if (loader.trace) {
-        esLinkRecord.depMap = esLinkRecord.depMap || {};
-        esLinkRecord.depMap[esLinkRecord.dependencies[i]] = resolvedDepKey;
       }
 
       return instantiate(loader, resolvedDepKey)
