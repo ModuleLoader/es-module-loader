@@ -29,7 +29,7 @@ SystemRegisterLoader.prototype = Object.create(RegisterLoader.prototype);
 
 // normalize is never given a relative name like "./x", that part is already handled
 // so we just need to do plain name detect to throw as in the WhatWG spec
-SystemRegisterLoader.prototype.normalize = function(key, parent, metadata) {
+SystemRegisterLoader.prototype[RegisterLoader.normalize] = function(key, parent, metadata) {
   var resolved = RegisterLoader.prototype.normalize.call(this, key, parent, metadata);
   if (!resolved)
     throw new RangeError('System.register loader does not resolve plain module names, resolving "' + key + '" to ' + parent);
@@ -40,18 +40,23 @@ var fs;
 
 // instantiate just needs to run System.register
 // so we load the module name as a URL, and expect that to run System.register
-SystemRegisterLoader.prototype.instantiate = function(key, metadata) {
+SystemRegisterLoader.prototype[RegisterLoader.instantiate] = function(key, metadata) {
   var thisLoader = this;
 
   return new Promise(function(resolve, reject) {
     if (isNode)
-      Promise.resolve(fs || (fs = typeof require !== 'undefined' ? require('fs') : loader.import('fs').then(m => m.default)))
+      Promise.resolve(fs || (fs = typeof require !== 'undefined' ? require('fs') : loader.import('fs').then(function(m){ return m.default })))
       .then(function(fs) {
         fs.readFile(fileUrlToPath(key), function(err, source) {
           if (err)
             return reject(err);
 
-          (0, eval)(source.toString());
+          // Strip Byte Order Mark out if it's the leading char
+          var sourceString = source.toString();
+          if (sourceString[0] === '\ufeff')
+            sourceString = sourceString.substr(1);
+
+          (0, eval)(sourceString);
           thisLoader.processRegisterContext(key);
           resolve();
         });
@@ -65,29 +70,6 @@ SystemRegisterLoader.prototype.instantiate = function(key, metadata) {
       throw new Error('No fetch system defined for this environment.');
   });
 };
-
-function nodeFetch(url, authorization, fulfill, reject) {
-  if (url.substr(0, 8) != 'file:///')
-    throw new Error('Unable to fetch "' + url + '". Only file URLs of the form file:/// allowed running in Node.');
-  fs = fs || module.require('fs');
-  if (isWindows)
-    url = url.replace(/\//g, '\\').substr(8);
-  else
-    url = url.substr(7);
-  return fs.readFile(url, function(err, data) {
-    if (err) {
-      return reject(err);
-    }
-    else {
-      // Strip Byte Order Mark out if it's the leading char
-      var dataString = data + '';
-      if (dataString[0] === '\ufeff')
-        dataString = dataString.substr(1);
-
-      fulfill(dataString);
-    }
-  });
-}
 
 function scriptLoad(src, resolve, reject) {
   var script = document.createElement('script');
