@@ -78,11 +78,8 @@ RegisterLoader.prototype[RESOLVE] = function(key, parentKey) {
     }
     
     // we create the in-progress load record already here to store the normalization metadata
-    if (!loader.registry.has(resolvedKey)) {
-      var load = getOrCreateLoadRecord(loader, resolvedKey);
-      if (!load.metadata)
-        load.metadata = metadata;
-    }
+    if (!loader.registry.has(resolvedKey))
+      (loader._registerRegistry[resolvedKey] || createLoadRecord(loader, resolvedKey)).metadata = metadata;
 
     return resolvedKey;
   });
@@ -93,8 +90,8 @@ RegisterLoader.prototype[RESOLVE] = function(key, parentKey) {
 // this record represents that waiting period, and when set, we then populate
 // the esLinkRecord record into this load record.
 // instantiate is a promise for a module namespace or undefined
-function getOrCreateLoadRecord(loader, key) {
-  return loader._registerRegistry[key] || (loader._registerRegistry[key] = {
+function createLoadRecord(loader, key) {
+  return loader._registerRegistry[key] = {
     key: key,
     metadata: undefined,
 
@@ -108,7 +105,7 @@ function getOrCreateLoadRecord(loader, key) {
     // es-specific
     esLinkRecord: undefined,
     importerSetters: undefined
-  });
+  };
 }
 
 RegisterLoader.prototype[Loader.instantiate] = function(key) {
@@ -159,10 +156,8 @@ function instantiate(loader, key) {
     ensureRegisterLinkRecord.call(loader, load);
 
     // metadata no longer needed
-    if (!loader.trace) {
+    if (!loader.trace)
       load.metadata = undefined;
-      load.defined = undefined;
-    }
 
     return load;
   })
@@ -316,14 +311,14 @@ RegisterLoader.prototype.register = function(key, deps, declare) {
 
   // everything else registers into the register cache
   else
-    getOrCreateLoadRecord(this, key).defined = [deps, declare];
+    (this._registerRegistry[key] || createLoadRecord(this, key)).defined = [deps, declare];
 };
 
 RegisterLoader.prototype.processRegisterContext = function(contextKey) {
   if (!this._registeredLastAnon)
     return;
 
-  getOrCreateLoadRecord(this, contextKey).defined = this._registeredLastAnon;
+  (this._registerRegistry[contextKey] || createLoadRecord(this, contextKey)).defined = this._registeredLastAnon;
   this._registeredLastAnon = undefined;
 };
 
