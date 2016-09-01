@@ -19,9 +19,6 @@ export var emptyModule = new ModuleNamespace({});
 function RegisterLoader(baseKey) {
   Loader.apply(this, arguments);
 
-  // System.register registration cache
-  this._registerCache = {};
-
   // last anonymous System.register call
   this._registeredLastAnon = undefined;
 
@@ -81,8 +78,11 @@ RegisterLoader.prototype[RESOLVE] = function(key, parentKey) {
     }
     
     // we create the in-progress load record already here to store the normalization metadata
-    if (!loader.registry.has(resolvedKey))
-      getOrCreateLoadRecord(loader, resolvedKey, metadata);
+    if (!loader.registry.has(resolvedKey)) {
+      var load = getOrCreateLoadRecord(loader, resolvedKey);
+      if (!load.metadata)
+        load.metadata = metadata;
+    }
 
     return resolvedKey;
   });
@@ -93,13 +93,16 @@ RegisterLoader.prototype[RESOLVE] = function(key, parentKey) {
 // this record represents that waiting period, and when set, we then populate
 // the esLinkRecord record into this load record.
 // instantiate is a promise for a module namespace or undefined
-function getOrCreateLoadRecord(loader, key, metadata) {
+function getOrCreateLoadRecord(loader, key) {
   return loader._registerRegistry[key] || (loader._registerRegistry[key] = {
     key: key,
-    metadata: metadata,
+    metadata: undefined,
 
+    // define cache
+    defined: undefined,
+    // in-flight
     instantiatePromise: undefined,
-
+    // loaded
     module: undefined,
 
     // es-specific
@@ -156,8 +159,10 @@ function instantiate(loader, key) {
     ensureRegisterLinkRecord.call(loader, load);
 
     // metadata no longer needed
-    if (!loader.trace)
+    if (!loader.trace) {
       load.metadata = undefined;
+      load.defined = undefined;
+    }
 
     return load;
   })
@@ -311,14 +316,14 @@ RegisterLoader.prototype.register = function(key, deps, declare) {
 
   // everything else registers into the register cache
   else
-    this._registerCache[key] = [deps, declare];
+    getOrCreateLoadRecord(this, key).defined = [deps, declare];
 };
 
 RegisterLoader.prototype.processRegisterContext = function(contextKey) {
   if (!this._registeredLastAnon)
     return;
 
-  this._registerCache[contextKey] = this._registeredLastAnon;
+  getOrCreateLoadRecord(this, contextKey).defined = this._registeredLastAnon;
   this._registeredLastAnon = undefined;
 };
 
@@ -328,13 +333,12 @@ function ensureRegisterLinkRecord(load) {
     return;
 
   var key = load.key;
-
-  var registrationPair = this._registerCache[key];
+  var registrationPair = load.defined;
 
   if (!registrationPair)
     throw new TypeError('Module instantiation did not call an anonymous or correctly named System.register');
 
-  this._registerCache[key] = undefined;
+  load.defined = undefined;
 
   var importerSetters = [];
 
