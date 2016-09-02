@@ -63,19 +63,14 @@ RegisterLoader.prototype[RESOLVE] = function(key, parentKey) {
   var loader = this;
 
   // normalization shortpath if already in the registry or loading
-  if (key && (loader.registry.has(key) || loader._registerRegistry[key]))
+  if (loader._registerRegistry[key] || loader.registry.has(key))
     return Promise.resolve(key);
 
   var metadata = this.createMetadata();
   return Promise.resolve(loader.normalize(key, parentKey, metadata))
   .then(function(resolvedKey) {
-    if (typeof resolvedKey !== 'string') {
-      if (resolvedKey === undefined)
-        throw new RangeError('No resolution normalizing "' + key + '" to ' + parentKey);
-
-      // allow a non-string resolve for use cases like conditionals
-      return resolvedKey;
-    }
+    if (resolvedKey === undefined)
+      throw new RangeError('No resolution normalizing "' + key + '" to ' + parentKey);
     
     // we create the in-progress load record already here to store the normalization metadata
     if (!loader.registry.has(resolvedKey))
@@ -117,8 +112,7 @@ RegisterLoader.prototype[Loader.instantiate] = function(key) {
 
     return instantiateAllDeps(loader, instantiated, [])
     .then(function() {
-      if (loader.execute)
-        var err = ensureEvaluated(loader, instantiated, []);
+      var err = ensureEvaluated(loader, instantiated, []);
       if (err)
         return Promise.reject(err);
 

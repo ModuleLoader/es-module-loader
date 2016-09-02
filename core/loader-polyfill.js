@@ -50,10 +50,6 @@ function arrayValues(arr) {
 function Loader(baseKey) {
   this.key = baseKey || baseURI;
   this.registry = new Registry();
-
-  // NB deprecate
-  // evaluation flag to allow for tracing loaders
-  this.execute = true;
 }
 // 3.3.1
 Loader.prototype.constructor = Loader;
@@ -61,15 +57,7 @@ Loader.prototype.constructor = Loader;
 Loader.prototype.import = function(key, parent) {
   if (typeof key !== 'string')
     throw new TypeError('Loader import method must be passed a module key string');
-  var execute = this.execute;
-  return this.load(key, parent)
-  .then(function(module) {
-    // ensure evaluated
-    if (execute)
-      Module.evaluate(module);
-
-    return module;
-  });
+  return this.load(key, parent);
 };
 // 3.3.3
 var RESOLVE = Loader.resolve = createSymbol('resolve');
