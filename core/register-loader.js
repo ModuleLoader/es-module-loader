@@ -393,7 +393,7 @@ ContextualLoader.prototype.constructor = function() {
   throw new TypeError('Cannot subclass the contextual loader only Reflect.Loader.');
 };
 ContextualLoader.prototype.import = function(key) {
-  return this.loader.import(key, this.key)
+  return this.loader.import(key, this.key);
 };
 ContextualLoader.prototype.resolve = function(key) {
   return this.loader[Loader.resolve](key, this.key);
