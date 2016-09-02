@@ -430,12 +430,8 @@ function ensureEvaluated(loader, load, seen) {
   // es load record evaluation
   err = esEvaluate(esLinkRecord);
   
-  if (err) {
-    loader.registry.delete(load.key);
-    if (loader._registerRegistry[load.key] === load)
-      loader._registerRegistry[load.key] = undefined;
+  if (err)
     return addToError(err, 'Evaluating ' + load.key);
-  }
 
   load.module = new ModuleNamespace(esLinkRecord.moduleObj);
   loader.registry.set(load.key, load.module);
