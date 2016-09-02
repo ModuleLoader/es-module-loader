@@ -441,11 +441,15 @@ function ensureEvaluated(loader, load, seen) {
     load.esLinkRecord = undefined;
 }
 
+var execContext = {};
+if (Object.freeze)
+  Object.freeze(execContext);
+
 function esEvaluate(esLinkRecord) {
   try {
     // {} is the closest we can get to call(undefined)
     // this should really be blocked earlier though
-    esLinkRecord.execute.call({});
+    esLinkRecord.execute.call(execContext);
   }
   catch(err) {
     return err;
