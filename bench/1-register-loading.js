@@ -672,14 +672,9 @@ function declaredRegisterLoader() {
   return loader;
 }
 
-suite.add('Importing a single registered module with RegisterLoader', async function() {
+suite.add('Importing mulitple trees at the same time with RegisterLoader', async function() {
   var loader = declaredRegisterLoader();
-  await loader.import('no-imports.js');
-});
-
-suite.add('Importing a module with deps with RegisterLoader', async function() {
-  var loader = declaredRegisterLoader();
-  await loader.import('es6-withdep.js');
+  await Promise.all(allModules.map(m => loader.import(m)));
 });
 
 suite.add('Importing a deep tree of modules with RegisterLoader', async function() {
@@ -687,9 +682,14 @@ suite.add('Importing a deep tree of modules with RegisterLoader', async function
   await loader.import('_a.js');
 });
 
-suite.add('Importing mulitple trees at the same time with RegisterLoader', async function() {
+suite.add('Importing a module with deps with RegisterLoader', async function() {
   var loader = declaredRegisterLoader();
-  await Promise.all(allModules.map(m => loader.import(m)));
+  await loader.import('es6-withdep.js');
+});
+
+suite.add('Importing a single registered module with RegisterLoader', async function() {
+  var loader = declaredRegisterLoader();
+  await loader.import('no-imports.js');
 });
 
 var allModules = [
