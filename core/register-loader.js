@@ -61,9 +61,10 @@ var RESOLVE = Loader.resolve;
 
 RegisterLoader.prototype[RESOLVE] = function(key, parentKey) {
   var loader = this;
+  var registry = loader.registry._registry;
 
   // normalization shortpath if already in the registry or loading
-  if (loader._registerRegistry[key] || loader.registry.has(key))
+  if (loader._registerRegistry[key] || registry[key])
     return Promise.resolve(key);
 
   var metadata = this.createMetadata();
@@ -73,7 +74,7 @@ RegisterLoader.prototype[RESOLVE] = function(key, parentKey) {
       throw new RangeError('No resolution normalizing "' + key + '" to ' + parentKey);
     
     // we create the in-progress load record already here to store the normalization metadata
-    if (!loader.registry.has(resolvedKey))
+    if (!registry[resolvedKey])
       (loader._registerRegistry[resolvedKey] || createLoadRecord(loader, resolvedKey)).metadata = metadata;
 
     return resolvedKey;
@@ -141,7 +142,7 @@ function instantiate(loader, key) {
   .then(function(instantiation) {
     // dynamic module
     if (instantiation !== undefined) {
-      loader.registry.set(key, instantiation);
+      loader.registry._registry[key] = instantiation;
       loader._registerRegistry[key] = undefined;
       return instantiation;
     }
@@ -182,6 +183,7 @@ function instantiateAllDeps(loader, load, seen) {
   seen.push(load);
 
   var instantiateDepsPromises = Array(esLinkRecord.dependencies.length);
+  var registry = loader.registry._registry;
 
   // normalize dependencies
   for (var i = 0; i < esLinkRecord.dependencies.length; i++) (function(i) {
@@ -196,7 +198,7 @@ function instantiateAllDeps(loader, load, seen) {
         esLinkRecord.depMap[esLinkRecord.dependencies[i]] = resolvedDepKey;
       }
 
-      var existingNamespace = loader.registry.get(resolvedDepKey);
+      var existingNamespace = registry[resolvedDepKey];
       if (existingNamespace) {
         esLinkRecord.dependencyInstantiations[i] = existingNamespace;
         // run setter to reference the module
@@ -434,7 +436,7 @@ function ensureEvaluated(loader, load, seen) {
     return addToError(err, 'Evaluating ' + load.key);
 
   load.module = new ModuleNamespace(esLinkRecord.moduleObj);
-  loader.registry.set(load.key, load.module);
+  loader.registry._registry[load.key] = load.module;
   
   // can clear link record now
   if (!loader.trace)

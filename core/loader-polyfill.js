@@ -76,6 +76,7 @@ Loader.prototype.resolve = function(key, parent) {
 // 3.3.4
 Loader.prototype.load = function(key, parent) {
   var loader = this;
+  var registry = loader.registry._registry;
 
   var resolvedKey;
 
@@ -83,7 +84,7 @@ Loader.prototype.load = function(key, parent) {
   // but this needs to be done based on performance measurement
   return Promise.resolve(this[RESOLVE](key, parent || this.key))
   .then(function(resolved) {
-    var existingNamespace = loader.registry.get(resolved);
+    var existingNamespace = registry[resolved];
 
     if (existingNamespace)
       return Promise.resolve(existingNamespace);
