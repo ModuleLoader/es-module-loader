@@ -15,7 +15,7 @@ function createSymbol(name) {
 function arrayValues(arr) {
   if (arr.values)
     return arr.values();
-  
+
   if (typeof Symbol === 'undefined' || !Symbol.iterator)
     throw new Error('Cannot return values iterator unless Symbol.iterator is defined');
 
@@ -194,11 +194,20 @@ function ModuleNamespace(baseObject, evaluate) {
     });
   });
   if (evaluate)
-    ns._evaluate = evaluate;
+    Object.defineProperty(ns, '$__evaluate', {
+      value: evaluate,
+      writable: true
+    });
 }
 
 if (typeof Symbol !== 'undefined' && Symbol.toStringTag)
   ModuleNamespace.prototype[Symbol.toStringTag] = 'Module';
+else
+  Object.defineProperty(ModuleNamespace.prototype, 'toString', {
+    value: function() {
+      return '[object Module]';
+    }
+  });
 
 // 8.3.1 Reflect.Module
 function Module(descriptors, executor, evaluate) {
@@ -230,11 +239,8 @@ Module.prototype = null;
 
 // 8.4.1 Module.evaluate
 Module.evaluate = function(ns) {
-  if (!(ns instanceof ModuleNamespace))
-    throw new TypeError('Module.evaluate must be called on a Module Namespace');
-
-  if (ns._evaluate) {
-    ns._evaluate();
-    ns._evaluate = undefined;
+  if (ns.$__evaluate) {
+    ns.$__evaluate();
+    ns.$__evaluate = undefined;
   }
 };
