@@ -62,7 +62,7 @@ function LoaderError__Check_error_message_above_for_loader_stack(childErr, newMe
   if (!isBrowser)
     newMessage = newMessage.replace(isWindows ? /file:\/\/\//g : /file:\/\//g, '');
 
-  var message = (childErr.message || childErr) + '\n\t' + newMessage;
+  var message = (childErr.message || childErr) + '\n  ' + newMessage;
 
   var err;
   if (errArgs && childErr.fileName)
@@ -75,7 +75,7 @@ function LoaderError__Check_error_message_above_for_loader_stack(childErr, newMe
   
   if (isNode)
     // node doesn't show the message otherwise
-    err.stack = message + '\n' + stack;
+    err.stack = message + '\n  ' + stack;
   else
     err.stack = stack;
 
