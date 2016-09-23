@@ -45,13 +45,17 @@ if (baseURI) {
   baseURI = baseURI.substr(0, baseURI.lastIndexOf('/') + 1);
 }
 else if (typeof process != 'undefined' && process.cwd) {
-  baseURI = 'file://' + (isWindows ? '/' : '') + process.cwd() + '/';
+  baseURI = 'file://' + (isWindows ? '/' : '') + process.cwd();
   if (isWindows)
     baseURI = baseURI.replace(/\\/g, '/');
 }
 else {
   throw new TypeError('No environment baseURI');
 }
+
+// ensure baseURI has trailing "/"
+if (baseURI[baseURI.length - 1] !== '/')
+  baseURI += '/';
 
 /*
  * LoaderError with chaining for loader stacks
@@ -72,7 +76,7 @@ function LoaderError__Check_error_message_above_for_loader_stack(childErr, newMe
 
 
   var stack = childErr.originalErr ? childErr.originalErr.stack : childErr.stack;
-  
+
   if (isNode)
     // node doesn't show the message otherwise
     err.stack = message + '\n  ' + stack;
