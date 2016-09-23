@@ -5,6 +5,9 @@ describe('Simple normalization tests', function() {
   it('Should resolve windows paths as file:/// URLs', function() {
     assert.equal(resolveUrlToParentIfNotPlain('c:\\some\\path', 'file:///c:/adsf/asdf'), 'file:///c:/some/path');
   });
+  it('Should resolve relative windows paths', function() {
+    assert.equal(resolveUrlToParentIfNotPlain('./test.js', 'file:///C:/some/path/'), 'file:///C:/some/path/test.js');
+  });
   it('Should resolve unix file paths as file:/// URLs', function() {
     assert.equal(resolveUrlToParentIfNotPlain('/some/file/path.js', 'file:///home/path/to/project'), 'file:///some/file/path.js');
   });
@@ -59,7 +62,7 @@ describe('Simple normalization tests', function() {
 import fs from 'fs';
 var testCases = eval('(' + fs.readFileSync('test/fixtures/url-resolution-cases.json') + ')');
 
-describe('URL resolution selected WhatWG URL spec tests', function() {  
+describe('URL resolution selected WhatWG URL spec tests', function() {
   var run = 0;
   testCases.forEach(function(test) {
     if (typeof test == 'string')

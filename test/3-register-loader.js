@@ -198,17 +198,17 @@ describe('System Register Loader', function() {
 
     it('should throw if on syntax error', async function() {
       var err = await getImportError('./main.js');
-      assert.equal(err, 'Error: dep error\n\tEvaluating ' + testPath + 'deperror.js\n\tEvaluating ' + testPath + 'main.js\n\tLoading ./main.js');
+      assert.equal(err, 'Error: dep error\n  Evaluating ' + testPath + 'deperror.js\n  Evaluating ' + testPath + 'main.js\n  Loading ./main.js');
     });
 
     it('should throw what the script throws', async function() {
       var err = await getImportError('./deperror.js');
-      assert.equal(err, 'Error: dep error\n\tEvaluating ' + testPath + 'deperror.js\n\tLoading ./deperror.js');
+      assert.equal(err, 'Error: dep error\n  Evaluating ' + testPath + 'deperror.js\n  Loading ./deperror.js');
     });
 
     it('404 error', async function() {
       var err = await getImportError('./load-non-existent.js');
-      var lines = err.split('\n\t');
+      var lines = err.split('\n  ');
       assert(lines[0].startsWith('Error: '));
       assert(lines[0].endsWith('open \'' + testPath + 'non-existent.js\''));
       assert.equal(lines[1], 'Instantiating ' + testPath + 'non-existent.js');
