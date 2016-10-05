@@ -16,7 +16,7 @@ export var emptyModule = new ModuleNamespace({});
  * - loader error behaviour as in HTML and loader specs, clearing failed modules from registration cache synchronously
  * - build tracing support by providing a .trace=true and .loads object format
  */
-function RegisterLoader(baseKey) {
+function RegisterLoader(baseKey, sync) {
   Loader.apply(this, arguments);
 
   // last anonymous System.register call
@@ -49,7 +49,7 @@ RegisterLoader.prototype.normalize = function(key, parentKey, metadata) {
 
 RegisterLoader.prototype.instantiate = function(key, metadata) {};
 
-// this function is an optimization to allow loader extensions to 
+// this function is an optimization to allow loader extensions to
 // implement it to set the metadata object shape upfront to ensure
 // it can run as a single hidden class throughout the normalize
 // and instantiate pipeline hooks in the js engine
@@ -72,7 +72,7 @@ RegisterLoader.prototype[RESOLVE] = function(key, parentKey) {
   .then(function(resolvedKey) {
     if (resolvedKey === undefined)
       throw new RangeError('No resolution normalizing "' + key + '" to ' + parentKey);
-    
+
     // we create the in-progress load record already here to store the normalization metadata
     if (!registry[resolvedKey])
       (loader._registerRegistry[resolvedKey] || createLoadRecord(loader, resolvedKey)).metadata = metadata;
@@ -279,7 +279,7 @@ function clearLoadErrors(loader, load) {
   });
 }
 
-function createESLinkRecord(dependencies, setters, module, moduleObj, execute) {
+function createESLinkRecord(dependencies, setters, moduleObj, execute) {
   return {
     dependencies: dependencies,
 
@@ -290,7 +290,6 @@ function createESLinkRecord(dependencies, setters, module, moduleObj, execute) {
 
     setters: setters,
 
-    module: module,
     moduleObj: moduleObj,
     execute: execute
   };
@@ -374,9 +373,11 @@ function ensureRegisterLinkRecord(load) {
     execute = declared;
   }
 
-  // TODO, pass module when we can create it here already via exports
+  // NB extensible module namespaces will avoid the need to have an upfront shell
+  // allowing the creation of the module object already here simplifying cross-registry management
+  // with a more generic shared registry progress record cross-registry API checks simplify further
   load.importerSetters = importerSetters;
-  load.esLinkRecord = createESLinkRecord(registrationPair[0], setters, undefined, moduleObj, execute);
+  load.esLinkRecord = createESLinkRecord(registrationPair[0], setters, moduleObj, execute);
 }
 
 // ContextualLoader class
@@ -402,7 +403,7 @@ ContextualLoader.prototype.load = function(key) {
 // returns the error if any
 function ensureEvaluated(loader, load, seen) {
   var esLinkRecord = load.esLinkRecord;
-  
+
   // no esLinkRecord means evaluated
   if (!esLinkRecord)
     return;
@@ -431,13 +432,13 @@ function ensureEvaluated(loader, load, seen) {
 
   // es load record evaluation
   err = esEvaluate(esLinkRecord);
-  
+
   if (err)
     return addToError(err, 'Evaluating ' + load.key);
 
   load.module = new ModuleNamespace(esLinkRecord.moduleObj);
   loader.registry._registry[load.key] = load.module;
-  
+
   // can clear link record now
   if (!loader.trace)
     load.esLinkRecord = undefined;

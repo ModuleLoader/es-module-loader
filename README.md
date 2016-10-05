@@ -14,7 +14,7 @@ Some examples of common use case module loaders built with this project are prov
   A demonstration-only loader to load ES modules in the browser including support for the `<script type="module">` tag as specified in HTML.
 
 - [Node ES Module Loader](https://github.com/ModuleLoader/node-es-module-loader)
-  Allows loading ES modules with CommonJS interop in Node via `node-esml module/path.js` in line with the current Node 
+  Allows loading ES modules with CommonJS interop in Node via `node-esml module/path.js` in line with the current Node
   plans for implementing ES modules. Used to run the tests and benchmarks in this project.
 
 - [System Register Loader](https://github.com/ModuleLoader/system-register-loader):
@@ -30,10 +30,10 @@ npm install es-module-loader --save-dev
 
 This project exposes a public API of ES modules in the `core` folder.
 
-The minimal polyfill loader is provided in `core/loader-polyfill.js`. On top of this the main API file is 
+The minimal polyfill loader is provided in `core/loader-polyfill.js`. On top of this the main API file is
 'core/register-loader.js'` which provides the base loader class.
 
-Helper functions are available in `core/resolve.js`, `core/common.js`, `core/fetch.js` and everything that is exported can be considered
+Helper functions are available in `core/resolve.js` and `core/common.js` where everything that is exported can be considered
 part of the publicly versioned API of this project.
 
 Any tool can be used to build the loader distribution file from these core modules - [Rollup](http://rollupjs.org) is used to do these builds in the example loaders above,

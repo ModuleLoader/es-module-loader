@@ -1,5 +1,5 @@
 import { baseURI, addToError } from './common.js';
-export { Loader, Module, ModuleNamespace as InternalModuleNamespace }
+export { Loader, Module, ModuleNamespace as InternalModuleNamespace, addNamespaceExport }
 
 /*
  * Simple Symbol() shim
@@ -46,10 +46,14 @@ function arrayValues(arr) {
  *
  * We skip the entire native internal pipeline, just providing the bare API
  */
+
 // 3.1.1
-function Loader(baseKey) {
+function Loader(baseKey, sync) {
   this.key = baseKey || baseURI;
   this.registry = new Registry();
+
+  this.resolve = (sync ? resolveSync : resolve).bind(this);
+  this.load = (sync ? loadSync : load).bind(this);
 }
 // 3.3.1
 Loader.prototype.constructor = Loader;
@@ -57,54 +61,102 @@ Loader.prototype.constructor = Loader;
 Loader.prototype.import = function(key, parent) {
   if (typeof key !== 'string')
     throw new TypeError('Loader import method must be passed a module key string');
-  return this.load(key, parent);
+  return Promise.resolve(this.load(key, parent));
 };
 // 3.3.3
 var RESOLVE = Loader.resolve = createSymbol('resolve');
+
+function throwResolveError(err, key, parent) {
+  throw addToError(err, 'Resolving ' + key + (parent ? ' to ' + parent : ''));
+}
+
+function resolveSync(key, parent) {
+  try {
+    return this[RESOLVE](key, parent);
+  }
+  catch (e) {
+    throwResolveError(e, key, parent);
+  }
+}
+
+function resolve(key, parent) {
+  var loader = this;
+  return Promise.resolve()
+  .then(function() {
+    return loader[RESOLVE](key, parent);
+  })
+  .catch(function(e) {
+    throwResolveError(e, key, parent);
+  });
+}
 
 // instantiate sets the namespace into the registry
 // it is up to implementations to ensure instantiate is debounced properly
 var INSTANTIATE = Loader.instantiate = createSymbol('instantiate');
 
-Loader.prototype.resolve = function(key, parent) {
-  return this[RESOLVE](key, parent)
-  .catch(function(err) {
-    throw addToError(err, 'Resolving ' + key + (parent ? ' to ' + parent : ''));
-  });
-};
+function throwLoadError(err, key, parent, resolved) {
+  throw addToError(err, 'Loading ' + key + ' from ' + resolved + (parent ? ' for ' + parent : ''));
+}
 
 // 3.3.4
-Loader.prototype.load = function(key, parent) {
-  var loader = this;
-  var registry = loader.registry._registry;
-
-  var resolvedKey;
+function loadSync(key, parent) {
+  var registry = this.registry._registry;
 
   // there is the potential for an internal perf optimization to allow resolve to return { resolved, namespace }
   // but this needs to be done based on performance measurement
-  return Promise.resolve(this[RESOLVE](key, parent || this.key))
+  var resolved = this.resolve(key, parent || this.key);
+  var existingNamespace = registry[resolved];
+
+  if (existingNamespace)
+    return existingNamespace;
+
+  try {
+    existingNamespace = this[INSTANTIATE](resolved);
+  }
+  catch (e) {
+    throwLoadError(e, key, parent, resolved);
+  }
+
+  // returning the namespace from instantiate can be considered a sort of perf optimization
+  if (!existingNamespace)
+    existingNamespace = this.registry.get(resolvedKey);
+  else if (!(existingNamespace instanceof ModuleNamespace))
+    throw new TypeError('Instantiate did not resolve a Module Namespace');
+
+  return existingNamespace;
+}
+
+function load(key, parent) {
+  var loader = this;
+  var registry = loader.registry._registry;
+
+  // there is the potential for an internal perf optimization to allow resolve to return { resolved, namespace }
+  // but this needs to be done based on performance measurement
+  return this.resolve(key, parent || loader.key)
   .then(function(resolved) {
     var existingNamespace = registry[resolved];
 
     if (existingNamespace)
       return Promise.resolve(existingNamespace);
 
-    return loader[INSTANTIATE](resolved)
+    return Promise.resolve()
+    .then(function() {
+      return loader[INSTANTIATE](resolved);
+    })
     .then(function(namespace) {
-
       // returning the namespace from instantiate can be considered a sort of perf optimization
       if (!namespace)
-        namespace = loader.registry.get(resolvedKey);
+        namespace = loader.registry.get(resolved);
       else if (!(namespace instanceof ModuleNamespace))
         throw new TypeError('Instantiate did not resolve a Module Namespace');
 
       return namespace;
+    })
+    .catch(function(err) {
+      throwLoadError(err, key, parent, resolved);
     });
-  })
-  .catch(function(err) {
-    throw addToError(err, 'Loading ' + key + (resolvedKey ? ' as ' + resolvedKey : '') + (parent ? ' from ' + parent : ''));
   });
-};
+}
 
 /*
  * 4. Registry
@@ -180,22 +232,28 @@ Registry.prototype.delete = function(key) {
  * Simple ModuleNamespace Exotic object based on a baseObject
  * We export this for allowing a fast-path for module namespace creation over Module descriptors
  */
-function ModuleNamespace(baseObject, evaluate) {
-  var ns = this;
-  Object.keys(baseObject).forEach(function(key) {
-    Object.defineProperty(ns, key, {
-      configurable: false,
-      enumerable: true,
-      get: function () {
-        return baseObject[key];
-      },
-      set: function() {
-        throw new TypeError('Module exports cannot be changed externally.');
-      }
-    });
+function addNamespaceExport(key) {
+  Object.defineProperty(this, key, {
+    configurable: false,
+    enumerable: true,
+    get: function () {
+      return this.$__baseObject[key];
+    },
+    set: function() {
+      throw new TypeError('Module exports cannot be changed externally.');
+    }
   });
+}
+
+function ModuleNamespace(baseObject, evaluate) {
+  Object.keys(baseObject).forEach(addNamespaceExport, this);
+
+  Object.defineProperty(this, '$__baseObject', {
+    value: baseObject
+  });
+
   if (evaluate)
-    Object.defineProperty(ns, '$__evaluate', {
+    Object.defineProperty(this, '$__evaluate', {
       value: evaluate,
       writable: true
     });
