@@ -1,18 +1,10 @@
-import { baseURI, addToError } from './common.js';
+import { baseURI, addToError, createSymbol } from './common.js';
 export { Loader, Module, ModuleNamespace as InternalModuleNamespace }
-
-/*
- * Simple Symbol() shim
- */
-var hasSymbol = typeof Symbol !== 'undefined';
-function createSymbol(name) {
-  return hasSymbol ? Symbol() : '@@' + name;
-}
 
 /*
  * Simple Array values shim
  */
-function arrayValues(arr) {
+function arrayValues (arr) {
   if (arr.values)
     return arr.values();
 
@@ -20,11 +12,11 @@ function arrayValues(arr) {
     throw new Error('Cannot return values iterator unless Symbol.iterator is defined');
 
   var iterable = {};
-  iterable[Symbol.iterator] = function() {
+  iterable[Symbol.iterator] = function () {
     var keys = Object.keys(arr);
     var keyIndex = 0;
     return {
-      next: function() {
+      next: function () {
         if (keyIndex < keys.length)
           return {
             value: arr[keys[keyIndex++]],
@@ -47,14 +39,14 @@ function arrayValues(arr) {
  * We skip the entire native internal pipeline, just providing the bare API
  */
 // 3.1.1
-function Loader(baseKey) {
+function Loader (baseKey) {
   this.key = baseKey || baseURI;
   this.registry = new Registry();
 }
 // 3.3.1
 Loader.prototype.constructor = Loader;
 // 3.3.2
-Loader.prototype.import = function(key, parent) {
+Loader.prototype.import = function (key, parent) {
   if (typeof key !== 'string')
     throw new TypeError('Loader import method must be passed a module key string');
   return this.load(key, parent);
@@ -66,7 +58,7 @@ var RESOLVE = Loader.resolve = createSymbol('resolve');
 // it is up to implementations to ensure instantiate is debounced properly
 var INSTANTIATE = Loader.instantiate = createSymbol('instantiate');
 
-Loader.prototype.resolve = function(key, parent) {
+Loader.prototype.resolve = function (key, parent) {
   return this[RESOLVE](key, parent)
   .catch(function(err) {
     throw addToError(err, 'Resolving ' + key + (parent ? ' to ' + parent : ''));
@@ -74,7 +66,7 @@ Loader.prototype.resolve = function(key, parent) {
 };
 
 // 3.3.4
-Loader.prototype.load = function(key, parent) {
+Loader.prototype.load = function (key, parent) {
   var loader = this;
   var registry = loader.registry._registry;
 
@@ -83,14 +75,14 @@ Loader.prototype.load = function(key, parent) {
   // there is the potential for an internal perf optimization to allow resolve to return { resolved, namespace }
   // but this needs to be done based on performance measurement
   return Promise.resolve(this[RESOLVE](key, parent || this.key))
-  .then(function(resolved) {
+  .then(function (resolved) {
     var existingNamespace = registry[resolved];
 
     if (existingNamespace)
       return Promise.resolve(existingNamespace);
 
     return loader[INSTANTIATE](resolved)
-    .then(function(namespace) {
+    .then(function (namespace) {
 
       // returning the namespace from instantiate can be considered a sort of perf optimization
       if (!namespace)
@@ -101,7 +93,7 @@ Loader.prototype.load = function(key, parent) {
       return namespace;
     });
   })
-  .catch(function(err) {
+  .catch(function (err) {
     throw addToError(err, 'Loading ' + key + (resolvedKey ? ' as ' + resolvedKey : '') + (parent ? ' from ' + parent : ''));
   });
 };
@@ -120,53 +112,53 @@ function Registry() {
   this._registry = {};
 }
 // 4.4.1
-Registry.prototype.constructor = function() {
+Registry.prototype.constructor = function () {
   throw new TypeError('Custom registries cannot be created.');
 };
 
 if (iteratorSupport) {
   // 4.4.2
-  Registry.prototype[Symbol.iterator] = function() {
+  Registry.prototype[Symbol.iterator] = function () {
     return this.entries()[Symbol.iterator]();
   };
 
   // 4.4.3
-  Registry.prototype.entries = function() {
+  Registry.prototype.entries = function () {
     var registry = this._registry;
-    return arrayValues(Object.keys(registry).map(function(key) {
+    return arrayValues(Object.keys(registry).map(function (key) {
       return [key, registry[key]];
     }));
   };
 }
 
 // 4.4.4
-Registry.prototype.keys = function() {
+Registry.prototype.keys = function () {
   return arrayValues(Object.keys(this._registry));
 };
 // 4.4.5
-Registry.prototype.values = function() {
+Registry.prototype.values = function () {
   var registry = this._registry;
-  return arrayValues(Object.keys(registry).map(function(key) {
+  return arrayValues(Object.keys(registry).map(function (key) {
     return registry[key];
   }));
 };
 // 4.4.6
-Registry.prototype.get = function(key) {
+Registry.prototype.get = function (key) {
   return this._registry[key];
 };
 // 4.4.7
-Registry.prototype.set = function(key, namespace) {
+Registry.prototype.set = function (key, namespace) {
   if (!(namespace instanceof ModuleNamespace))
     throw new Error('Registry must be set with an instance of Module Namespace');
   this._registry[key] = namespace;
   return this;
 };
 // 4.4.8
-Registry.prototype.has = function(key) {
+Registry.prototype.has = function (key) {
   return !!this._registry[key];
 };
 // 4.4.9
-Registry.prototype.delete = function(key) {
+Registry.prototype.delete = function (key) {
   if (this._registry[key]) {
     //delete this._registry[key];
     // much faster...
@@ -180,16 +172,16 @@ Registry.prototype.delete = function(key) {
  * Simple ModuleNamespace Exotic object based on a baseObject
  * We export this for allowing a fast-path for module namespace creation over Module descriptors
  */
-function ModuleNamespace(baseObject, evaluate) {
+function ModuleNamespace (baseObject, evaluate) {
   var ns = this;
-  Object.keys(baseObject).forEach(function(key) {
+  Object.keys(baseObject).forEach(function (key) {
     Object.defineProperty(ns, key, {
       configurable: false,
       enumerable: true,
       get: function () {
         return baseObject[key];
       },
-      set: function() {
+      set: function () {
         throw new TypeError('Module exports cannot be changed externally.');
       }
     });
@@ -205,13 +197,13 @@ if (typeof Symbol !== 'undefined' && Symbol.toStringTag)
   ModuleNamespace.prototype[Symbol.toStringTag] = 'Module';
 else
   Object.defineProperty(ModuleNamespace.prototype, 'toString', {
-    value: function() {
+    value: function () {
       return '[object Module]';
     }
   });
 
 // 8.3.1 Reflect.Module
-function Module(descriptors, executor, evaluate) {
+function Module (descriptors, executor, evaluate) {
   if (typeof descriptors !== 'object')
     throw new TypeError('Expected descriptors object');
 
@@ -219,7 +211,7 @@ function Module(descriptors, executor, evaluate) {
   var baseObject = {};
 
   // 8.2.1 ParseExportsDescriptors
-  Object.keys(descriptors).forEach(function(key) {
+  Object.keys(descriptors).forEach(function (key) {
     var descriptor = descriptors[key];
 
     if (!('value' in descriptor))
@@ -239,7 +231,7 @@ function Module(descriptors, executor, evaluate) {
 Module.prototype = null;
 
 // 8.4.1 Module.evaluate
-Module.evaluate = function(ns) {
+Module.evaluate = function (ns) {
   if (ns.$__evaluate) {
     ns.$__evaluate();
     ns.$__evaluate = undefined;

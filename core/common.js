@@ -8,11 +8,19 @@ export var isWindows = typeof process !== 'undefined' && typeof process.platform
 var envGlobal = typeof self !== 'undefined' ? self : global;
 export { envGlobal as global }
 
-export function pathToFileUrl(filePath) {
+/*
+ * Simple Symbol() shim
+ */
+var hasSymbol = typeof Symbol !== 'undefined';
+export function createSymbol (name) {
+  return hasSymbol ? Symbol() : '@@' + name;
+}
+
+export function pathToFileUrl (filePath) {
   return 'file://' + (isWindows ? '/' : '') + filePath;
 }
 
-export function fileUrlToPath(fileUrl) {
+export function fileUrlToPath (fileUrl) {
   if (fileUrl.substr(0, 7) !== 'file://')
     throw new RangeError(fileUrl + ' is not a valid file url');
   if (isWindows)
@@ -61,7 +69,7 @@ if (baseURI[baseURI.length - 1] !== '/')
  * LoaderError with chaining for loader stacks
  */
 var errArgs = new Error(0, '_').fileName == '_';
-function LoaderError__Check_error_message_above_for_loader_stack(childErr, newMessage) {
+function LoaderError__Check_error_message_above_for_loader_stack (childErr, newMessage) {
   // Convert file:/// URLs to paths in Node
   if (!isBrowser)
     newMessage = newMessage.replace(isWindows ? /file:\/\/\//g : /file:\/\//g, '');

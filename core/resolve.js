@@ -2,10 +2,10 @@ import { isNode } from './common.js';
 
 /*
  * Optimized URL normalization assuming a syntax-valid URL parent
- */ 
-export function resolveUrlToParentIfNotPlain(relUrl, parentUrl) {
+ */
+export function resolveUrlToParentIfNotPlain (relUrl, parentUrl) {
 
-  function throwResolveError() {
+  function throwResolveError () {
     throw new RangeError('Unable to resolve "' + relUrl + '" to ' + parentUrl);
   }
 
@@ -63,7 +63,7 @@ export function resolveUrlToParentIfNotPlain(relUrl, parentUrl) {
       else
         return parentUrl.substr(0, parentUrl.length - pathname.length - 1) + relUrl;
     }
-    
+
     // join together and split for removal of .. and . segments
     // looping the string instead of anything fancy for perf reasons
     // '../../../../../z' resolved to 'x/y' is just 'z' regardless of parentIsPlain
@@ -102,7 +102,7 @@ export function resolveUrlToParentIfNotPlain(relUrl, parentUrl) {
         // this is the plain URI backtracking error (../, package:x -> error)
         if (parentIsPlain && output.length === 0)
           throwResolveError();
-        
+
         // trailing . or .. segment
         if (i === segmented.length)
           output.push('');
@@ -115,9 +115,9 @@ export function resolveUrlToParentIfNotPlain(relUrl, parentUrl) {
     // finish reading out the last segment
     if (segmentIndex !== undefined)
       output.push(segmented.substr(segmentIndex, segmented.length - segmentIndex));
-    
+
     return parentUrl.substr(0, parentUrl.length - pathname.length) + output.join('');
   }
-  
+
   // plain name -> return undefined
 }
