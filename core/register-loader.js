@@ -1,10 +1,10 @@
-import { Loader, Module, InternalModuleNamespace as ModuleNamespace } from './loader-polyfill.js';
+import { Loader, Module, } from './loader-polyfill.js';
 import { resolveUrlToParentIfNotPlain } from './resolve.js';
 import { addToError, global, createSymbol } from './common.js';
 
 export default RegisterLoader;
 
-export var emptyModule = new ModuleNamespace({});
+export var emptyModule = new Module({});
 
 /*
  * Register Loader
@@ -73,7 +73,7 @@ RegisterLoader.prototype[RESOLVE] = function (key, parentKey) {
 
     // we create the in-progress load record already here to store the normalization metadata
     if (!registry[resolvedKey])
-      (loader._registerRegistry[resolvedKey] || loader[CREATE_LOAD_RECORD](resolvedKey)).metadata = metadata;
+      (loader._registerRegistry[resolvedKey] || createLoadRecord.call(loader, resolvedKey)).metadata = metadata;
 
     return resolvedKey;
   });
@@ -84,10 +84,7 @@ RegisterLoader.prototype[RESOLVE] = function (key, parentKey) {
 // this record represents that waiting period, and when set, we then populate
 // the esLinkRecord record into this load record.
 // instantiate is a promise for a module namespace or undefined
-
-var CREATE_LOAD_RECORD = RegisterLoader.createLoadRecord = createSymbol('createLoadRecord');
-
-RegisterLoader.prototype[CREATE_LOAD_RECORD] = function (key) {
+function createLoadRecord (key) {
   return this._registerRegistry[key] = {
     key: key,
     metadata: undefined,
@@ -109,7 +106,7 @@ RegisterLoader.prototype[Loader.instantiate] = function (key) {
   var loader = this;
   return instantiate(this, key)
   .then(function(instantiated) {
-    if (instantiated instanceof ModuleNamespace)
+    if (instantiated instanceof Module)
       return Promise.resolve(instantiated);
 
     return instantiateAllDeps(loader, instantiated, [])
@@ -214,7 +211,7 @@ function instantiateAllDeps (loader, load, seen) {
         esLinkRecord.dependencyInstantiations[i] = instantiation;
 
         // dynamic module
-        if (instantiation instanceof ModuleNamespace) {
+        if (instantiation instanceof Module) {
           if (esLinkRecord.setters[i])
             esLinkRecord.setters[i](instantiation);
           return Promise.resolve();
@@ -265,7 +262,7 @@ function clearLoadErrors (loader, load) {
     return;
 
   esLinkRecord.dependencyInstantiations.forEach(function (depLoad, index) {
-    if (!depLoad || depLoad instanceof ModuleNamespace)
+    if (!depLoad || depLoad instanceof Module)
       return;
 
     if (depLoad.esLinkRecord && depLoad.esLinkRecord.error) {
@@ -308,15 +305,19 @@ RegisterLoader.prototype.register = function (key, deps, declare) {
 
   // everything else registers into the register cache
   else
-    (this._registerRegistry[key] || this[CREATE_LOAD_RECORD](key)).defined = [deps, declare];
+    (this._registerRegistry[key] || createLoadRecord.call(this, key)).defined = [deps, declare];
 };
 
 RegisterLoader.prototype.processRegisterContext = function (contextKey) {
-  if (!this._registeredLastAnon)
+  var registeredLastAnon = this._registeredLastAnon;
+
+  if (!registeredLastAnon)
     return;
 
-  (this._registerRegistry[contextKey] || this[CREATE_LOAD_RECORD](contextKey)).defined = this._registeredLastAnon;
   this._registeredLastAnon = undefined;
+
+  // returning the defined value allows avoiding an extra lookup for custom instantiate
+  return (this._registerRegistry[contextKey] || createLoadRecord.call(this, contextKey)).defined = registeredLastAnon;
 };
 
 function ensureRegisterLinkRecord (load) {
@@ -328,7 +329,7 @@ function ensureRegisterLinkRecord (load) {
   var registrationPair = load.defined;
 
   if (!registrationPair)
-    throw new TypeError('Module instantiation did not call an anonymous or correctly named System.register');
+    throw new TypeError('Module instantiation did not call an anonymous or correctly named System.register.');
 
   load.defined = undefined;
 
@@ -419,7 +420,7 @@ function ensureEvaluated (loader, load, seen) {
     // non ES load
 
     // it is the responsibility of the executor to remove the module from the registry on failure
-    if (depLoad instanceof ModuleNamespace)
+    if (depLoad instanceof Module)
       err = namespaceEvaluate(depLoad);
 
     // ES load
@@ -436,7 +437,7 @@ function ensureEvaluated (loader, load, seen) {
   if (err)
     return addToError(err, 'Evaluating ' + load.key);
 
-  load.module = new ModuleNamespace(esLinkRecord.moduleObj);
+  load.module = new Module(esLinkRecord.moduleObj);
   loader.registry._registry[load.key] = load.module;
 
   // can clear link record now
@@ -469,7 +470,7 @@ function namespaceEvaluate (namespace) {
 
 function traceLoadRecord (loader, load, seen) {
   // its up to dynamic instantiate layers to ensure their own traces are present
-  if (load instanceof ModuleNamespace)
+  if (load instanceof Module)
     return;
 
   seen.push(load);

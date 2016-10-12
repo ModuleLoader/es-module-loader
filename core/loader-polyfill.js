@@ -1,5 +1,5 @@
 import { baseURI, addToError, createSymbol } from './common.js';
-export { Loader, Module, ModuleNamespace as InternalModuleNamespace }
+export { Loader, Module, Module as InternalModuleNamespace }
 
 /*
  * Simple Array values shim
@@ -87,7 +87,7 @@ Loader.prototype.load = function (key, parent) {
       // returning the namespace from instantiate can be considered a sort of perf optimization
       if (!namespace)
         namespace = loader.registry.get(resolvedKey);
-      else if (!(namespace instanceof ModuleNamespace))
+      else if (!(namespace instanceof Module))
         throw new TypeError('Instantiate did not resolve a Module Namespace');
 
       return namespace;
@@ -148,7 +148,7 @@ Registry.prototype.get = function (key) {
 };
 // 4.4.7
 Registry.prototype.set = function (key, namespace) {
-  if (!(namespace instanceof ModuleNamespace))
+  if (!(namespace instanceof Module))
     throw new Error('Registry must be set with an instance of Module Namespace');
   this._registry[key] = namespace;
   return this;
@@ -172,68 +172,103 @@ Registry.prototype.delete = function (key) {
  * Simple ModuleNamespace Exotic object based on a baseObject
  * We export this for allowing a fast-path for module namespace creation over Module descriptors
  */
-function ModuleNamespace (baseObject, evaluate) {
-  var ns = this;
-  Object.keys(baseObject).forEach(function (key) {
-    Object.defineProperty(ns, key, {
-      configurable: false,
-      enumerable: true,
-      get: function () {
-        return baseObject[key];
-      },
-      set: function () {
-        throw new TypeError('Module exports cannot be changed externally.');
-      }
-    });
+var EVALUATE = createSymbol('evaluate');
+var BASE_OBJECT = createSymbol('baseObject');
+
+// 8.3.1 Reflect.Module
+/*
+ * Best-effort spec guess made for September 2016 TC39 directions
+ * - baseObject is the "module.exports"-like mutable object
+ * - evaluate is an optional evaluation function
+ *
+ * The Module Namespace named export values are read as the iterable
+ * properties of baseObject and fixed on completion of the evaluation
+ * function (if any).
+ *
+ * Allows use cases:
+ *
+ *   loader.registry.set('x', new Module({ default: 'x' }));
+ *
+ * As well as:
+ *
+ *   var exports = {};
+ *   loader.registry.set('cjs', new Module(exports, function() {
+ *     exports.x = 'x';
+ *   }));
+ *
+ */
+function Module (baseObject, evaluate) {
+  Object.defineProperty(this, BASE_OBJECT, {
+    value: baseObject,
+    writable: true
   });
+
+  // evaluate defers namespace population
   if (evaluate)
-    Object.defineProperty(ns, '$__evaluate', {
+    Object.defineProperty(this, EVALUATE, {
       value: evaluate,
+      configurable: true,
       writable: true
     });
-}
+  else
+    Object.keys(baseObject).forEach(extendNamespace, this);
+};
+// 8.4.2
+Module.prototype = Object.create(null);
 
 if (typeof Symbol !== 'undefined' && Symbol.toStringTag)
-  ModuleNamespace.prototype[Symbol.toStringTag] = 'Module';
+  Module.prototype[Symbol.toStringTag] = 'Module';
 else
-  Object.defineProperty(ModuleNamespace.prototype, 'toString', {
+  Object.defineProperty(Module.prototype, 'toString', {
     value: function () {
       return '[object Module]';
     }
   });
 
-// 8.3.1 Reflect.Module
-function Module (descriptors, executor, evaluate) {
-  if (typeof descriptors !== 'object')
-    throw new TypeError('Expected descriptors object');
-
-  // instead of providing a mutator, just provide the base object
-  var baseObject = {};
-
-  // 8.2.1 ParseExportsDescriptors
-  Object.keys(descriptors).forEach(function (key) {
-    var descriptor = descriptors[key];
-
-    if (!('value' in descriptor))
-      throw new TypeError('Error reading descriptor for "' + key + '" - module polyfill only supports value descriptors currently');
-
-    baseObject[key] = descriptor.value;
+function extendNamespace (key) {
+  Object.defineProperty(this, key, {
+    configurable: false,
+    enumerable: true,
+    get: function () {
+      return this[BASE_OBJECT][key];
+    },
+    set: function () {
+      throw new TypeError('Module exports cannot be changed externally.');
+    }
   });
+}
 
-  var ns = new ModuleNamespace(baseObject, evaluate);
-
-  if (executor)
-    executor(baseObject, ns);
-
-  return ns;
-};
-// 8.4.2
-Module.prototype = null;
+function doEvaluate (evaluate) {
+  try {
+    evaluate();
+  }
+  catch (e) {
+    return e;
+  }
+}
 
 // 8.4.1 Module.evaluate
 Module.evaluate = function (ns) {
-  if (ns.$__evaluate) {
-    ns.$__evaluate();
-    ns.$__evaluate = undefined;
+  var evaluate = ns[EVALUATE];
+  if (evaluate) {
+    ns[EVALUATE] = undefined;
+    var err = doEvaluate(evaluate);
+    if (err) {
+      // effectively cache the evaluation error
+      // to ensure we don't re-run evaluation of the module
+      // before it has been cleared off the registry
+      Object.defineProperty(ns, EVALUATE, {
+        get: function() {
+          throw err;
+        }
+      });
+      throw err;
+    }
+    Object.keys(ns[BASE_OBJECT]).forEach(extendNamespace, ns);
   }
+};
+
+// non-spec
+Module.isEvaluated = function (ns) {
+  return !ns[EVALUATE];
 };
