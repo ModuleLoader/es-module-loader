@@ -455,7 +455,7 @@ function esEvaluate (esLinkRecord) {
     // this should really be blocked earlier though
     esLinkRecord.execute.call(execContext);
   }
-  catch(err) {
+  catch (err) {
     return err;
   }
 }
@@ -463,7 +463,7 @@ function namespaceEvaluate (namespace) {
   try {
     Module.evaluate(namespace);
   }
-  catch(err) {
+  catch (err) {
     return err;
   }
 }

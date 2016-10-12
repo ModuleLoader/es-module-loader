@@ -60,7 +60,7 @@ var INSTANTIATE = Loader.instantiate = createSymbol('instantiate');
 
 Loader.prototype.resolve = function (key, parent) {
   return this[RESOLVE](key, parent)
-  .catch(function(err) {
+  .catch(function (err) {
     throw addToError(err, 'Resolving ' + key + (parent ? ' to ' + parent : ''));
   });
 };
