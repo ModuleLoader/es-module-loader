@@ -130,10 +130,10 @@ RegisterLoader.prototype[Loader.resolveInstantiate] = function (key, parentKey) 
   if (registry[key])
     return registry[key];
 
-  var metadata;
+  var metadata = {};
   return Promise.resolve()
   .then(function () {
-    return loader.normalize(key, parentKey, metadata = {});
+    return loader.normalize(key, parentKey, metadata);
   })
   .then(function (resolvedKey) {
     if (resolvedKey === undefined)
@@ -162,21 +162,12 @@ RegisterLoader.prototype[Loader.resolveInstantiate] = function (key, parentKey) 
     return ensureInstantiate(loader, load)
     .then(function (module) {
       if (module)
-        return registry[load.key] = module;
+        return module;
 
       return ensureInstantiateAllDeps(loader, load, [])
       .then(function () {
         return load.module;
-      })
-      .then(function (module) {
-        // we add the top-level load to the registry
-        // this allows deferred execution through loader.load
-        // while keeping the dependency module records private to avoid
-        // conflict scenarios with top-level exeuctions
-        // dependencies are added into the registry as they become evaluated
-        // unless otherwise top-level modules or already evaluated
-        return registry[load.key] = load.module;
-      })
+      });
     })
     .catch(function (err) {
       clearLoadErrors(loader, load);
@@ -190,15 +181,16 @@ RegisterLoader.prototype[Loader.resolveInstantiate] = function (key, parentKey) 
 function ensureInstantiate (loader, load) {
   var link = load.linkRecord;
 
-  if (!link || link.allInstantiated)
+  if (!link)
     return Promise.resolve(load);
 
-  if (link.error)
-    return Promise.reject(link.error);
+  if (link.instantiatePromise)
+    return link.instantiatePromise;
 
-  return link.instantiatePromise || (link.instantiatePromise = Promise.resolve().then(function() {
+  return link.instantiatePromise = Promise.resolve()
+  .then(function() {
     return loader.instantiate(load.key, link.metadata);
-  }))
+  })
   .then(function (instantiation) {
     // direct module return from instantiate -> we're done
     if (instantiation !== undefined) {
@@ -209,6 +201,9 @@ function ensureInstantiate (loader, load) {
 
     // run the cached loader.register declaration if there is one
     ensureRegister.call(loader, load);
+
+    // as soon as registered, we have a module and evaluate function so can add to the registry
+    loader.registry._registry[load.key] = load.module;
   })
   .catch(function (err) {
     throw link.error = addToError(err, 'Instantiating ' + load.key);
@@ -457,6 +452,9 @@ function ensureRegister (load) {
 
   link.dependencies = registration[0];
 
+  if (link.dependencies.length === 0)
+    link.allInstantiated = true;
+
   load.importerSetters = [];
 
   // dynamic module
@@ -568,6 +566,9 @@ function moduleEvaluate () {
   if (link.error)
     throw link.error;
 
+  if (link.evaluated)
+    return;
+
   var err = ensureEvaluate(this, []);
   if (err) {
     clearLoadErrors(this.loader, this);
@@ -585,7 +586,13 @@ function ensureEvaluate (load, seen) {
   var link = load.linkRecord;
 
   // no esLinkRecord means evaluated
-  if (!link || link.evaluated)
+  if (!link)
+    return;
+
+  if (link.error)
+    return link.error;
+
+  if (link.evaluated)
     return;
 
   var err, depLoad;
@@ -611,39 +618,32 @@ function ensureEvaluate (load, seen) {
 
   // extra guard in case of overlapping execution graphs
   // eg a Module.evaluate call within a Module.evaluate body
-  if (!link.evaluated) {
-    link.evaluated = true;
-    err = doExecute(link.execute, link.setters && nullContext);
+  link.evaluated = true;
+  err = doExecute(link.execute, link.setters && nullContext);
 
-    if (err)
-      return link.error = addToError(err, 'Evaluating ' + load.key);
+  if (err)
+    return link.error = addToError(err, 'Evaluating ' + load.key);
 
-    // can clear link record now for es modules,
-    // just keeping importerSetters binding metadata
-    load.linkRecord = undefined;
+  // if not an esm module, run importer setters and clear them
+  // this allows dynamic modules to update themselves into es modules
+  // as soon as execution has completed
+  if (!link.setters) {
+    for (var i = 0; i < load.importerSetters.length; i++)
+      load.importerSetters[i](link.moduleObj, load.module);
 
-    // if not an esm module, run importer setters and clear them
-    // this allows dynamic modules to update themselves into es modules
-    // as soon as execution has completed
-    if (!link.setters) {
-      for (var i = 0; i < load.importerSetters.length; i++)
-        load.importerSetters[i](link.moduleObj, load.module);
-
-      // once executed, non-es modules can be removed from the private registry
-      // since we don't need to store binding update metadata
-      if (load.loader._registerRegistry[load.key] === load)
-        load.loader._registerRegistry[load.key] = undefined;
-    }
-
-    // evaluate the namespace to seal the exports
-    // this hits the shortpath in moduleEvaluate as linkRecord is undefined
-    nsEvaluate(load.module);
-    // as evaluated, ensure set in main registry
-    load.loader.registry._registry[load.key] = load.module;
+    // once executed, non-es modules can be removed from the private registry
+    // since we don't need to store binding update metadata
+    if (load.loader._registerRegistry[load.key] === load)
+      load.loader._registerRegistry[load.key] = undefined;
   }
-  else if (link.error) {
-    return link.error;
-  }
+
+  // evaluate the namespace to seal the exports
+  // this hits the shortpath in moduleEvaluate as linkRecord is undefined
+  nsEvaluate(load.module);
+
+  // can clear link record now for es modules,
+  // just keeping importerSetters binding metadata
+  load.linkRecord = undefined;
 }
 
 // {} is the closest we can get to call(undefined)

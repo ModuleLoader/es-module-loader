@@ -181,6 +181,7 @@ Registry.prototype.delete = function (key) {
 var EVALUATE = createSymbol('evaluate');
 var EVALUATION_CONTEXT = createSymbol('evaluationContext');
 var BASE_OBJECT = createSymbol('baseObject');
+var EVALUATE_ERROR = createSymbol()
 
 // 8.3.1 Reflect.Module
 /*
@@ -267,15 +268,12 @@ Module.evaluate = function (ns) {
   if (evaluate) {
     ns[EVALUATE] = undefined;
     var err = doEvaluate(evaluate, ns[EVALUATION_CONTEXT]);
+    ns[EVALUATION_CONTEXT] = undefined;
     if (err) {
-      // effectively cache the evaluation error
-      // to ensure we don't re-run evaluation of the module
-      // before it has been cleared off the registry
-      Object.defineProperty(ns, EVALUATE, {
-        get: function() {
-          throw err;
-        }
-      });
+      // cache the error
+      ns[EVALUATE] = function () {
+        throw err;
+      };
       throw err;
     }
     Object.keys(ns[BASE_OBJECT]).forEach(extendNamespace, ns);
