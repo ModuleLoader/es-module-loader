@@ -96,3 +96,42 @@ function LoaderError__Check_error_message_above_for_loader_stack (childErr, newM
   return err;
 }
 export { LoaderError__Check_error_message_above_for_loader_stack as addToError }
+
+
+
+/*
+ * Convert a CJS module.exports into a valid object for new Module:
+ *
+ *   new Module(getEsModule(module.exports))
+ *
+ * Sets the default value to the module, while also reading off named exports carefully.
+ */
+export function getEsModule(exports, moduleObj) {
+  moduleObj = moduleObj || {};
+  // don't trigger getters/setters in environments that support them
+  if ((typeof exports == 'object' || typeof exports == 'function') && exports !== envGlobal) {
+      for (var p in exports) {
+        // The default property is copied to esModule later on
+        if (p === 'default')
+          continue;
+        defineOrCopyProperty(moduleObj, exports, p);
+      }
+  }
+  esModule['default'] = exports;
+  defineProperty(moduleObj, '__useDefault', { value: true });
+  return moduleObj;
+}
+
+function defineOrCopyProperty(targetObj, sourceObj, propName) {
+  try {
+    var d;
+    if (d = Object.getOwnPropertyDescriptor(sourceObj, propName))
+      defineProperty(targetObj, propName, d);
+  }
+  catch (ex) {
+    // Object.getOwnPropertyDescriptor threw an exception, fall back to normal set property
+    // we dont need hasOwnProperty here because getOwnPropertyDescriptor would have returned undefined above
+    targetObj[propName] = sourceObj[propName];
+    return false;
+  }
+}

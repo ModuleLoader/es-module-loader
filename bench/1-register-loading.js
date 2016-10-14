@@ -672,7 +672,7 @@ function declaredRegisterLoader() {
   return loader;
 }
 
-suite.add('Importing mulitple trees at the same time with RegisterLoader', {
+suite.add('Importing multiple trees at the same time with RegisterLoader', {
   defer: true,
   fn: async function(deferred) {
     var loader = declaredRegisterLoader();
@@ -735,7 +735,7 @@ var allModules = [
   'export-star2.js'
 ];
 
-suite.add('Importing mulitple trees at the same time with SystemJS', {
+suite.add('Importing multiple trees at the same time with SystemJS', {
   defer: true,
   fn: async function(deferred) {
     var loader = declaredSystemJSLoader();
@@ -744,11 +744,11 @@ suite.add('Importing mulitple trees at the same time with SystemJS', {
   }
 });
 
-suite.add('Importing a single registered module with SystemJS', {
+suite.add('Importing a deep tree of modules with SystemJS', {
   defer: true,
   fn: async function(deferred) {
     var loader = declaredSystemJSLoader();
-    await loader.import('no-imports.js');
+    await loader.import('_a.js');
     deferred.resolve();
   }
 });
@@ -762,11 +762,11 @@ suite.add('Importing a module with deps with SystemJS', {
   }
 });
 
-suite.add('Importing a deep tree of modules with SystemJS', {
+suite.add('Importing a single registered module with SystemJS', {
   defer: true,
   fn: async function(deferred) {
     var loader = declaredSystemJSLoader();
-    await loader.import('_a.js');
+    await loader.import('no-imports.js');
     deferred.resolve();
   }
 });

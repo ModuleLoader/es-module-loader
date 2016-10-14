@@ -49,14 +49,36 @@ Loader.prototype.constructor = Loader;
 Loader.prototype.import = function (key, parent) {
   if (typeof key !== 'string')
     throw new TypeError('Loader import method must be passed a module key string');
-  return this.load(key, parent);
+
+  var loader = this;
+
+  // custom resolveInstantiate combined hook for better perf
+  return Promise.resolve(this[RESOLVE_INSTANTIATE](key, parent || this.key))
+  .then(function (module) {
+    // returning a module directly instead of the resolved string
+    // is a (private) optimization to avoid double registry lookups
+    if (typeof module === 'string') {
+      module = loader.registry.get(module);
+      if (!module)
+        throw new Error('Module "' + module + '" was not instantiated correctly.');
+    }
+    Module.evaluate(module);
+    return module;
+  })
+  .catch(function (err) {
+    throw addToError(err, 'Loading ' + key + (parent ? ' from ' + parent : ''));
+  });
 };
 // 3.3.3
 var RESOLVE = Loader.resolve = createSymbol('resolve');
 
-// instantiate sets the namespace into the registry
-// it is up to implementations to ensure instantiate is debounced properly
-var INSTANTIATE = Loader.instantiate = createSymbol('instantiate');
+/*
+ * Combined resolve / instantiate hook
+ *
+ * Not in spec, but necessary to separate RESOLVE from RESOLVE + INSTANTIATE as described in the spec notes
+ * of this repo to ensure that loader.resolve doesn't instantiate when not wanted.
+ */
+var RESOLVE_INSTANTIATE = Loader.resolveInstantiate = createSymbol('resolveInstantiate');
 
 Loader.prototype.resolve = function (key, parent) {
   return this[RESOLVE](key, parent)
@@ -65,36 +87,20 @@ Loader.prototype.resolve = function (key, parent) {
   });
 };
 
-// 3.3.4
+// 3.3.4 (import without evaluate)
 Loader.prototype.load = function (key, parent) {
   var loader = this;
-  var registry = loader.registry._registry;
-
-  var resolvedKey;
-
-  // there is the potential for an internal perf optimization to allow resolve to return { resolved, namespace }
-  // but this needs to be done based on performance measurement
-  return Promise.resolve(this[RESOLVE](key, parent || this.key))
-  .then(function (resolved) {
-    var existingNamespace = registry[resolved];
-
-    if (existingNamespace)
-      return Promise.resolve(existingNamespace);
-
-    return loader[INSTANTIATE](resolved)
-    .then(function (namespace) {
-
-      // returning the namespace from instantiate can be considered a sort of perf optimization
-      if (!namespace)
-        namespace = loader.registry.get(resolvedKey);
-      else if (!(namespace instanceof Module))
-        throw new TypeError('Instantiate did not resolve a Module Namespace');
-
-      return namespace;
-    });
+  return Promise.resolve(this[RESOLVE_INSTANTIATE](key, parent || this.key))
+  .then(function (module) {
+    if (typeof module === 'string') {
+      module = loader.registry.get(module);
+      if (!module)
+        throw new Error('Module "' + module + '" was not instantiated correctly.');
+    }
+    return module;
   })
   .catch(function (err) {
-    throw addToError(err, 'Loading ' + key + (resolvedKey ? ' as ' + resolvedKey : '') + (parent ? ' from ' + parent : ''));
+    throw addToError(err, 'Loading ' + key + (parent ? ' from ' + parent : ''));
   });
 };
 
@@ -173,6 +179,7 @@ Registry.prototype.delete = function (key) {
  * We export this for allowing a fast-path for module namespace creation over Module descriptors
  */
 var EVALUATE = createSymbol('evaluate');
+var EVALUATION_CONTEXT = createSymbol('evaluationContext');
 var BASE_OBJECT = createSymbol('baseObject');
 
 // 8.3.1 Reflect.Module
@@ -196,22 +203,30 @@ var BASE_OBJECT = createSymbol('baseObject');
  *     exports.x = 'x';
  *   }));
  *
+ * evaluationContext is an optional third argument for optimization
+ *  setting the "this" value within the evaluation function
  */
-function Module (baseObject, evaluate) {
+function Module (baseObject, evaluate, evaluationContext) {
   Object.defineProperty(this, BASE_OBJECT, {
-    value: baseObject,
-    writable: true
+    value: baseObject
   });
 
   // evaluate defers namespace population
-  if (evaluate)
+  if (evaluate) {
     Object.defineProperty(this, EVALUATE, {
       value: evaluate,
       configurable: true,
       writable: true
     });
-  else
+    Object.defineProperty(this, EVALUATION_CONTEXT, {
+      value: evaluationContext,
+      configurable: true,
+      writable: true
+    });
+  }
+  else {
     Object.keys(baseObject).forEach(extendNamespace, this);
+  }
 };
 // 8.4.2
 Module.prototype = Object.create(null);
@@ -227,7 +242,6 @@ else
 
 function extendNamespace (key) {
   Object.defineProperty(this, key, {
-    configurable: false,
     enumerable: true,
     get: function () {
       return this[BASE_OBJECT][key];
@@ -238,9 +252,9 @@ function extendNamespace (key) {
   });
 }
 
-function doEvaluate (evaluate) {
+function doEvaluate (evaluate, context) {
   try {
-    evaluate();
+    evaluate.call(context);
   }
   catch (e) {
     return e;
@@ -252,7 +266,7 @@ Module.evaluate = function (ns) {
   var evaluate = ns[EVALUATE];
   if (evaluate) {
     ns[EVALUATE] = undefined;
-    var err = doEvaluate(evaluate);
+    var err = doEvaluate(evaluate, ns[EVALUATION_CONTEXT]);
     if (err) {
       // effectively cache the evaluation error
       // to ensure we don't re-run evaluation of the module

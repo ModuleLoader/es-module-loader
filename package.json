@@ -21,9 +21,9 @@
     }
   ],
   "devDependencies": {
-    "babel-cli": "^6.11.4",
-    "babel-plugin-transform-async-to-generator": "^6.8.0",
-    "babel-plugin-transform-es2015-modules-systemjs": "^6.12.0",
+    "babel-cli": "^6.16.0",
+    "babel-plugin-transform-async-to-generator": "^6.16.0",
+    "babel-plugin-transform-es2015-modules-systemjs": "^6.14.0",
     "benchmark": "^2.1.1",
     "mocha": "^3.0.2",
     "node-es-module-loader": "^0.1.1",

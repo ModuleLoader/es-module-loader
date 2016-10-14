@@ -86,8 +86,7 @@ describe('System Register Loader', function() {
       assert.equal(m1.output2, 'test circular 1');
     });
 
-    // pending https://github.com/babel/babel/pull/3650
-    it.skip('should update circular dependencies', async function() {
+    it('should update circular dependencies', async function() {
       var m = await loader.import('./even.js');
       assert.equal(m.counter, 1);
       assert(m.even(10));

@@ -58,23 +58,13 @@ RegisterLoader.prototype.createMetadata = function () {
 var RESOLVE = Loader.resolve;
 
 RegisterLoader.prototype[RESOLVE] = function (key, parentKey) {
-  var loader = this;
-  var registry = loader.registry._registry;
-
-  // normalization shortpath if already in the registry or loading
-  if (loader._registerRegistry[key] || registry[key])
+  if (loader._registerRegistry[key] || loader.registry._registry[key])
     return Promise.resolve(key);
 
-  var metadata = this.createMetadata();
-  return Promise.resolve(loader.normalize(key, parentKey, metadata))
+  return Promise.resolve(loader.normalize(key, parentKey, {}))
   .then(function (resolvedKey) {
     if (resolvedKey === undefined)
-      throw new RangeError('No resolution normalizing "' + key + '" to ' + parentKey);
-
-    // we create the in-progress load record already here to store the normalization metadata
-    if (!registry[resolvedKey])
-      (loader._registerRegistry[resolvedKey] || createLoadRecord.call(loader, resolvedKey)).metadata = metadata;
-
+      throw new RangeError('No resolution found.');
     return resolvedKey;
   });
 };
@@ -84,169 +74,289 @@ RegisterLoader.prototype[RESOLVE] = function (key, parentKey) {
 // this record represents that waiting period, and when set, we then populate
 // the esLinkRecord record into this load record.
 // instantiate is a promise for a module namespace or undefined
-function createLoadRecord (key) {
+function createLoadRecord (key, registration) {
   return this._registerRegistry[key] = {
     key: key,
-    metadata: undefined,
+    loader: this,
 
-    // define cache
-    defined: undefined,
-    // in-flight
-    instantiatePromise: undefined,
-    // loaded
+    // defineded System.register cache
+    registration: registration,
+
+    linkRecord: {
+      metadata: undefined,
+
+      // in-flight
+      // promise for instantiate result (load / module namespace)
+      instantiatePromise: undefined,
+
+      error: undefined,
+
+      dependencies: undefined,
+
+      // will be the dependency load record, or a module namespace
+      // picked up at linking time
+      dependencyInstantiations: undefined,
+
+      // indicates if module and all its dependencies have been instantiated
+      // implies that dependencyInstantiations is fully populated
+      // means we are ready to execute
+      allInstantiated: false,
+
+      execute: undefined,
+
+      // this lock is necessary just in case a top level execure is called
+      // while alreadu executing
+      evaluated: false,
+
+      // underlying module object
+      moduleObj: undefined,
+
+      // es only
+      setters: undefined
+    },
+
     module: undefined,
 
-    // es-specific
-    esLinkRecord: undefined,
+    // this sticks around so new module loads can listen to binding changes
+    // for already-loaded modules by adding themselves to their importerSetters
     importerSetters: undefined
   };
 }
 
-RegisterLoader.prototype[Loader.instantiate] = function (key) {
+RegisterLoader.prototype[Loader.resolveInstantiate] = function (key, parentKey) {
   var loader = this;
-  return instantiate(this, key)
-  .then(function(instantiated) {
-    if (instantiated instanceof Module)
-      return Promise.resolve(instantiated);
+  var registry = loader.registry._registry;
 
-    return instantiateAllDeps(loader, instantiated, [])
-    .then(function () {
-      var err = ensureEvaluated(loader, instantiated, []);
-      if (err)
-        return Promise.reject(err);
+  if (registry[key])
+    return registry[key];
 
-      if (loader.trace)
-        traceLoadRecord(loader, instantiated, []);
-      return instantiated.module || emptyModule;
+  var metadata;
+  return Promise.resolve()
+  .then(function () {
+    return loader.normalize(key, parentKey, metadata = {});
+  })
+  .then(function (resolvedKey) {
+    if (resolvedKey === undefined)
+      throw new RangeError('No resolution found.');
+
+    if (registry[resolvedKey])
+      return registry[resolvedKey];
+
+    var load = loader._registerRegistry[resolvedKey];
+
+    if (!load) {
+      load = createLoadRecord.call(loader, resolvedKey);
+      load.linkRecord.metadata = metadata;
+    }
+    else if (!load.linkRecord) {
+      // already linked but wasnt found in main registry
+      // means it was removed by registry.delete, so we should
+      // disgard the existing record creating a new one over it
+      // but keep any registration
+      var registration = load && load.registration;
+      load = createLoadRecord.call(loader, resolvedKey);
+      load.registration = registration;
+      load.linkRecord.metadata = metadata;
+    }
+
+    return ensureInstantiate(loader, load)
+    .then(function (module) {
+      if (module)
+        return registry[load.key] = module;
+
+      return ensureInstantiateAllDeps(loader, load, [])
+      .then(function () {
+        return load.module;
+      })
+      .then(function (module) {
+        // we add the top-level load to the registry
+        // this allows deferred execution through loader.load
+        // while keeping the dependency module records private to avoid
+        // conflict scenarios with top-level exeuctions
+        // dependencies are added into the registry as they become evaluated
+        // unless otherwise top-level modules or already evaluated
+        return registry[load.key] = load.module;
+      })
     })
     .catch(function (err) {
-      clearLoadErrors(loader, instantiated);
+      clearLoadErrors(loader, load);
       throw err;
     });
-  })
+  });
 };
 
-// instantiates the given module name
-// returns the load record for es or the namespace object for dynamic
+// instantiates the given load record
 // setting the dynamic namespace into the registry
-function instantiate (loader, key) {
-  var load = loader._registerRegistry[key];
+function ensureInstantiate (loader, load) {
+  var link = load.linkRecord;
 
-  // this is impossible assuming resolve always runs before instantiate
-  if (!load)
-    throw new TypeError('Internal error, load record not created');
+  if (!link)
+    return Promise.resolve(load);
 
-  return load.instantiatePromise || (load.instantiatePromise = Promise.resolve(loader.instantiate(key, load.metadata))
+  if (link.error)
+    return Promise.reject(link.error);
+
+  return link.instantiatePromise || (link.instantiatePromise = Promise.resolve().then(function() {
+    return loader.instantiate(load.key, link.metadata);
+  }))
   .then(function (instantiation) {
-    // dynamic module
+    // direct module return from instantiate -> we're done
     if (instantiation !== undefined) {
-      loader.registry._registry[key] = instantiation;
-      loader._registerRegistry[key] = undefined;
+      if (!(instantiation instanceof module))
+        throw new TypeError('Instantiate did not return a valid Module object.');
       return instantiation;
     }
 
     // run the cached loader.register declaration if there is one
-    ensureRegisterLinkRecord.call(loader, load);
+    ensureRegister.call(loader, load);
+  })
+  .catch(function (err) {
+    throw link.error = addToError(err, 'Instantiating ' + load.key);
+  });
+}
 
-    // metadata no longer needed
-    if (!loader.trace)
-      load.metadata = undefined;
+// this only applies to load records with load.link set
+function ensureInstantiateAllDeps (loader, load, seen) {
+  var link = load.linkRecord;
+
+  // skip if already executed / already all instantiated
+  if (!link || link.allInstantiated)
+    return load;
+
+  if (seen.indexOf(load) !== -1)
+    return load;
+  seen.push(load);
+
+  var instantiateDepsPromises = Array(link.dependencies.length);
+
+  if (loader.trace)
+    load.depMap = {};
+
+  // instantiate dependencies deeply against seen list
+  for (var i = 0; i < link.dependencies.length; i++)
+    instantiateDepsPromises[i] = resolveInstantiateAllDeps.call(loader, link.dependencies[i], load, seen);
+
+  return Promise.all(instantiateDepsPromises)
+  .then(function (dependencyInstantiations) {
+    link.allInstantiated = true;
+    link.dependencyInstantiations = dependencyInstantiations;
+
+    if (loader.trace)
+      loader.loads[load.key] = {
+        key: load.key,
+        dependencies: link.dependencies,
+        depMap: load.depMap,
+        metadata: link.metadata
+      };
+
+    // run setters to set up bindings
+    if (link.setters)
+      for (var i = 0; i < dependencyInstantiations.length; i++) {
+        var setter = link.setters[i];
+        if (setter) {
+          var instantiation = dependencyInstantiations[i];
+
+          if (instantiation instanceof Module) {
+            setter(instantiation, instantiation);
+          }
+          else {
+            setter(instantiation.linkRecord && instantiation.linkRecord.moduleObj || instantiation.module, instantiation.module);
+            // this applies to both es and dynamic registrations
+            instantiation.importerSetters.push(setter);
+          }
+        }
+      }
 
     return load;
   })
   .catch(function (err) {
-    err = addToError(err, 'Instantiating ' + load.key);
-
-    // immediately clear the load record for an instantiation error
-    if (loader._registerRegistry[load.key] === load)
-      loader._registerRegistry[load.key] = undefined;
-
-    throw err;
-  }));
-}
-
-// this only applies to load records with load.esLinkRecord set
-function instantiateAllDeps (loader, load, seen) {
-  // skip if already linked
-  if (load.module)
-    return Promise.resolve();
-
-  var esLinkRecord = load.esLinkRecord;
-
-  // no dependencies shortpath
-  if (!esLinkRecord.dependencies.length)
-    return Promise.resolve();
-
-  // assumes seen does not contain load already
-  seen.push(load);
-
-  var instantiateDepsPromises = Array(esLinkRecord.dependencies.length);
-  var registry = loader.registry._registry;
-
-  // normalize dependencies
-  for (var i = 0; i < esLinkRecord.dependencies.length; i++) (function(i) {
-    // this resolve can potentially be cached on the link record, should be a measured optimization
-    instantiateDepsPromises[i] = loader[RESOLVE](esLinkRecord.dependencies[i], load.key)
-    .catch(function (err) {
-      throw addToError(err, 'Resolving ' + esLinkRecord.dependencies[i] + ' to ' + load.key);
-    })
-    .then(function (resolvedDepKey) {
-      if (loader.trace) {
-        esLinkRecord.depMap = esLinkRecord.depMap || {};
-        esLinkRecord.depMap[esLinkRecord.dependencies[i]] = resolvedDepKey;
-      }
-
-      var existingNamespace = registry[resolvedDepKey];
-      if (existingNamespace) {
-        esLinkRecord.dependencyInstantiations[i] = existingNamespace;
-        // run setter to reference the module
-        if (esLinkRecord.setters[i])
-          esLinkRecord.setters[i](existingNamespace);
-        return Promise.resolve();
-      }
-
-      return instantiate(loader, resolvedDepKey)
-      .then(function (instantiation) {
-        // instantiation is either a load record or a module namespace
-        esLinkRecord.dependencyInstantiations[i] = instantiation;
-
-        // dynamic module
-        if (instantiation instanceof Module) {
-          if (esLinkRecord.setters[i])
-            esLinkRecord.setters[i](instantiation);
-          return Promise.resolve();
-        }
-
-        // register setter with dependency
-        instantiation.importerSetters.push(esLinkRecord.setters[i]);
-
-        // run setter now to pick up the first bindings from the dependency
-        if (esLinkRecord.setters[i])
-          esLinkRecord.setters[i](instantiation.esLinkRecord.moduleObj);
-
-        // circular
-        if (seen.indexOf(instantiation) !== -1)
-          return Promise.resolve();
-
-        // es module load
-
-        // if not already linked, instantiate dependencies
-        if (instantiation.esLinkRecord)
-          return instantiateAllDeps(loader, instantiation, seen);
-      });
-    })
-  })(i);
-
-  return Promise.all(instantiateDepsPromises)
-  .catch(function (err) {
     err = addToError(err, 'Loading ' + load.key);
 
-    // throw up the instantiateAllDeps stack
-    // loads are then synchonously cleared at the top-level through the helper below
+    // throw up the instantiateAll stack
+    // loads are then synchonously cleared at the top-level through the clearLoadErrors helper below
     // this then ensures avoiding partially unloaded tree states
-    esLinkRecord.error = err;
+    link.error = link.error || err;
 
     throw err;
+  });
+}
+
+// just like resolveInstantiate, but with a seen list to handle instantiateAll subtrees
+// this is used to instantiate dependencies in ensureInstantiateAllDeps
+function resolveInstantiateAllDeps (key, parentLoad, seen) {
+  var loader = this;
+  var registry = loader.registry._registry;
+
+  var load = loader._registerRegistry[key];
+  if (registry[key]) {
+    // tracing
+    if (parentLoad.depMap)
+      parentLoad.depMap[key] = key;
+
+    // only use the load record if it matches the registry
+    // the registry always has authoritative preference over registerRegistry
+    if (load && registry[key] === load.module)
+      return load;
+    else
+      return registry[key];
+  }
+  // only use the load if not in the registry if its linking
+  // otherwise that indicates it was deleted from the main registry
+  else if (load && load.linkRecord) {
+    // tracing
+    if (parentLoad.depMap)
+      parentLoad.depMap[key] = key;
+
+    return ensureInstantiate(loader, load)
+    .then(function (module) {
+      if (module)
+        return module;
+
+      return ensureInstantiateAllDeps(loader, load, seen);
+    });
+  }
+
+  var metadata;
+  return Promise.resolve()
+  .then(function () {
+    return loader.normalize(key, parentLoad.key, metadata = {});
+  })
+  .then(function (resolvedKey) {
+    if (resolvedKey === undefined)
+      throw new RangeError('No resolution found.');
+
+    // for tracing
+    if (parentLoad.depMap)
+      parentLoad.depMap[key] = resolvedKey;
+
+    // similar logic to above
+    var load = loader._registerRegistry[resolvedKey];
+    if (registry[resolvedKey]) {
+      if (!load || registry[resolvedKey] !== load.module)
+        return registry[resolvedKey];
+    }
+    else if (!load) {
+      load = createLoadRecord.call(loader, resolvedKey);
+      load.linkRecord.metadata = metadata;
+    }
+    else if (!load.linkRecord) {
+      // already linked but wasnt found in main registry
+      // means it was removed by registry.delete, so we should
+      // disgard the existing record creating a new one over it
+      // but keep any registration
+      var registration = load && load.registration;
+      load = createLoadRecord.call(loader, resolvedKey);
+      load.registration = registration;
+      load.linkRecord.metadata = metadata;
+    }
+
+    return ensureInstantiate(loader, load)
+    .then(function (module) {
+      if (module)
+        return module;
+
+      return ensureInstantiateAllDeps(loader, load, seen);
+    });
   });
 }
 
@@ -256,57 +366,72 @@ function clearLoadErrors (loader, load) {
   if (loader._registerRegistry[load.key] === load)
     loader._registerRegistry[load.key] = undefined;
 
-  var esLinkRecord = load.esLinkRecord;
+  var link = load.linkRecord;
 
-  if (!esLinkRecord)
+  if (!link)
     return;
 
-  esLinkRecord.dependencyInstantiations.forEach(function (depLoad, index) {
-    if (!depLoad || depLoad instanceof Module)
-      return;
+  if (link.dependencyInstantiations)
+    link.dependencyInstantiations.forEach(function (depLoad, index) {
+      if (!depLoad || depLoad instanceof Module)
+        return;
 
-    if (depLoad.esLinkRecord && depLoad.esLinkRecord.error) {
-      // unregister setters for es dependency load records
-      var setterIndex = depLoad.importerSetters.indexOf(esLinkRecord.setters[index]);
-      depLoad.importerSetters.splice(setterIndex, 1);
-
-      // provides a circular reference check
-      if (loader._registerRegistry[depLoad.key] === depLoad)
-        clearLoadErrors(loader, depLoad);
-    }
-  });
-}
-
-function createESLinkRecord (dependencies, setters, module, moduleObj, execute) {
-  return {
-    dependencies: dependencies,
-
-    error: undefined,
-
-    // will be the dependency ES load record, or a module namespace
-    dependencyInstantiations: Array(dependencies.length),
-
-    setters: setters,
-
-    module: module,
-    moduleObj: moduleObj,
-    execute: execute
-  };
+      if (depLoad.linkRecord) {
+        if (depLoad.linkRecord.error) {
+          // provides a circular reference check
+          if (loader._registerRegistry[depLoad.key] === depLoad)
+            clearLoadErrors(loader, depLoad);
+        }
+        // unregister setters for es dependency load records that will remain
+        else if (depLoad.importerSetters) {
+          var setterIndex = depLoad.importerSetters.indexOf(link.setters[index]);
+          depLoad.importerSetters.splice(setterIndex, 1);
+        }
+      }
+    });
 }
 
 /*
  * System.register
- * Places the status into the registry and a load into the loads list
  */
 RegisterLoader.prototype.register = function (key, deps, declare) {
   // anonymous modules get stored as lastAnon
-  if (declare === undefined)
-    this._registeredLastAnon = [key, deps];
+  if (declare === undefined) {
+    this._registeredLastAnon = [key, deps, false];
+  }
 
   // everything else registers into the register cache
-  else
-    (this._registerRegistry[key] || createLoadRecord.call(this, key)).defined = [deps, declare];
+  else {
+    var load = this._registerRegistry[key] || createLoadRecord.call(this, key);
+    load.registration = [deps, declare, false];
+  }
 };
+
+/*
+ * System.registerDyanmic
+ */
+RegisterLoader.prototype.registerDynamic = function (key, deps, execute) {
+  // anonymous modules get stored as lastAnon
+  if (typeof key !== 'string') {
+    this._registeredLastAnon = [key, deps === true && execute || deps === false && makeExecutingRequire(key, execute) || deps, true];
+  }
+
+  // everything else registers into the register cache
+  else {
+    var load = this._registerRegistry[key] || createLoadRecord.call(this, key);
+    load.registration = [deps, execute === true && arguments[3] || execute === false && makeExecutingRequire(key, arguments[3]) || execute, true];
+  }
+};
+function makeNonExecutingRequire (deps, execute) {
+  return function(require) {
+    // evaluate deps first
+    for (var i = 0; i < deps.length; i++)
+      require(deps[i]);
+
+    // then run execution function
+    return execute.apply(this, arguments);
+  };
+}
 
 RegisterLoader.prototype.processRegisterContext = function (contextKey) {
   var registeredLastAnon = this._registeredLastAnon;
@@ -317,68 +442,102 @@ RegisterLoader.prototype.processRegisterContext = function (contextKey) {
   this._registeredLastAnon = undefined;
 
   // returning the defined value allows avoiding an extra lookup for custom instantiate
-  return (this._registerRegistry[contextKey] || createLoadRecord.call(this, contextKey)).defined = registeredLastAnon;
+  var load = this._registerRegistry[contextKey] || createLoadRecord.call(this, contextKey);
+  load.registration = registeredLastAnon;
 };
 
-function ensureRegisterLinkRecord (load) {
-  // ensure we already have a link record
-  if (load.esLinkRecord)
-    return;
+function ensureRegister (load) {
+  var link = load.linkRecord;
 
-  var key = load.key;
-  var registrationPair = load.defined;
-
-  if (!registrationPair)
+  var registration = load.registration;
+  // clear to allow new registrations for future loads (combined with registry delete)
+  load.registration = undefined;
+  if (!registration)
     throw new TypeError('Module instantiation did not call an anonymous or correctly named System.register.');
 
-  load.defined = undefined;
+  link.dependencies = registration[0];
+  load.importerSetters = [];
 
-  var importerSetters = [];
+  // dynamic module
+  if (registration[2]) {
+    var moduleObj = link.moduleObj = {};
 
-  var moduleObj = {};
+    // NB manage this so we can actually dispose the load record!
+    function require (name) {
+      for (var i = 0; i < load.dependencies.length; i++) {
+        if (load.dependencies[i] === name) {
+          var depLoad = load.dependencyInstantiations[i];
+          var err;
+          if (depLoad instanceof Module)
+            err = Module.evaluate(depLoad);
+          else
+            err = ensureEvaluate(depLoad, [load]);
 
-  var locked = false;
+          if (err)
+            throw addToError(err, 'Calling require(\'' + name + '\') within ' + load.key);
 
-  var declared = registrationPair[1].call(global, function (name, value) {
-    // export setter propogation with locking to avoid cycles
-    if (locked)
-      return;
-
-    if (typeof name == 'object') {
-      for (var p in name)
-        moduleObj[p] = name[p];
+          var module = depLoad instanceof Module ? depLoad : depLoad.module;
+          return module.__useDefault ? module.default : module;
+        }
+      }
+      throw new Error('Module ' + name + ' not declared as a System.registerDynamic dependency of ' + load.key);
     }
-    else {
-      moduleObj[name] = value;
-    }
 
-    if (importerSetters.length) {
+    var execute = registration[1];
+    load.execute = function evaluate () {
+      var exports = moduleObj.default = {};
+      var module = { exports: exports, id: load.key };
+      getESModule(execute(require, exports, module) || module.exports, moduleObj);
+    }
+    load.module = new Module(moduleObj, moduleEvaluate, load);
+  }
+  // declarative module
+  else {
+    var moduleObj = link.moduleObj = {};
+    var module;
+
+    var importerSetters = load.importerSetters;
+
+    var locked = false;
+    var declared = registration[1].call(global, function (name, value) {
+      // export setter propogation with locking to avoid cycles
+      if (locked)
+        return;
+
+      if (typeof name == 'object') {
+        for (var p in name)
+          moduleObj[p] = name[p];
+      }
+      else {
+        moduleObj[name] = value;
+      }
+
       locked = true;
       for (var i = 0; i < importerSetters.length; i++)
-        // this object should be a defined module object
-        // but in order to do that we need the exports returned by declare
-        // for now we assume no exports in the implementation
-        importerSetters[i](moduleObj);
-
+        // temporary solution to problem of bindings obj v module namespace
+        // module namespace does not have export bindings present until it is executed
+        // so bindings object is used to show bindings until then
+        // but import * as X will then get this bindings object not a namespace
+        // by providing both as separate arguments, transpilers can manage intent
+        // ideally extensible namespace constructor could avoid this, but otherwise
+        // we can stick with this two-argument approach
+        importerSetters[i](moduleObj, module);
       locked = false;
+
+      return value;
+    }, new ContextualLoader(this, load.key));
+
+    if (typeof declared !== 'function') {
+      link.setters = declared.setters;
+      link.execute = declared.execute;
     }
-    return value;
-  }, new ContextualLoader(this, key));
+    else {
+      link.setters = [];
+      link.execute = declared;
+    }
 
-  var setters, execute;
-
-  if (typeof declared !== 'function') {
-    setters = declared.setters;
-    execute = declared.execute;
+    module = load.module = new Module(moduleObj, moduleEvaluate, load);
   }
-  else {
-    setters = [],
-    execute = declared;
-  }
-
-  // TODO, pass module when we can create it here already via exports
-  load.importerSetters = importerSetters;
-  load.esLinkRecord = createESLinkRecord(registrationPair[0], setters, undefined, moduleObj, execute);
 }
 
 // ContextualLoader class
@@ -400,93 +559,110 @@ ContextualLoader.prototype.load = function (key) {
   return this.loader.load(key, this.key);
 };
 
-// ensures the given es load is evaluated
-// returns the error if any
-function ensureEvaluated (loader, load, seen) {
-  var esLinkRecord = load.esLinkRecord;
-
-  // no esLinkRecord means evaluated
-  if (!esLinkRecord)
+function moduleEvaluate () {
+  var link = this.linkRecord;
+  if (!link)
     return;
 
-  // assumes seen does not contain load already
+  if (link.error)
+    throw link.error;
+
+  var err = ensureEvaluate(this, []);
+  if (err) {
+    clearLoadErrors(this.loader, this);
+    throw err;
+  }
+
+  // NB compare perf with clear loads batch here post-execute instead of ensure
+}
+
+// ensures the given es load is evaluated
+// returns the error if any
+function ensureEvaluate (load, seen) {
   seen.push(load);
+
+  var link = load.linkRecord;
+
+  // no esLinkRecord means evaluated
+  if (!link || link.evaluated)
+    return;
 
   var err, depLoad;
 
-  for (var i = 0; i < esLinkRecord.dependencies.length; i++) {
-    depLoad = esLinkRecord.dependencyInstantiations[i];
+  // es modules evaluate dependencies first
+  // non es modules explicitly call ensureEvaluate through require
+  if (link.setters)
+    for (var i = 0; i < link.dependencies.length; i++) {
+      depLoad = link.dependencyInstantiations[i];
 
-    // non ES load
+      // custom Module returned from instantiate
+      // it is the responsibility of the executor to remove the module from the registry on failure
+      if (depLoad instanceof Module)
+        err = nsEvaluate(depLoad);
 
-    // it is the responsibility of the executor to remove the module from the registry on failure
-    if (depLoad instanceof Module)
-      err = namespaceEvaluate(depLoad);
+      // ES or dynamic execute
+      else if (seen.indexOf(depLoad) === -1)
+        err = ensureEvaluate(depLoad, seen);
 
-    // ES load
-    else if (seen.indexOf(depLoad) === -1)
-      err = ensureEvaluated(loader, depLoad, seen);
+      if (err)
+        return link.error = addToError(err, 'Evaluating ' + load.key);
+    }
+
+  // extra guard in case of overlapping execution graphs
+  // eg a Module.evaluate call within a Module.evaluate body
+  if (!link.evaluated) {
+    link.evaluated = true;
+    err = doExecute(link.execute, link.setters && nullContext);
 
     if (err)
-      return addToError(err, 'Evaluating ' + load.key);
+      return link.error = addToError(err, 'Evaluating ' + load.key);
+
+    // can clear link record now for es modules,
+    // just keeping importerSetters binding metadata
+    load.linkRecord = undefined;
+
+    // if not an esm module, run importer setters and clear them
+    // this allows dynamic modules to update themselves into es modules
+    // as soon as execution has completed
+    if (!link.setters) {
+      for (var i = 0; i < load.importerSetters.length; i++)
+        load.importerSetters[i](link.moduleObj, load.module);
+
+      // once executed, non-es modules can be removed from the private registry
+      // since we don't need to store binding update metadata
+      if (load.loader._registerRegistry[load.key] === load)
+        load.loader._registerRegistry[load.key] = undefined;
+    }
+
+    // evaluate the namespace to seal the exports
+    // this hits the shortpath in moduleEvaluate as linkRecord is undefined
+    nsEvaluate(load.module);
+    // as evaluated, ensure set in main registry
+    load.loader.registry._registry[load.key] = load.module;
   }
-
-  // es load record evaluation
-  err = esEvaluate(esLinkRecord);
-
-  if (err)
-    return addToError(err, 'Evaluating ' + load.key);
-
-  load.module = new Module(esLinkRecord.moduleObj);
-  loader.registry._registry[load.key] = load.module;
-
-  // can clear link record now
-  if (!loader.trace)
-    load.esLinkRecord = undefined;
+  else if (link.error) {
+    return link.error;
+  }
 }
 
-var execContext = {};
+// {} is the closest we can get to call(undefined)
+var nullContext = {};
 if (Object.freeze)
-  Object.freeze(execContext);
-
-function esEvaluate (esLinkRecord) {
+  Object.freeze(nullContext);
+function doExecute (execute, context) {
   try {
-    // {} is the closest we can get to call(undefined)
-    // this should really be blocked earlier though
-    esLinkRecord.execute.call(execContext);
+    execute.call(context);
   }
-  catch (err) {
-    return err;
-  }
-}
-function namespaceEvaluate (namespace) {
-  try {
-    Module.evaluate(namespace);
-  }
-  catch (err) {
-    return err;
+  catch (e) {
+    return e;
   }
 }
 
-function traceLoadRecord (loader, load, seen) {
-  // its up to dynamic instantiate layers to ensure their own traces are present
-  if (load instanceof Module)
-    return;
-
-  seen.push(load);
-
-  if (!load.esLinkRecord || load.esLinkRecord.dependencies.length && !load.esLinkRecord.depMap)
-    throw new Error('Tracing error, ensure loader.trace is set before loading begins');
-
-  loader.loads[load.key] = {
-    key: load.key,
-    dependencies: load.esLinkRecord.dependencies,
-    depMap: load.esLinkRecord.depMap || {},
-    metadata: load.metadata
-  };
-
-  load.esLinkRecord.dependencyInstantiations.forEach(function (dep) {
-    if (seen.indexOf(dep) === -1)
-      traceLoadRecord(loader, dep, seen);
-  });
+function nsEvaluate (ns) {
+  try {
+    Module.evaluate(ns);
+  }
+  catch (e) {
+    return e;
+  }
 }
