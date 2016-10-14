@@ -672,24 +672,40 @@ function declaredRegisterLoader() {
   return loader;
 }
 
-suite.add('Importing mulitple trees at the same time with RegisterLoader', async function() {
-  var loader = declaredRegisterLoader();
-  await Promise.all(allModules.map(m => loader.import(m)));
+suite.add('Importing mulitple trees at the same time with RegisterLoader', {
+  defer: true,
+  fn: async function(deferred) {
+    var loader = declaredRegisterLoader();
+    await Promise.all(allModules.map(m => loader.import(m)));
+    deferred.resolve();
+  }
 });
 
-suite.add('Importing a deep tree of modules with RegisterLoader', async function() {
-  var loader = declaredRegisterLoader();
-  await loader.import('_a.js');
+suite.add('Importing a deep tree of modules with RegisterLoader', {
+  defer: true,
+  fn: async function(deferred) {
+    var loader = declaredRegisterLoader();
+    await loader.import('_a.js');
+    deferred.resolve();
+  }
 });
 
-suite.add('Importing a module with deps with RegisterLoader', async function() {
-  var loader = declaredRegisterLoader();
-  await loader.import('es6-withdep.js');
+suite.add('Importing a module with deps with RegisterLoader', {
+  defer: true,
+  fn: async function(deferred) {
+    var loader = declaredRegisterLoader();
+    await loader.import('es6-withdep.js');
+    deferred.resolve();
+  }
 });
 
-suite.add('Importing a single registered module with RegisterLoader', async function() {
-  var loader = declaredRegisterLoader();
-  await loader.import('no-imports.js');
+suite.add('Importing a single registered module with RegisterLoader', {
+  defer: true,
+  fn: async function(deferred) {
+    var loader = declaredRegisterLoader();
+    await loader.import('no-imports.js');
+    deferred.resolve();
+  }
 });
 
 var allModules = [
@@ -719,22 +735,38 @@ var allModules = [
   'export-star2.js'
 ];
 
-suite.add('Importing mulitple trees at the same time with SystemJS', async function() {
-  var loader = declaredSystemJSLoader();
-  await Promise.all(allModules.map(m => loader.import(m)));
+suite.add('Importing mulitple trees at the same time with SystemJS', {
+  defer: true,
+  fn: async function(deferred) {
+    var loader = declaredSystemJSLoader();
+    await Promise.all(allModules.map(m => loader.import(m)));
+    deferred.resolve();
+  }
 });
 
-suite.add('Importing a single registered module with SystemJS', async function() {
-  var loader = declaredSystemJSLoader();
-  await loader.import('no-imports.js');
+suite.add('Importing a single registered module with SystemJS', {
+  defer: true,
+  fn: async function(deferred) {
+    var loader = declaredSystemJSLoader();
+    await loader.import('no-imports.js');
+    deferred.resolve();
+  }
 });
 
-suite.add('Importing a module with deps with SystemJS', async function() {
-  var loader = declaredSystemJSLoader();
-  await loader.import('es6-withdep.js');
+suite.add('Importing a module with deps with SystemJS', {
+  defer: true,
+  fn: async function(deferred) {
+    var loader = declaredSystemJSLoader();
+    await loader.import('es6-withdep.js');
+    deferred.resolve();
+  }
 });
 
-suite.add('Importing a deep tree of modules with SystemJS', async function() {
-  var loader = declaredSystemJSLoader();
-  await loader.import('_a.js');
+suite.add('Importing a deep tree of modules with SystemJS', {
+  defer: true,
+  fn: async function(deferred) {
+    var loader = declaredSystemJSLoader();
+    await loader.import('_a.js');
+    deferred.resolve();
+  }
 });
