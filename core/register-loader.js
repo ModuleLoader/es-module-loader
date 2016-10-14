@@ -104,7 +104,7 @@ function createLoadRecord (key, registration) {
 
       execute: undefined,
 
-      // this lock is necessary just in case a top level execure is called
+      // this lock is necessary just in case a top level execute is called
       // while alreadu executing
       evaluated: false,
 
@@ -190,7 +190,7 @@ RegisterLoader.prototype[Loader.resolveInstantiate] = function (key, parentKey) 
 function ensureInstantiate (loader, load) {
   var link = load.linkRecord;
 
-  if (!link)
+  if (!link || link.allInstantiated)
     return Promise.resolve(load);
 
   if (link.error)
@@ -221,10 +221,10 @@ function ensureInstantiateAllDeps (loader, load, seen) {
 
   // skip if already executed / already all instantiated
   if (!link || link.allInstantiated)
-    return load;
+    return Promise.resolve(load);
 
   if (seen.indexOf(load) !== -1)
-    return load;
+    return Promise.resolve(load);
   seen.push(load);
 
   var instantiateDepsPromises = Array(link.dependencies.length);
@@ -456,6 +456,7 @@ function ensureRegister (load) {
     throw new TypeError('Module instantiation did not call an anonymous or correctly named System.register.');
 
   link.dependencies = registration[0];
+
   load.importerSetters = [];
 
   // dynamic module
