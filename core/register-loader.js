@@ -65,7 +65,7 @@ RegisterLoader.prototype[RESOLVE] = function (key, parentKey) {
   if (loader[REGISTER_REGISTRY][key] || loader.registry._registry[key])
     return Promise.resolve(key);
 
-  return Promise.resolve(loader.normalize(key, parentKey, {}))
+  return Promise.resolve(loader.normalize(key, parentKey, this.createMetadata()))
   .then(function (resolvedKey) {
     if (resolvedKey === undefined)
       throw new RangeError('No resolution found.');
@@ -73,6 +73,9 @@ RegisterLoader.prototype[RESOLVE] = function (key, parentKey) {
   });
 };
 
+// once executed, the linkRecord is set to undefined leaving just the other load record properties
+// this allows tracking new binding listeners for es modules through importerSetters
+// for dynamic modules, the load record is removed entirely.
 function createLoadRecord (key, registration) {
   return this[REGISTER_REGISTRY][key] = {
     key: key,
@@ -154,15 +157,9 @@ RegisterLoader.prototype[Loader.resolveInstantiate] = function (key, parentKey) 
     var link = load.linkRecord;
     link.metadata = link.metadata || metadata;
 
-    return ensureInstantiate(loader, load, link, registry, registerRegistry)
-    .then(function (module) {
-      if (module)
-        return module;
-
-      return ensureInstantiateAllDeps(loader, load, link, registry, registerRegistry, [])
-      .then(function () {
-        return load.module;
-      });
+    return instantiateAll(loader, load, link, registry, registerRegistry, [])
+    .then(function () {
+      return load.module;
     })
     .catch(function (err) {
       clearLoadErrors(loader, load);
@@ -171,13 +168,8 @@ RegisterLoader.prototype[Loader.resolveInstantiate] = function (key, parentKey) 
   });
 };
 
-// instantiates the given load record
-// setting the dynamic namespace into the registry
-function ensureInstantiate (loader, load, link, registry, registerRegistry) {
-  if (link.instantiatePromise)
-    return link.instantiatePromise;
-
-  return link.instantiatePromise = Promise.resolve()
+function instantiateAll (loader, load, link, registry, registerRegistry, seen) {
+  return (link.instantiatePromise || (link.instantiatePromise = Promise.resolve()
   .then(function() {
     return loader.instantiate(load.key, link.metadata);
   })
@@ -186,12 +178,14 @@ function ensureInstantiate (loader, load, link, registry, registerRegistry) {
     if (instantiation !== undefined) {
       if (!(instantiation instanceof module))
         throw new TypeError('Instantiate did not return a valid Module object.');
-      return instantiation;
+
+      return registry[load.key] = load.module = instantiation;
     }
 
     // run the cached loader.register declaration if there is one
     var registration = load.registration;
     // clear to allow new registrations for future loads (combined with registry delete)
+    // NB try deferring registration removal?
     load.registration = undefined;
     if (!registration)
       throw new TypeError('Module instantiation did not call an anonymous or correctly named System.register.');
@@ -216,6 +210,68 @@ function ensureInstantiate (loader, load, link, registry, registerRegistry) {
   })
   .catch(function (err) {
     throw link.error = addToError(err, 'Instantiating ' + load.key);
+  })))
+  .then (function (module) {
+    if (module)
+      return module;
+
+    if (link.allInstantiated || seen.indexOf(load) !== -1)
+      return load;
+
+    seen.push(load);
+
+    var instantiateDepsPromises = Array(link.dependencies.length);
+
+    if (loader.trace)
+      load.depMap = {};
+
+    // instantiate dependencies deeply against seen list
+    for (var i = 0; i < link.dependencies.length; i++)
+      instantiateDepsPromises[i] = resolveInstantiateAllDeps.call(loader, link.dependencies[i], load, registry, registerRegistry, seen);
+
+    return Promise.all(instantiateDepsPromises)
+    .then(function (dependencyInstantiations) {
+      link.allInstantiated = true;
+      link.dependencyInstantiations = dependencyInstantiations;
+
+      if (loader.trace)
+        loader.loads[load.key] = {
+          key: load.key,
+          dependencies: link.dependencies,
+          depMap: load.depMap,
+          metadata: link.metadata
+        };
+
+      // run setters to set up bindings to instantiated dependencies
+      if (link.setters)
+        for (var i = 0; i < dependencyInstantiations.length; i++) {
+          var setter = link.setters[i];
+          if (setter) {
+            var instantiation = dependencyInstantiations[i];
+
+            if (instantiation instanceof Module) {
+              setter(instantiation, instantiation);
+            }
+            else {
+              setter(instantiation.linkRecord && instantiation.linkRecord.moduleObj || instantiation.module, instantiation.module);
+              // this applies to both es and dynamic registrations
+              instantiation.importerSetters.push(setter);
+            }
+          }
+        }
+
+      return load;
+    })
+    .catch(function (err) {
+      err = addToError(err, 'Loading ' + load.key);
+
+      // throw up the instantiateAll stack
+      // loads are then synchonously cleared at the top-level through the clearLoadErrors helper below
+      // this then ensures avoiding partially unloaded tree states
+      link.error = link.error || err;
+
+      throw err;
+    });
   });
 }
 
@@ -297,72 +353,9 @@ function registerDeclarative (load, link, declare) {
   }
 }
 
-// this only applies to load records with load.link set
-function ensureInstantiateAllDeps (loader, load, link, registry, registerRegistry, seen) {
-  // skip if already executed / already all instantiated
-  if (!link || link.allInstantiated)
-    return Promise.resolve(load);
-
-  if (seen.indexOf(load) !== -1)
-    return Promise.resolve(load);
-  seen.push(load);
-
-  var instantiateDepsPromises = Array(link.dependencies.length);
-
-  if (loader.trace)
-    load.depMap = {};
-
-  // instantiate dependencies deeply against seen list
-  for (var i = 0; i < link.dependencies.length; i++)
-    instantiateDepsPromises[i] = resolveInstantiateAllDeps.call(loader, link.dependencies[i], load, registry, registerRegistry, seen);
-
-  return Promise.all(instantiateDepsPromises)
-  .then(function (dependencyInstantiations) {
-    link.allInstantiated = true;
-    link.dependencyInstantiations = dependencyInstantiations;
-
-    if (loader.trace)
-      loader.loads[load.key] = {
-        key: load.key,
-        dependencies: link.dependencies,
-        depMap: load.depMap,
-        metadata: link.metadata
-      };
-
-    // run setters to set up bindings to instantiated dependencies
-    if (link.setters)
-      for (var i = 0; i < dependencyInstantiations.length; i++) {
-        var setter = link.setters[i];
-        if (setter) {
-          var instantiation = dependencyInstantiations[i];
-
-          if (instantiation instanceof Module) {
-            setter(instantiation, instantiation);
-          }
-          else {
-            setter(instantiation.linkRecord && instantiation.linkRecord.moduleObj || instantiation.module, instantiation.module);
-            // this applies to both es and dynamic registrations
-            instantiation.importerSetters.push(setter);
-          }
-        }
-      }
-
-    return load;
-  })
-  .catch(function (err) {
-    err = addToError(err, 'Loading ' + load.key);
-
-    // throw up the instantiateAll stack
-    // loads are then synchonously cleared at the top-level through the clearLoadErrors helper below
-    // this then ensures avoiding partially unloaded tree states
-    link.error = link.error || err;
-
-    throw err;
-  });
-}
-
 // just like resolveInstantiate, but with a seen list to handle instantiateAll subtrees
-// this is used to instantiate dependencies in ensureInstantiateAllDeps
+// also picks up from the registry slightly differently, using internal load records over public registry
+// to ensure we have linking metadata to send back to instantiateAll
 function resolveInstantiateAllDeps (key, parentLoad, registry, registerRegistry, seen) {
   var loader = this;
 
@@ -388,13 +381,7 @@ function resolveInstantiateAllDeps (key, parentLoad, registry, registerRegistry,
     if (parentLoad.depMap)
       parentLoad.depMap[key] = key;
 
-    return ensureInstantiate(loader, load, link, registry, registerRegistry)
-    .then(function (module) {
-      if (module)
-        return module;
-
-      return ensureInstantiateAllDeps(loader, load, link, registry, registerRegistry, seen);
-    });
+    return instantiateAll(loader, load, link, registry, registerRegistry, seen);
   }
 
   var metadata = this.createMetadata();
@@ -412,10 +399,8 @@ function resolveInstantiateAllDeps (key, parentLoad, registry, registerRegistry,
 
     // similar logic to above
     load = registerRegistry[resolvedKey];
-    if (registry[resolvedKey]) {
-      if (!load || registry[resolvedKey] !== load.module)
-        return registry[resolvedKey];
-    }
+    if (registry[resolvedKey] && (!load || registry[resolvedKey] !== load.module))
+      return registry[resolvedKey];
 
     // already linked but wasnt found in main registry
     // means it was removed by registry.delete, so we should
@@ -427,13 +412,7 @@ function resolveInstantiateAllDeps (key, parentLoad, registry, registerRegistry,
     link = load.linkRecord;
     link.metadata = link.metadata || metadata;
 
-    return ensureInstantiate(loader, load, link, registry, registerRegistry)
-    .then(function (module) {
-      if (module)
-        return module;
-
-      return ensureInstantiateAllDeps(loader, load, link, registry, registerRegistry, seen);
-    });
+    return instantiateAll(loader, load, link, registry, registerRegistry, seen);
   });
 }
 
@@ -495,7 +474,7 @@ RegisterLoader.prototype.registerDynamic = function (key, deps, execute) {
 
   // everything else registers into the register cache
   else {
-    var load = this[REGISTER_REGISTRY][key] || createLoadRecord.call(this, key);
+    var load = this[REGISTER_REGISTRY][key] || createLoadRecord.call(this, key, undefined);
     load.registration = [deps, execute === true && arguments[3] || execute === false && makeExecutingRequire(key, arguments[3]) || execute, true];
   }
 };
@@ -519,7 +498,7 @@ RegisterLoader.prototype.processRegisterContext = function (contextKey) {
   this[REGISTERED_LAST_ANON] = undefined;
 
   // returning the defined value allows avoiding an extra lookup for custom instantiate
-  var load = this[REGISTER_REGISTRY][contextKey] || createLoadRecord.call(this, contextKey);
+  var load = this[REGISTER_REGISTRY][contextKey] || createLoadRecord.call(this, contextKey, undefined);
   load.registration = registeredLastAnon;
 };
 
@@ -542,6 +521,7 @@ ContextualLoader.prototype.load = function (key) {
   return this.loader.load(key, this.key);
 };
 
+// this is the execution function bound to the Module namespace record
 function moduleEvaluate () {
   var link = this.linkRecord;
   if (!link)
