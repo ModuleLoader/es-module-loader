@@ -73,13 +73,13 @@ RegisterLoader.prototype[RESOLVE] = function (key, parentKey) {
   });
 };
 
-function createLoadRecord (key) {
+function createLoadRecord (key, registration) {
   return this[REGISTER_REGISTRY][key] = {
     key: key,
     loader: this,
 
     // defined System.register cache
-    registration: undefined,
+    registration: registration,
 
     linkRecord: {
       metadata: undefined,
@@ -141,29 +141,25 @@ RegisterLoader.prototype[Loader.resolveInstantiate] = function (key, parentKey) 
     if (registry[resolvedKey])
       return registry[resolvedKey];
 
-    var load = loader[REGISTER_REGISTRY][resolvedKey];
+    var registerRegistry = loader[REGISTER_REGISTRY];
+    var load = registerRegistry[resolvedKey];
 
-    if (!load) {
-      load = createLoadRecord.call(loader, resolvedKey);
-      load.linkRecord.metadata = metadata;
-    }
-    else if (!load.linkRecord) {
-      // already linked but wasnt found in main registry
-      // means it was removed by registry.delete, so we should
-      // disgard the existing record creating a new one over it
-      // but keep any registration
-      var registration = load && load.registration;
-      load = createLoadRecord.call(loader, resolvedKey);
-      load.registration = registration;
-      load.linkRecord.metadata = metadata;
-    }
+    // already linked but wasnt found in main registry
+    // means it was removed by registry.delete, so we should
+    // disgard the existing record creating a new one over it
+    // but keep any registration
+    if (!load || !load.linkRecord)
+      load = createLoadRecord.call(loader, resolvedKey, load && load.registration);
 
-    return ensureInstantiate(loader, load)
+    var link = load.linkRecord;
+    link.metadata = link.metadata || metadata;
+
+    return ensureInstantiate(loader, load, link, registry, registerRegistry)
     .then(function (module) {
       if (module)
         return module;
 
-      return ensureInstantiateAllDeps(loader, load, [])
+      return ensureInstantiateAllDeps(loader, load, link, registry, registerRegistry, [])
       .then(function () {
         return load.module;
       });
@@ -177,12 +173,7 @@ RegisterLoader.prototype[Loader.resolveInstantiate] = function (key, parentKey) 
 
 // instantiates the given load record
 // setting the dynamic namespace into the registry
-function ensureInstantiate (loader, load) {
-  var link = load.linkRecord;
-
-  if (!link)
-    return Promise.resolve(load.module);
-
+function ensureInstantiate (loader, load, link, registry, registerRegistry) {
   if (link.instantiatePromise)
     return link.instantiatePromise;
 
@@ -214,22 +205,21 @@ function ensureInstantiate (loader, load) {
 
     // process System.registerDynamic declaration
     if (registration[2])
-      registerDynamic.call(loader, load, registration[1]);
+      registerDynamic.call(loader, load, link, registration[1]);
 
     // process System.register declaration
     else
-      registerDeclarative.call(loader, load, registration[1]);
+      registerDeclarative.call(loader, load, link, registration[1]);
 
     // as soon as processed, we have a module and evaluate function so can add to the registry
-    loader.registry._registry[load.key] = load.module;
+    registry[load.key] = load.module;
   })
   .catch(function (err) {
     throw link.error = addToError(err, 'Instantiating ' + load.key);
   });
 }
 
-function registerDynamic (load, execute) {
-  var link = load.linkRecord;
+function registerDynamic (load, link, execute) {
   var moduleObj = link.moduleObj = {};
 
   // NB manage this so we can actually dispose the load record!
@@ -241,7 +231,7 @@ function registerDynamic (load, execute) {
         if (depLoad instanceof Module)
           err = Module.evaluate(depLoad);
         else
-          err = ensureEvaluate(depLoad, [load]);
+          err = doEvaluate(depLoad, depLoad.link, [load]);
 
         if (err)
           throw addToError(err, 'Calling require(\'' + name + '\') within ' + load.key);
@@ -261,13 +251,14 @@ function registerDynamic (load, execute) {
   load.module = new Module(moduleObj, moduleEvaluate, load);
 }
 
-function registerDeclarative (load, declare) {
-  var link = load.linkRecord;
+function registerDeclarative (load, link, declare) {
   var moduleObj = link.moduleObj = {};
   var importerSetters = load.importerSetters;
   var module = load.module = new Module(moduleObj, moduleEvaluate, load);
 
   var locked = false;
+
+  // closure especially not based on link to allow link record disposal
   var declared = declare.call(global, function (name, value) {
     // export setter propogation with locking to avoid cycles
     if (locked)
@@ -307,9 +298,7 @@ function registerDeclarative (load, declare) {
 }
 
 // this only applies to load records with load.link set
-function ensureInstantiateAllDeps (loader, load, seen) {
-  var link = load.linkRecord;
-
+function ensureInstantiateAllDeps (loader, load, link, registry, registerRegistry, seen) {
   // skip if already executed / already all instantiated
   if (!link || link.allInstantiated)
     return Promise.resolve(load);
@@ -325,7 +314,7 @@ function ensureInstantiateAllDeps (loader, load, seen) {
 
   // instantiate dependencies deeply against seen list
   for (var i = 0; i < link.dependencies.length; i++)
-    instantiateDepsPromises[i] = resolveInstantiateAllDeps.call(loader, link.dependencies[i], load, seen);
+    instantiateDepsPromises[i] = resolveInstantiateAllDeps.call(loader, link.dependencies[i], load, registry, registerRegistry, seen);
 
   return Promise.all(instantiateDepsPromises)
   .then(function (dependencyInstantiations) {
@@ -340,7 +329,7 @@ function ensureInstantiateAllDeps (loader, load, seen) {
         metadata: link.metadata
       };
 
-    // run setters to set up bindings
+    // run setters to set up bindings to instantiated dependencies
     if (link.setters)
       for (var i = 0; i < dependencyInstantiations.length; i++) {
         var setter = link.setters[i];
@@ -374,11 +363,12 @@ function ensureInstantiateAllDeps (loader, load, seen) {
 
 // just like resolveInstantiate, but with a seen list to handle instantiateAll subtrees
 // this is used to instantiate dependencies in ensureInstantiateAllDeps
-function resolveInstantiateAllDeps (key, parentLoad, seen) {
+function resolveInstantiateAllDeps (key, parentLoad, registry, registerRegistry, seen) {
   var loader = this;
-  var registry = loader.registry._registry;
 
-  var load = loader[REGISTER_REGISTRY][key];
+  var load = registerRegistry[key];
+  var link;
+
   if (registry[key]) {
     // tracing
     if (parentLoad.depMap)
@@ -393,17 +383,17 @@ function resolveInstantiateAllDeps (key, parentLoad, seen) {
   }
   // only use the load if not in the registry if its linking
   // otherwise that indicates it was deleted from the main registry
-  else if (load && load.linkRecord) {
+  else if (load && (link = load.linkRecord)) {
     // tracing
     if (parentLoad.depMap)
       parentLoad.depMap[key] = key;
 
-    return ensureInstantiate(loader, load)
+    return ensureInstantiate(loader, load, link, registry, registerRegistry)
     .then(function (module) {
       if (module)
         return module;
 
-      return ensureInstantiateAllDeps(loader, load, seen);
+      return ensureInstantiateAllDeps(loader, load, link, registry, registerRegistry, seen);
     });
   }
 
@@ -421,32 +411,28 @@ function resolveInstantiateAllDeps (key, parentLoad, seen) {
       parentLoad.depMap[key] = resolvedKey;
 
     // similar logic to above
-    var load = loader[REGISTER_REGISTRY][resolvedKey];
+    load = registerRegistry[resolvedKey];
     if (registry[resolvedKey]) {
       if (!load || registry[resolvedKey] !== load.module)
         return registry[resolvedKey];
     }
-    else if (!load) {
-      load = createLoadRecord.call(loader, resolvedKey);
-      load.linkRecord.metadata = metadata;
-    }
-    else if (!load.linkRecord) {
-      // already linked but wasnt found in main registry
-      // means it was removed by registry.delete, so we should
-      // disgard the existing record creating a new one over it
-      // but keep any registration
-      var registration = load && load.registration;
-      load = createLoadRecord.call(loader, resolvedKey);
-      load.registration = registration;
-      load.linkRecord.metadata = metadata;
-    }
 
-    return ensureInstantiate(loader, load)
+    // already linked but wasnt found in main registry
+    // means it was removed by registry.delete, so we should
+    // disgard the existing record creating a new one over it
+    // but keep any registration
+    if (!load || !load.linkRecord)
+      load = createLoadRecord.call(loader, resolvedKey, load && load.registration);
+
+    link = load.linkRecord;
+    link.metadata = link.metadata || metadata;
+
+    return ensureInstantiate(loader, load, link, registry, registerRegistry)
     .then(function (module) {
       if (module)
         return module;
 
-      return ensureInstantiateAllDeps(loader, load, seen);
+      return ensureInstantiateAllDeps(loader, load, link, registry, registerRegistry, seen);
     });
   });
 }
@@ -493,7 +479,7 @@ RegisterLoader.prototype.register = function (key, deps, declare) {
 
   // everything else registers into the register cache
   else {
-    var load = this[REGISTER_REGISTRY][key] || createLoadRecord.call(this, key);
+    var load = this[REGISTER_REGISTRY][key] || createLoadRecord.call(this, key, undefined);
     load.registration = [deps, declare, false];
   }
 };
@@ -567,7 +553,7 @@ function moduleEvaluate () {
   if (link.evaluated)
     return;
 
-  var err = ensureEvaluate(this, []);
+  var err = doEvaluate(this, link, []);
   if (err) {
     clearLoadErrors(this.loader, this);
     throw err;
@@ -578,37 +564,36 @@ function moduleEvaluate () {
 
 // ensures the given es load is evaluated
 // returns the error if any
-function ensureEvaluate (load, seen) {
+function doEvaluate (load, link, seen) {
   seen.push(load);
 
-  var link = load.linkRecord;
-
-  // no esLinkRecord means evaluated
-  if (!link)
-    return;
-
-  if (link.error)
-    return link.error;
-
-  if (link.evaluated)
-    return;
-
-  var err, depLoad;
+  var err, depLoad, depLink;
 
   // es modules evaluate dependencies first
-  // non es modules explicitly call ensureEvaluate through require
+  // non es modules explicitly call moduleEvaluate through require
   if (link.setters)
     for (var i = 0; i < link.dependencies.length; i++) {
       depLoad = link.dependencyInstantiations[i];
 
       // custom Module returned from instantiate
       // it is the responsibility of the executor to remove the module from the registry on failure
-      if (depLoad instanceof Module)
+      if (depLoad instanceof Module) {
         err = nsEvaluate(depLoad);
+      }
 
       // ES or dynamic execute
-      else if (seen.indexOf(depLoad) === -1)
-        err = ensureEvaluate(depLoad, seen);
+      else if (seen.indexOf(depLoad) === -1) {
+        depLink = depLoad.linkRecord;
+
+        if (!depLink)
+          return;
+
+        if (depLink.error)
+          err = depLink.error;
+
+        else if (!depLink.evaluated)
+          err = doEvaluate(depLoad, depLink, seen);
+      }
 
       if (err)
         return link.error = addToError(err, 'Evaluating ' + load.key);
