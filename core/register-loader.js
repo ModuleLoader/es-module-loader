@@ -203,7 +203,7 @@ function resolveInstantiate (loader, key, parentKey, registry, registerRegistry,
   });
 }
 
-function instantiate (loader, load, link, registry) {
+function instantiate (loader, load, link, registry, registerRegistry) {
   return link.instantiatePromise || (link.instantiatePromise =
   Promise.resolve(loader.instantiate(load.key, link.metadata))
   .then(function (instantiation) {
@@ -213,6 +213,7 @@ function instantiate (loader, load, link, registry) {
         throw new TypeError('Instantiate did not return a valid Module object.');
 
       load.linked = true;
+      registerRegistry[load.key] = undefined;
       if (loader.trace)
         traceLoad(load, link);
       return registry[load.key] = load.module = instantiation;
@@ -576,7 +577,8 @@ function doEvaluate (load, link, seen) {
   // extra guard in case of overlapping execution graphs
   // eg a Module.evaluate call within a Module.evaluate body
   link.evaluated = true;
-  err = doExecute(link.execute, link.setters && nullContext);
+  if (link.execute)
+    err = doExecute(link.execute, link.setters && nullContext);
 
   if (err)
     return link.error = addToError(err, 'Evaluating ' + load.key);
