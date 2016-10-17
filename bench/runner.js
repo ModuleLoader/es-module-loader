@@ -6,6 +6,12 @@ var benchmarks = fs.readdirSync('bench').filter(function(testName) {
   return testName != 'runner.js' && testName.endsWith('.js')
 });
 
+process.on('unhandledRejection', function (e) {
+  setTimeout(function () {
+    throw e;
+  });
+});
+
 function runNextBenchmark() {
   var nextBenchmark = benchmarks.shift();
 
