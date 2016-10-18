@@ -81,7 +81,7 @@ The default loader as described above would support loading modules if they have
 The return value of `normalize` is the final key that is set in the registry (available and iterable as per the spec
 at `loader.registry`).
 
-The default normalization provided (`super[RegisterLoader.normalize]` above) is based on the principles of the HTML specification for modules, whereby _plain module names_ that are not valid URLs, and not starting with `./`, `../` or `/` return `undefined`.
+The default normalization provided (`super[RegisterLoader.normalize]` above) follows the same approach as the HTML specification for module resolution, whereby _plain module names_ that are not valid URLs, and not starting with `./`, `../` or `/` return `undefined`.
 
 So for example `lodash` will return `undefined`, while `./x` will resolve to `[baseURI]/x`. In NodeJS a `file:///` URL is used for the baseURI.
 
@@ -168,14 +168,16 @@ The `Loader` and `ModuleNamespace` classes in `core/loader-polyfill.js` provide 
 
 ### Performance
 
-A performance comparison loading System.register modules is provided in the `bench` folder comparing times between
-the minimal [System Register Loader](https://github.com/ModuleLoader/system-register-loader) and SystemJS (which is built to the previous loader polyfill):
+Some simple benchmarks loading System.register modules are provided in the `bench` folder:
 
-| Test                                      | SystemJS    | ES Module Loader 1.3 |
-| ----------------------------------------- |:-----------:| :-------------------:|
-| Importing a tree of modules               | 166 ops/sec | 5,301 ops/sec        |
-| Importing multiple trees at the same time | 69 ops/sec  | 642 ops/sec          |
+Each test operation includes a new loader class instantiation, `System.register` declarations, binding setup for ES module trees, loading and execution.
 
+| Test                                      | ES Module Loader 1.3 |
+| ----------------------------------------- |:--------------------:|
+| Importing multiple trees at the same time | 705 ops/sec          |
+| Importing a deep tree of modules          | 4,713 ops/sec        |
+| Importing a single module with deps       | 9,652 ops/sec        |
+| Importing a single module without deps    | 16,279 ops/sec       |
 
 ### Tracing API
 
@@ -199,18 +201,17 @@ Also not in the spec, this allows useful tooling to build on top of the loader.
 The loader API in `core/loader-polyfill.js` matches the API of the current [WhatWG loader](https://whatwg.github.io/loader/) specification as closely as possible, while
 making a best-effort implementation of the upcoming loader simplification changes as descibred in https://github.com/whatwg/loader/issues/147.
 
-Error handling is implemented as in the HTML specification for module loading, such that rejections reject the current in-progress load trees, but
-are immediately removed from the registry to allow further loads to retry loading.
+Default normalization and error handling is implemented as in the HTML specification for module loading. Default normalization follows the HTML specification treatment of module keys as URLs, with plain names ignored by default (effectively erroring unless altering this behaviour through the hooks). Rejections during normalize, instantiate or execution reject the current in-progress load trees for all dependents, which are immediately and synchronously removed from the registry to allow further loads to retry loading.
 
 - A direct `ModuleNamespace` constructor is provided over the `Module` mutator proposal in the WhatWG specification.
  Instead of storing a registry of ModuleStatus objects, we then store a registry of Module Namespace objects. The reason for this is that asynchronous rejection of registry entries as a source of truth leads to partial inconsistent rejection states
 (it is possible for the tick between the rejection of one load and its parent to have to deal with an overlapping in-progress tree),
 so in order to have a predictable load error rejection process, loads are only stored in the registry as fully-linked Namespace objects
-and not ModuleStatus objects as promises for Namespace objects (Module.evaluate is still supported though).
+and not ModuleStatus objects as promises for Namespace objects.
 - `Loader` is available as a named export from `core/loader-polyfill.js` but is not by default exported to the `global.Reflect` object.
   This is to allow individual loader implementations to determine their own impact on the environment.
 - A constructor argument is added to the loader that takes the environment `baseKey` to be used as the default normalization parent.
-- The [WhatWG reduced specification proposal](https://github.com/whatwg/loader/issues/147) is to remove the loader hooks and simply have a single `resolve` hook, which could then set a module into the registry using the `registry.set` API as a side-effect to allow custom interception. As discussed in https://github.com/whatwg/loader/issues/147#issuecomment-230407764, this may cause unwanted execution of modules when only resolution is needed via `loader.resolve`, so the internal approach taken here is to still consider separate `resolve` and `instantiate` hooks in `core/loader-polyfill.js`.
+- The [WhatWG reduced specification proposal](https://github.com/whatwg/loader/issues/147) to remove the loader hooks and simply have a single `resolve` hook is followed with the exception of still separating resolve and instantiate hooks. The proposal idea is that the module can be set into the registry using the `registry.set` API as a side-effect of resolution to allow custom interception. As discussed in https://github.com/whatwg/loader/issues/147#issuecomment-230407764, this may cause unwanted execution of modules when only resolution is needed via `loader.resolve`, so the internal approach taken here is to still consider separate `resolve` and `instantiate` hooks in `core/loader-polyfill.js`.
 
 ## License
 Licensed under the MIT license.
