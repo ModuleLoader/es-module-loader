@@ -735,7 +735,7 @@ var allModules = [
   'export-star2.js'
 ];
 
-suite.add('Importing multiple trees at the same time with SystemJS', {
+/*suite.add('Importing multiple trees at the same time with SystemJS', {
   defer: true,
   fn: async function(deferred) {
     var loader = declaredSystemJSLoader();
@@ -769,4 +769,4 @@ suite.add('Importing a single registered module with SystemJS', {
     await loader.import('no-imports.js');
     deferred.resolve();
   }
-});
+});*/

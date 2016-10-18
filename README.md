@@ -173,10 +173,9 @@ the minimal [System Register Loader](https://github.com/ModuleLoader/system-regi
 
 | Test                                      | SystemJS    | ES Module Loader 1.3 |
 | ----------------------------------------- |:-----------:| :-------------------:|
-| Importing multiple trees at the same time | 147 ops/sec | 705 ops/sec          |
-| Importing a deep tree of modules          | 225 ops/sec | 4,713 ops/sec        |
-| Importing a single module with deps       | 153 ops/sec | 9,652 ops/sec        |
-| Importing a single module without deps    | 119 ops/sec | 16,279 ops/sec       |
+| Importing a tree of modules               | 166 ops/sec | 5,301 ops/sec        |
+| Importing multiple trees at the same time | 69 ops/sec  | 642 ops/sec          |
+
 
 ### Tracing API
 
