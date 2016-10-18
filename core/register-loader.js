@@ -311,8 +311,8 @@ function resolveInstantiateDep (loader, key, parentKey, registry, registerRegist
 function traceLoad (load, link) {
   loader.loads[load.key] = {
     key: load.key,
-    dependencies: load.link.dependencies,
-    depMap: link.depMap,
+    dependencies: link.dependencies,
+    depMap: link.depMap || {},
     metadata: link.metadata
   };
 }
