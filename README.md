@@ -1,7 +1,7 @@
 # ES Module Loader Polyfill [![Build Status][travis-image]][travis-url]
 
 Provides [low-level hooks](#loader-hooks) for creating ES module loaders, roughly based on the API of the [WhatWG loader spec](https://github.com/whatwg/loader),
-but with [various adjustments](#spec-differences) to match the current proposals for [NodeJS ES module adoption](https://github.com/nodejs/node/issues/8866).
+but with [various adjustments](#spec-differences) to match the current proposals for the HTML modules specification and [NodeJS ES module adoption](https://github.com/nodejs/node/issues/8866).
 
 Supports the [System.register](docs/system-register.md) module format to provide exact module loading semantics for ES modules in environments today. In addition, support for the [System.registerDynamic](docs/system-register-dynamic.md) is provided to allow the linking
 of module graphs consisting of inter-dependent ES modules and CommonJS modules with their respective semantics retained.
@@ -121,7 +121,7 @@ The `key` and `contextKey` provided to `register` or `processRegisterContext` mu
 
 This is identical to the `System.register` process above, only running `loader.registerDynamic` instead of `loader.register`.
 
-For more information on the `System.registerDynamic` format (see the format explanation)[docs/system-register-dynamic.md].
+For more information on the `System.registerDynamic` format [see the format explanation](docs/system-register-dynamic.md).
 
 ##### 3. Instantiating Dynamic Modules via ModuleNamespace
 
@@ -153,7 +153,7 @@ The `Loader` and `Module` classes in `core/loader-polyfill.js` provide the basic
 
 - *`new Loader(baseKey)`*: Instantiate a new `loader` instance, with the given `baseKey` as the default parentKey for normalizations.
   Defaults to environment baseURI detection in NodeJS and browsers.
-- *`loader.import(key [, parentKey])`*: Promise for importing and execute a given module, returning its module instance.
+- *`loader.import(key [, parentKey])`*: Promise for importing and executing a given module, returning its module instance.
 - *`loader.resolve(key [, parentKey])`*: Promise for resolving the idempotent fully-normalized string key for a module.
 - *`new Module(bindings)`*: Creates a new module namespace object instance for the given bindings object. The iterable properties
   of the bindings object are created as getters returning the corresponding values from the bindings object.
@@ -169,7 +169,7 @@ The `Loader` and `Module` classes in `core/loader-polyfill.js` provide the basic
 ### Performance
 
 A performance comparison loading System.register modules is provided in the `bench` folder comparing times between
-the minimal [System Register Loader](https://github.com/ModuleLoader/system-register-loader) and SystemJS which is built to the previous loader polyfill):
+the minimal [System Register Loader](https://github.com/ModuleLoader/system-register-loader) and SystemJS (which is built to the previous loader polyfill):
 
 | Test                                      | SystemJS    | ES Module Loader 1.2 |
 | ----------------------------------------- |:-----------:| :-------------------:|
