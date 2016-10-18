@@ -49,22 +49,9 @@ Loader.prototype.constructor = Loader;
 Loader.prototype.import = function (key, parent) {
   if (typeof key !== 'string')
     throw new TypeError('Loader import method must be passed a module key string');
-
-  var loader = this;
-
   // custom resolveInstantiate combined hook for better perf
   return Promise.resolve(this[RESOLVE_INSTANTIATE](key, parent || this.key))
-  .then(function (module) {
-    // returning a module directly instead of the resolved string
-    // is a (private) optimization to avoid double registry lookups
-    if (typeof module === 'string') {
-      module = loader.registry.get(module);
-      if (!module)
-        throw new Error('Module "' + module + '" was not instantiated correctly.');
-    }
-    Module.evaluate(module);
-    return module;
-  })
+  .then(Module.evaluate)
   .catch(function (err) {
     throw addToError(err, 'Loading ' + key + (parent ? ' from ' + parent : ''));
   });
@@ -75,8 +62,11 @@ var RESOLVE = Loader.resolve = createSymbol('resolve');
 /*
  * Combined resolve / instantiate hook
  *
- * Not in spec, but necessary to separate RESOLVE from RESOLVE + INSTANTIATE as described in the spec notes
- * of this repo to ensure that loader.resolve doesn't instantiate when not wanted.
+ * Not in current reduced spec, but necessary to separate RESOLVE from RESOLVE + INSTANTIATE as described
+ * in the spec notes of this repo to ensure that loader.resolve doesn't instantiate when not wanted.
+ *
+ * We implement RESOLVE_INSTANTIATE as a single hook instead of a separate INSTANTIATE in order to avoid
+ * the need for double registry lookups as a performance optimization.
  */
 var RESOLVE_INSTANTIATE = Loader.resolveInstantiate = createSymbol('resolveInstantiate');
 
@@ -89,16 +79,7 @@ Loader.prototype.resolve = function (key, parent) {
 
 // 3.3.4 (import without evaluate)
 Loader.prototype.load = function (key, parent) {
-  var loader = this;
   return Promise.resolve(this[RESOLVE_INSTANTIATE](key, parent || this.key))
-  .then(function (module) {
-    if (typeof module === 'string') {
-      module = loader.registry.get(module);
-      if (!module)
-        throw new Error('Module "' + module + '" was not instantiated correctly.');
-    }
-    return module;
-  })
   .catch(function (err) {
     throw addToError(err, 'Loading ' + key + (parent ? ' from ' + parent : ''));
   });
@@ -185,29 +166,17 @@ var EVALUATE_ERROR = createSymbol()
 
 // 8.3.1 Reflect.Module
 /*
- * Best-effort spec guess made for September 2016 TC39 directions
- * - baseObject is the "module.exports"-like mutable object
- * - evaluate is an optional evaluation function
+ * Best-effort simplified non-spec implementation based on
+ * a baseObject referenced via getters.
  *
- * The Module Namespace named export values are read as the iterable
- * properties of baseObject and fixed on completion of the evaluation
- * function (if any).
- *
- * Allows use cases:
+ * Allows:
  *
  *   loader.registry.set('x', new Module({ default: 'x' }));
  *
- * As well as:
- *
- *   var exports = {};
- *   loader.registry.set('cjs', new Module(exports, function() {
- *     exports.x = 'x';
- *   }));
- *
- * evaluationContext is an optional third argument for optimization
- *  setting the "this" value within the evaluation function
+ * Optional evaluation function provides experimental Module.evaluate
+ * support for non-executed modules in registry.
  */
-function Module (baseObject, evaluate, evaluationContext) {
+function Module (baseObject, evaluate) {
   Object.defineProperty(this, BASE_OBJECT, {
     value: baseObject
   });
@@ -216,11 +185,6 @@ function Module (baseObject, evaluate, evaluationContext) {
   if (evaluate) {
     Object.defineProperty(this, EVALUATE, {
       value: evaluate,
-      configurable: true,
-      writable: true
-    });
-    Object.defineProperty(this, EVALUATION_CONTEXT, {
-      value: evaluationContext,
       configurable: true,
       writable: true
     });
@@ -262,13 +226,12 @@ function doEvaluate (evaluate, context) {
   }
 }
 
-// 8.4.1 Module.evaluate
+// 8.4.1 Module.evaluate... not documented or used because this is potentially unstable
 Module.evaluate = function (ns) {
   var evaluate = ns[EVALUATE];
   if (evaluate) {
     ns[EVALUATE] = undefined;
-    var err = doEvaluate(evaluate, ns[EVALUATION_CONTEXT]);
-    ns[EVALUATION_CONTEXT] = undefined;
+    var err = doEvaluate(evaluate);
     if (err) {
       // cache the error
       ns[EVALUATE] = function () {
@@ -278,6 +241,8 @@ Module.evaluate = function (ns) {
     }
     Object.keys(ns[BASE_OBJECT]).forEach(extendNamespace, ns);
   }
+  // make chainable
+  return ns;
 };
 
 // non-spec
