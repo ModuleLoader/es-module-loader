@@ -1,5 +1,8 @@
 import { baseURI, addToError, createSymbol } from './common.js';
-export { Loader, Module, Module as InternalModuleNamespace }
+
+// multiple exports of Module for backwards compat
+// only ModuleNamespace will remain in next break!
+export { Loader, Module, Module as InternalModuleNamespace, Module as ModuleNamespace }
 
 /*
  * Simple Array values shim
@@ -78,6 +81,8 @@ Loader.prototype.resolve = function (key, parent) {
 };
 
 // 3.3.4 (import without evaluate)
+// this is not documented because the use of deferred evaluation as in Module.evaluate is not
+// documented, as it is not considered a stable feature to be encouraged
 Loader.prototype.load = function (key, parent) {
   return Promise.resolve(this[RESOLVE_INSTANTIATE](key, parent || this.key))
   .catch(function (err) {
@@ -243,9 +248,4 @@ Module.evaluate = function (ns) {
   }
   // make chainable
   return ns;
-};
-
-// non-spec
-Module.isEvaluated = function (ns) {
-  return !ns[EVALUATE];
 };
