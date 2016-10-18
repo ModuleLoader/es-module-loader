@@ -34,7 +34,7 @@ npm install es-module-loader --save-dev
 
 This project exposes a public API of ES modules in the `core` folder.
 
-The minimal [polyfill loader API](@base-loader-polyfill-api) is provided in `core/loader-polyfill.js`. On top of this main API file is
+The minimal [polyfill loader API](#base-loader-polyfill-api) is provided in `core/loader-polyfill.js`. On top of this main API file is
 `core/register-loader.js` which provides a base loader class with the non-spec `System.register` and `System.registerDynamic` support to enable the exact
 linking semantics.
 
