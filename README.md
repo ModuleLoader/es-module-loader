@@ -149,13 +149,13 @@ to track small changes of this spec API over major versions of this project.
 
 ### Base Loader Polyfill API
 
-The `Loader` and `Module` classes in `core/loader-polyfill.js` provide the basic spec API method shells for a loader instance `loader`:
+The `Loader` and `ModuleNamespace` classes in `core/loader-polyfill.js` provide the basic spec API method shells for a loader instance `loader`:
 
 - *`new Loader(baseKey)`*: Instantiate a new `loader` instance, with the given `baseKey` as the default parentKey for normalizations.
   Defaults to environment baseURI detection in NodeJS and browsers.
 - *`loader.import(key [, parentKey])`*: Promise for importing and executing a given module, returning its module instance.
 - *`loader.resolve(key [, parentKey])`*: Promise for resolving the idempotent fully-normalized string key for a module.
-- *`new Module(bindings)`*: Creates a new module namespace object instance for the given bindings object. The iterable properties
+- *`new ModuleNamespace(bindings)`*: Creates a new module namespace object instance for the given bindings object. The iterable properties
   of the bindings object are created as getters returning the corresponding values from the bindings object.
 - *`loader.registry.set(resolvedKey, namespace)`*: Set a module namespace into the registry.
 - *`loader.registry.get(resolvedKey)`*: Get a module namespace (if any) from the registry.
