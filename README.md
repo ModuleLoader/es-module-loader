@@ -171,7 +171,7 @@ The `Loader` and `Module` classes in `core/loader-polyfill.js` provide the basic
 A performance comparison loading System.register modules is provided in the `bench` folder comparing times between
 the minimal [System Register Loader](https://github.com/ModuleLoader/system-register-loader) and SystemJS (which is built to the previous loader polyfill):
 
-| Test                                      | SystemJS    | ES Module Loader 1.2 |
+| Test                                      | SystemJS    | ES Module Loader 1.3 |
 | ----------------------------------------- |:-----------:| :-------------------:|
 | Importing multiple trees at the same time | 147 ops/sec | 705 ops/sec          |
 | Importing a deep tree of modules          | 225 ops/sec | 4,713 ops/sec        |
