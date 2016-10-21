@@ -117,7 +117,7 @@ function createLoadRecord (key, registration) {
       // promise for instantiated dependencies (dependencyInstantiations populated)
       depsInstantiatePromise: undefined,
       // will be the array of dependency load record or a module namespace
-      dependencyInstantiations: [],
+      dependencyInstantiations: undefined,
 
       // indicates if the load and all its dependencies are instantiated and linked
       // but not yet executed
@@ -127,6 +127,9 @@ function createLoadRecord (key, registration) {
       error: undefined
       // NB optimization and way of ensuring module objects in setters
       // indicates setters which should run pre-execution of that dependency
+      // setters is then just for completely executed module objects
+      // alternatively we just pass the partially filled module objects as
+      // arguments into the execute function
       // hoisted: undefined
     }
   };
@@ -605,7 +608,7 @@ ContextualLoader.prototype.import = function (key) {
   return this.loader.import(key, this.key);
 };
 ContextualLoader.prototype.resolve = function (key) {
-  return this.loader[Loader.resolve](key, this.key);
+  return this.loader.resolve(key, this.key);
 };
 ContextualLoader.prototype.load = function (key) {
   return this.loader.load(key, this.key);
@@ -667,6 +670,7 @@ function doEvaluate (load, link, registry, registerRegistry, seen) {
   // link.execute won't exist for Module returns from instantiate on top-level load
   if (link.execute)
     // "this" is null in ES, exports in CJS
+    // NB can add args to execute for inclusive require, exports, module / module bindings in es
     err = doExecute(link.execute, link.setters ? nullContext : link.moduleObj.default);
 
   if (err)
@@ -696,7 +700,7 @@ if (Object.freeze)
   Object.freeze(nullContext);
 function doExecute (execute, context) {
   try {
-    execute.call(context);
+    execute.apply(context);
   }
   catch (e) {
     return e;
