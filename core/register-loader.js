@@ -4,8 +4,6 @@ import { addToError, global, createSymbol } from './common.js';
 
 export default RegisterLoader;
 
-export var emptyModule = new Module({});
-
 /*
  * Register Loader
  *

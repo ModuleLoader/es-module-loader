@@ -165,9 +165,7 @@ Registry.prototype.delete = function (key) {
  * We export this for allowing a fast-path for module namespace creation over Module descriptors
  */
 var EVALUATE = createSymbol('evaluate');
-var EVALUATION_CONTEXT = createSymbol('evaluationContext');
 var BASE_OBJECT = createSymbol('baseObject');
-var EVALUATE_ERROR = createSymbol()
 
 // 8.3.1 Reflect.Module
 /*
