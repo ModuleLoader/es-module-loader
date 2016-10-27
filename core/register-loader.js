@@ -44,6 +44,10 @@ RegisterLoader.processRegisterContext = 'processRegisterContext';
 
 // default normalize is the WhatWG style normalizer
 RegisterLoader.prototype.normalize = function (key, parentKey, metadata) {
+  // normalization shortpath
+  if (this[REGISTER_REGISTRY][key] || this.registry._registry[key])
+    return key;
+
   return resolveUrlToParentIfNotPlain(key, parentKey);
 };
 
@@ -77,9 +81,6 @@ function resolve (loader, key, parentKey, metadata) {
 var RESOLVE = Loader.resolve;
 
 RegisterLoader.prototype[RESOLVE] = function (key, parentKey) {
-  if (this[REGISTER_REGISTRY][key] || this.registry._registry[key])
-    return Promise.resolve(key);
-
   return resolve(this, key, parentKey, this.createMetadata());
 };
 
