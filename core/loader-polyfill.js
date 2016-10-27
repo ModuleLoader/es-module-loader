@@ -73,8 +73,34 @@ var RESOLVE = Loader.resolve = createSymbol('resolve');
  */
 var RESOLVE_INSTANTIATE = Loader.resolveInstantiate = createSymbol('resolveInstantiate');
 
+// default resolveInstantiate is just to call resolve and then get from the registry
+// this provides compatibility for the resolveInstantiate optimization
+Loader.prototype[RESOLVE_INSTANTIATE] = function (key, parent) {
+  var loader = this;
+  return this.resolve(key, parent)
+  .then(function (resolved) {
+    var module = loader.registry.get(resolved);
+    if (!module)
+      throw new Error('Resolve did not define the "' + resolved + '" module into the registry.');
+    return module;
+  });
+};
+
+Loader.prototype[RESOLVE] = function () {
+  throw new TypeError('No loader resolve hook implementation provided.');
+};
+
 Loader.prototype.resolve = function (key, parent) {
-  return this[RESOLVE](key, parent)
+  var loader = this;
+  return Promise.resolve()
+  .then(function() {
+    return loader[RESOLVE](key, parent);
+  })
+  .then(function (resolvedKey) {
+    if (resolvedKey === undefined)
+      throw new RangeError('No resolution found.');
+    return resolvedKey;
+  })
   .catch(function (err) {
     throw addToError(err, 'Resolving ' + key + (parent ? ' to ' + parent : ''));
   });
