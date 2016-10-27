@@ -37,7 +37,7 @@ RegisterLoader.prototype = Object.create(Loader.prototype);
 RegisterLoader.prototype.constructor = RegisterLoader;
 
 // NB replace with createSymbol('normalize'), ... for next major
-RegisterLoader.normalize = 'normalize';
+RegisterLoader.normalize = RegisterLoader.resolve = 'normalize';
 RegisterLoader.instantiate = 'instantiate';
 RegisterLoader.createMetadata = 'createMetadata';
 RegisterLoader.processRegisterContext = 'processRegisterContext';
@@ -74,7 +74,7 @@ function resolve (loader, key, parentKey, metadata) {
 var RESOLVE = Loader.resolve;
 
 RegisterLoader.prototype[RESOLVE] = function (key, parentKey) {
-  if (loader[REGISTER_REGISTRY][key] || loader.registry._registry[key])
+  if (this[REGISTER_REGISTRY][key] || this.registry._registry[key])
     return Promise.resolve(key);
 
   return resolve(this, key, parentKey, this.createMetadata());
