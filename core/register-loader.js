@@ -229,13 +229,19 @@ function instantiate (loader, load, link, registry, registerRegistry) {
 
     load.importerSetters = [];
 
+    link.moduleObj = {};
+
     // process System.registerDynamic declaration
-    if (registration[2])
-      registerDynamic(loader, load, link, registry, registerRegistry, registration[1]);
+    if (registration[2]) {
+      link.moduleObj.default = {};
+      Object.defineProperty(link.moduleObj, '__useDefault', { value: true });
+      link.execute = registration[1];
+    }
 
     // process System.register declaration
-    else
+    else {
       registerDeclarative(loader, load, link, registration[1]);
+    }
 
     // shortpath to instantiateDeps
     if (!link.dependencies.length) {
@@ -318,43 +324,6 @@ function traceLoad (load, link) {
   };
 }
 
-function registerDynamic (loader, load, link, registry, registerRegistry, execute) {
-  var moduleObj = link.moduleObj = {};
-
-  // create a closure on dependencies and dependencyInstantiations only
-  var dependencyInstantiations = link.dependencyInstantiations = [];
-  var dependencies = link.dependencies;
-  var key = load.key;
-
-  // we can only require from already-known dependencies
-  function require (name) {
-    for (var i = 0; i < dependencies.length; i++) {
-      if (dependencies[i] === name) {
-        var depLoad = dependencyInstantiations[i];
-        var err;
-
-        var module;
-
-        if (depLoad instanceof Module)
-          module = depLoad;
-        else
-          module = ensureEvaluate(loader, depLoad, depLoad.linkRecord, registry, registerRegistry);
-
-        return module.__useDefault ? module.default : module;
-      }
-    }
-    throw new Error('Module ' + name + ' not declared as a System.registerDynamic dependency of ' + key);
-  }
-
-  link.execute = function () {
-    var exports = moduleObj.default = {};
-    Object.defineProperty(moduleObj, '__useDefault', { value: true });
-    var module = { exports: exports, id: key };
-    // execute then copy the exports onto moduleObj
-    copyNamedExports(execute(require, exports, module) || module.exports, moduleObj);
-  }
-}
-
 /*
  * Convert a CJS module.exports into a valid object for new Module:
  *
@@ -388,7 +357,7 @@ function defineOrCopyProperty(targetObj, sourceObj, propName) {
 }
 
 function registerDeclarative (loader, load, link, declare) {
-  var moduleObj = link.moduleObj = {};
+  var moduleObj = link.moduleObj;
   var importerSetters = load.importerSetters;
 
   var locked = false;
@@ -436,16 +405,10 @@ function instantiateDeps (loader, load, link, registry, registerRegistry, seen) 
     return Promise.all(depsInstantiatePromises);
   })
   .then(function (dependencyInstantiations) {
-    // for registerDynamic, we need dependencyInstantiations
-    // to work by reference as we have a closure on it
-    if (!link.setters) {
-      for (var i = 0; i < dependencyInstantiations.length; i++)
-        link.dependencyInstantiations[i] = dependencyInstantiations[i];
-    }
+    link.dependencyInstantiations = dependencyInstantiations;
 
     // run setters to set up bindings to instantiated dependencies
-    else {
-      link.dependencyInstantiations = dependencyInstantiations;
+    if (link.setters) {
       for (var i = 0; i < dependencyInstantiations.length; i++) {
         var setter = link.setters[i];
         if (setter) {
@@ -570,13 +533,14 @@ RegisterLoader.prototype.registerDynamic = function (key, deps, execute) {
 };
 
 function makeNonExecutingRequire (deps, execute) {
-  return function(require) {
+  return function(require, exports, module) {
     // evaluate deps first
     for (var i = 0; i < deps.length; i++)
       require(deps[i]);
 
     // then run execution function
-    return execute.apply(this, arguments);
+    // also provide backwards compat for no return value
+    module.exports = execute.apply(this, arguments) || module.exports;
   };
 }
 
@@ -629,6 +593,28 @@ function ensureEvaluate (loader, load, link, registry, registerRegistry) {
   return load.module;
 }
 
+function makeDynamicRequire (key, dependencies, dependencyInstantiations, registry, registerRegistry) {
+  // we can only require from already-known dependencies
+  return function (name) {
+    for (var i = 0; i < dependencies.length; i++) {
+      if (dependencies[i] === name) {
+        var depLoad = dependencyInstantiations[i];
+        var err;
+
+        var module;
+
+        if (depLoad instanceof Module)
+          module = depLoad;
+        else
+          module = ensureEvaluate(loader, depLoad, depLoad.linkRecord, registry, registerRegistry);
+
+        return module.__useDefault ? module.default : module;
+      }
+    }
+    throw new Error('Module ' + name + ' not declared as a System.registerDynamic dependency of ' + key);
+  };
+}
+
 // ensures the given es load is evaluated
 // returns the error if any
 function doEvaluate (load, link, registry, registerRegistry, seen) {
@@ -666,15 +652,32 @@ function doEvaluate (load, link, registry, registerRegistry, seen) {
   }
 
   // link.execute won't exist for Module returns from instantiate on top-level load
-  if (link.execute)
-    // "this" is null in ES, exports in CJS
-    // NB can add args to execute for inclusive require, exports, module / module bindings in es
-    err = doExecute(link.execute, link.setters ? nullContext : link.moduleObj.default);
+  if (link.execute) {
+    // ES System.register execute
+    // "this" is null in ES
+    if (link.setters) {
+      err = doExecute(link.execute, nullContext);
+    }
+    // System.registerDynamic execute
+    // "this" is "exports" in CJS
+    else {
+      var module = { exports: link.moduleObj.default, id: load.key };
+      err = doExecute(link.execute, module.exports, [
+        makeDynamicRequire(load.key, link.dependencies, link.dependencyInstantiations, registry, registerRegistry),
+        module.exports,
+        module
+      ]);
+
+      // copy module.exports onto the module object
+      if (!err)
+        copyNamedExports(module.exports, link.moduleObj);
+    }
+  }
 
   if (err)
     return link.error = addToError(err, 'Evaluating ' + load.key);
 
-  registry[load.key] = load.module = new Module(load.linkRecord.moduleObj);
+  registry[load.key] = load.module = new Module(link.moduleObj);
 
   // if not an esm module, run importer setters and clear them
   // this allows dynamic modules to update themselves into es modules
@@ -689,16 +692,18 @@ function doEvaluate (load, link, registry, registerRegistry, seen) {
     if (registerRegistry[load.key] === load)
       registerRegistry[load.key] = undefined;
   }
-  load.linkRecord = undefined;
+  else {
+    load.linkRecord = undefined;
+  }
 }
 
 // {} is the closest we can get to call(undefined)
 var nullContext = {};
 if (Object.freeze)
   Object.freeze(nullContext);
-function doExecute (execute, context) {
+function doExecute (execute, context, args) {
   try {
-    execute.apply(context);
+    execute.apply(context, args);
   }
   catch (e) {
     return e;
