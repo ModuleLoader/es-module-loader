@@ -44,12 +44,11 @@ RegisterLoader.processRegisterContext = 'processRegisterContext';
 
 // default normalize is the WhatWG style normalizer
 RegisterLoader.prototype.normalize = function (key, parentKey, metadata) {
-  // normalization shortpath
+  // normalization shortpath for already in registry
   if (this[REGISTER_REGISTRY][key] || this.registry._registry[key])
     return key;
-
   return resolveUrlToParentIfNotPlain(key, parentKey);
-};
+}
 
 RegisterLoader.prototype.instantiate = function (key, metadata) {};
 
@@ -161,7 +160,7 @@ RegisterLoader.prototype[Loader.resolveInstantiate] = function (key, parentKey) 
 };
 
 function resolveInstantiate (loader, key, parentKey, registry, registerRegistry) {
-  // normalization shortpaths for already-normalized key
+  // normalization shortpath for already-normalized key
   // could add a plain name filter, but doesn't yet seem necessary for perf
   var module = registry[key];
   if (module)
@@ -288,7 +287,7 @@ function resolveInstantiateDep (loader, key, parentKey, registry, registerRegist
     if (traceDepMap)
       traceDepMap[key] = key;
 
-    // similar logic to above
+    // normalization shortpaths for already-normalized key
     var load = registerRegistry[resolvedKey];
     var module = registry[resolvedKey];
 

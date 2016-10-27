@@ -1,9 +1,9 @@
 # ES Module Loader Polyfill [![Build Status][travis-image]][travis-url]
 
 Provides [low-level hooks](#loader-hooks) for creating ES module loaders, roughly based on the API of the [WhatWG loader spec](https://github.com/whatwg/loader),
-but with [various adjustments](#spec-differences) to match the current proposals for the HTML modules specification and [NodeJS ES module adoption](https://github.com/nodejs/node/issues/8866).
+but with [adjustments](#spec-differences) to match the current proposals for the HTML modules specification, [unspecified WhatWG changes](https://github.com/whatwg/loader/issues/147), and [NodeJS ES module adoption](https://github.com/nodejs/node/issues/8866).
 
-Supports the [System.register](docs/system-register.md) module format to provide exact module loading semantics for ES modules in environments today. In addition, support for the [System.registerDynamic](docs/system-register-dynamic.md) is provided to allow the linking
+Supports the [loader import and registry API](#base-loader-polyfill-api) with the [System.register](docs/system-register.md) module format to provide exact module loading semantics for ES modules in environments today. In addition, support for the [System.registerDynamic](docs/system-register-dynamic.md) is provided to allow the linking
 of module graphs consisting of inter-dependent ES modules and CommonJS modules with their respective semantics retained.
 
 This project aims to provide a [highly performant](#performance), minimal, unopinionated loader API on top of which custom loaders [can easily be built](#creating-a-loader). See the [spec differences](#spec-differences) section for a more detailed listing of the tradeoffs made.
@@ -43,12 +43,53 @@ part of the publicly versioned API of this project.
 
 Any tool can be used to build the loader distribution file from these core modules - [Rollup](http://rollupjs.org) is used to do these builds in the example loaders above, provided by the `rollup.config.js` file in the example loader repos listed above.
 
-### Loader Hooks
+### Base Loader Polyfill API
 
-Implementing a loader on top of the `RegisterLoader` base class involves extending that class and providing `normalize` and `instantiate` prototype
-methods.
+The `Loader` and `ModuleNamespace` classes in `core/loader-polyfill.js` provide the basic spec API method shells for a loader instance `loader`:
 
-These hooks are not in the spec, but defined here and as an abstraction provided by this project to make it easy to create custom loaders:
+- *`new Loader(baseKey)`*: Instantiate a new `loader` instance, with the given `baseKey` as the default parentKey for normalizations.
+  Defaults to environment baseURI detection in NodeJS and browsers.
+- *`loader.import(key [, parentKey])`*: Promise for importing and executing a given module, returning its module instance.
+- *`loader.resolve(key [, parentKey])`*: Promise for resolving the idempotent fully-normalized string key for a module.
+- *`new ModuleNamespace(bindings)`*: Creates a new module namespace object instance for the given bindings object. The iterable properties
+  of the bindings object are created as getters returning the corresponding values from the bindings object.
+- *`loader.registry.set(resolvedKey, namespace)`*: Set a module namespace into the registry.
+- *`loader.registry.get(resolvedKey)`*: Get a module namespace (if any) from the registry.
+- *`loader.registry.has(resolvedKey)`*: Boolean indicating whether the given key is present in the registry.
+- *`loader.registry.delete(resolvedKey)``*: Removes the given module from the registry (if any), returning true or false.
+- *`loader.registry.keys`*: Function returning the keys iterator for the registry.
+- *`loader.registry.values`*: Function returning the values iterator for the registry.
+- *`loader.registry.entries`*: Function returning the entries iterator for the registry (keys and values).
+- *`loader.registry[Symbol.iterator]`*: In supported environments, provides registry entries iteration.
+
+Example of using the base loader API:
+
+```javascript
+import { Loader, ModuleNamespace } from 'es-module-loader/core/loader-polyfill.js';
+
+let loader = new Loader();
+
+// override the resolve hook
+loader[Loader.resolve] = function (key, parent) {
+  // intercept the load of "x"
+  if (key === 'x') {
+    this.registry.set('x', new ModuleNamespace({ some: 'exports' }));
+    return key;
+  }
+  return Loader.prototype[Loader.resolve](key, parent);
+};
+
+loader.import('x').then(function (m) {
+  console.log(m.some);
+});
+```
+
+### RegisterLoader Hooks
+
+Implementing a loader on top of the `RegisterLoader` base class involves extending that class and providing `resolve` and `instantiate` prototype
+hook methods.
+
+The instantiate hook convention here is defined by the register loader:
 
 ```javascript
 import RegisterLoader from 'es-module-loader/core/register-loader.js';
@@ -59,10 +100,10 @@ class MyCustomLoader extends RegisterLoader {
   }
 
   /*
-   * Default normalize hook
+   * Default resolve hook
    */
-  [RegisterLoader.normalize](key, parentKey, metadata) {
-    var relativeResolved = super[RegisterLoader.normalize](key, parentKey, metadata) || key;
+  [RegisterLoader.resolve](key, parentKey, metadata) {
+    var relativeResolved = super[RegisterLoader.resolve](key, parentKey, metadata) || key;
     return relativeResolved;
   }
 
@@ -86,6 +127,8 @@ The default normalization provided (`super[RegisterLoader.normalize]` above) fol
 So for example `lodash` will return `undefined`, while `./x` will resolve to `[baseURI]/x`. In NodeJS a `file:///` URL is used for the baseURI.
 
 #### Instantiate Hook
+
+Hooking of the RegisterLoader is based on the instantiate hook, taking the following forms:
 
 ##### 1. Instantiating ES Modules via System.register
 
@@ -130,7 +173,7 @@ then the direct module namespace value can be returned from instantiate:
 
 ```javascript
 
-import { ModuleNamespace } from 'es-module-loader/core/loader-polyfill.js'
+import { ModuleNamespace } from 'es-module-loader/core/loader-polyfill.js';
 
 // ...
 
@@ -146,25 +189,6 @@ Using these three types of return values for instantiate, we can thus recreate E
 Note that `ModuleNamespace` is not specified in the WhatWG loader specification - the specification actually uses a `Module.Status` constructor.
 A custom private constructor is used over the spec until there is a stable proposal instead of having
 to track small changes of this spec API over major versions of this project.
-
-### Base Loader Polyfill API
-
-The `Loader` and `ModuleNamespace` classes in `core/loader-polyfill.js` provide the basic spec API method shells for a loader instance `loader`:
-
-- *`new Loader(baseKey)`*: Instantiate a new `loader` instance, with the given `baseKey` as the default parentKey for normalizations.
-  Defaults to environment baseURI detection in NodeJS and browsers.
-- *`loader.import(key [, parentKey])`*: Promise for importing and executing a given module, returning its module instance.
-- *`loader.resolve(key [, parentKey])`*: Promise for resolving the idempotent fully-normalized string key for a module.
-- *`new ModuleNamespace(bindings)`*: Creates a new module namespace object instance for the given bindings object. The iterable properties
-  of the bindings object are created as getters returning the corresponding values from the bindings object.
-- *`loader.registry.set(resolvedKey, namespace)`*: Set a module namespace into the registry.
-- *`loader.registry.get(resolvedKey)`*: Get a module namespace (if any) from the registry.
-- *`loader.registry.has(resolvedKey)`*: Boolean indicating whether the given key is present in the registry.
-- *`loader.registry.delete(resolvedKey)``*: Removes the given module from the registry (if any), returning true or false.
-- *`loader.registry.keys`*: Function returning the keys iterator for the registry.
-- *`loader.registry.values`*: Function returning the values iterator for the registry.
-- *`loader.registry.entries`*: Function returning the entries iterator for the registry (keys and values).
-- *`loader.registry[Symbol.iterator]`*: In supported environments, provides registry entries iteration.
 
 ### Performance
 

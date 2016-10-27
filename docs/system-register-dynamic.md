@@ -33,9 +33,6 @@ System.registerDynamic('optional-name', ['unnormalized-dependency'], function (r
 
   // module exports object can even be set directly
   module.exports = 'can even assign module exports';
-
-  // return value is also allowed to return module.exports
-  return 'this is actually the final module.exports';
 });
 ```
 
