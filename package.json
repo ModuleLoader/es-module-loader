@@ -1,7 +1,7 @@
 {
   "name": "es-module-loader",
   "description": "An ES Module Loader shim",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "homepage": "https://github.com/ModuleLoader/es-module-loader",
   "author": {
     "name": "Guy Bedford, Luke Hoban, Addy Osmani",
