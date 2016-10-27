@@ -68,7 +68,10 @@ function resolve (loader, key, parentKey, metadata) {
   .then(function () {
     return loader.normalize(key, parentKey, metadata);
   })
-  .then(ensureResolution);
+  .then(ensureResolution)
+  .catch(function (err) {
+    throw addToError(err, 'Resolving dependency "' + key + '" of ' + parentKey);
+  });
 }
 
 var RESOLVE = Loader.resolve;
@@ -173,9 +176,6 @@ function resolveInstantiate (loader, key, parentKey, registry, registerRegistry)
 
   var metadata = loader.createMetadata();
   return resolve(loader, key, parentKey, metadata)
-  .catch(function (err) {
-    throw addToError(err, 'Resolving dependency "' + key + '" of ' + parentKey);
-  })
   .then(function (resolvedKey) {
     // main loader registry always takes preference
     module = registry[resolvedKey];
@@ -284,9 +284,6 @@ function resolveInstantiateDep (loader, key, parentKey, registry, registerRegist
 
   var metadata = loader.createMetadata();
   return resolve(loader, key, parentKey, metadata)
-  .catch(function (err) {
-    throw addToError(err, 'Resolving dependency "' + key + '" of ' + parentKey);
-  })
   .then(function (resolvedKey) {
     if (traceDepMap)
       traceDepMap[key] = key;
