@@ -86,7 +86,7 @@ loader.import('x').then(function (m) {
 
 ### RegisterLoader Hooks
 
-Implementing a loader on top of the `RegisterLoader` base class involves extending that class and providing `normalize` and `instantiate` prototype
+Implementing a loader on top of the `RegisterLoader` base class involves extending that class and providing `resolve` and `instantiate` prototype
 hook methods.
 
 The instantiate hook convention here is defined by the register loader:
@@ -100,10 +100,10 @@ class MyCustomLoader extends RegisterLoader {
   }
 
   /*
-   * Default normalize hook
+   * Default resolve hook
    */
-  [RegisterLoader.normalize](key, parentKey, metadata) {
-    var relativeResolved = super[RegisterLoader.normalize](key, parentKey, metadata) || key;
+  [RegisterLoader.resolve](key, parentKey, metadata) {
+    var relativeResolved = super[RegisterLoader.resolve](key, parentKey, metadata) || key;
     return relativeResolved;
   }
 
@@ -119,10 +119,10 @@ class MyCustomLoader extends RegisterLoader {
 The default loader as described above would support loading modules if they have already been registered by key via
 `loader.register` calls (the `System.register` module format, where `System` is the global loader name).
 
-The return value of `normalize` is the final key that is set in the registry (available and iterable as per the spec
+The return value of `resolve` is the final key that is set in the registry (available and iterable as per the spec
 at `loader.registry`).
 
-The default normalization provided (`super[RegisterLoader.normalize]` above) follows the same approach as the HTML specification for module resolution, whereby _plain module names_ that are not valid URLs, and not starting with `./`, `../` or `/` return `undefined`.
+The default normalization provided (`super[RegisterLoader.resolve]` above) follows the same approach as the HTML specification for module resolution, whereby _plain module names_ that are not valid URLs, and not starting with `./`, `../` or `/` return `undefined`.
 
 So for example `lodash` will return `undefined`, while `./x` will resolve to `[baseURI]/x`. In NodeJS a `file:///` URL is used for the baseURI.
 
@@ -225,7 +225,7 @@ Also not in the spec, this allows useful tooling to build on top of the loader.
 The loader API in `core/loader-polyfill.js` matches the API of the current [WhatWG loader](https://whatwg.github.io/loader/) specification as closely as possible, while
 making a best-effort implementation of the upcoming loader simplification changes as descibred in https://github.com/whatwg/loader/issues/147.
 
-Default normalization and error handling is implemented as in the HTML specification for module loading. Default normalization follows the HTML specification treatment of module keys as URLs, with plain names ignored by default (effectively erroring unless altering this behaviour through the hooks). Rejections during normalize, instantiate or execution reject the current in-progress load trees for all dependents, which are immediately and synchronously removed from the registry to allow further loads to retry loading.
+Default normalization and error handling is implemented as in the HTML specification for module loading. Default normalization follows the HTML specification treatment of module keys as URLs, with plain names ignored by default (effectively erroring unless altering this behaviour through the hooks). Rejections during resolve, instantiate or execution reject the current in-progress load trees for all dependents, which are immediately and synchronously removed from the registry to allow further loads to retry loading.
 
 - A direct `ModuleNamespace` constructor is provided over the `Module` mutator proposal in the WhatWG specification.
  Instead of storing a registry of ModuleStatus objects, we then store a registry of Module Namespace objects. The reason for this is that asynchronous rejection of registry entries as a source of truth leads to partial inconsistent rejection states
@@ -235,7 +235,7 @@ and not ModuleStatus objects as promises for Namespace objects.
 - `Loader` is available as a named export from `core/loader-polyfill.js` but is not by default exported to the `global.Reflect` object.
   This is to allow individual loader implementations to determine their own impact on the environment.
 - A constructor argument is added to the loader that takes the environment `baseKey` to be used as the default normalization parent.
-- The `RegisterLoader` splits up the `resolve` hook into `normalize` and `instantiate`. The [WhatWG reduced specification proposal](https://github.com/whatwg/loader/issues/147) to remove the loader hooks implies having a single `resolve` hook by having the module set into the registry using the `registry.set` API as a side-effect of resolution to allow custom interception as in the first loader example above. As discussed in https://github.com/whatwg/loader/issues/147#issuecomment-230407764, this may cause unwanted execution of modules when only resolution is needed via `loader.resolve` calls, so the approach taken in the `RegisterLoader` is to implement separate `normalize` and `instantiate` hooks.
+- The `RegisterLoader` splits up the `resolve` hook into `resolve` and `instantiate`. The [WhatWG reduced specification proposal](https://github.com/whatwg/loader/issues/147) to remove the loader hooks implies having a single `resolve` hook by having the module set into the registry using the `registry.set` API as a side-effect of resolution to allow custom interception as in the first loader example above. As discussed in https://github.com/whatwg/loader/issues/147#issuecomment-230407764, this may cause unwanted execution of modules when only resolution is needed via `loader.resolve` calls, so the approach taken in the `RegisterLoader` is to implement separate `resolve` and `instantiate` hooks.
 
 ## License
 Licensed under the MIT license.
