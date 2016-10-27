@@ -37,7 +37,7 @@ RegisterLoader.prototype = Object.create(Loader.prototype);
 RegisterLoader.prototype.constructor = RegisterLoader;
 
 // NB replace with createSymbol('normalize'), ... for next major
-RegisterLoader.normalize = RegisterLoader.resolve = 'normalize';
+RegisterLoader.normalize = 'normalize';
 RegisterLoader.instantiate = 'instantiate';
 RegisterLoader.createMetadata = 'createMetadata';
 RegisterLoader.processRegisterContext = 'processRegisterContext';
