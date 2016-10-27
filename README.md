@@ -119,10 +119,10 @@ class MyCustomLoader extends RegisterLoader {
 The default loader as described above would support loading modules if they have already been registered by key via
 `loader.register` calls (the `System.register` module format, where `System` is the global loader name).
 
-The return value of `normalize` is the final key that is set in the registry (available and iterable as per the spec
+The return value of `resolve` is the final key that is set in the registry (available and iterable as per the spec
 at `loader.registry`).
 
-The default normalization provided (`super[RegisterLoader.normalize]` above) follows the same approach as the HTML specification for module resolution, whereby _plain module names_ that are not valid URLs, and not starting with `./`, `../` or `/` return `undefined`.
+The default normalization provided (`super[RegisterLoader.resolve]` above) follows the same approach as the HTML specification for module resolution, whereby _plain module names_ that are not valid URLs, and not starting with `./`, `../` or `/` return `undefined`.
 
 So for example `lodash` will return `undefined`, while `./x` will resolve to `[baseURI]/x`. In NodeJS a `file:///` URL is used for the baseURI.
 
