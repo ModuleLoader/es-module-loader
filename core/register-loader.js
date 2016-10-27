@@ -43,7 +43,7 @@ RegisterLoader.createMetadata = 'createMetadata';
 RegisterLoader.processRegisterContext = 'processRegisterContext';
 
 // default normalize is the WhatWG style normalizer
-RegisterLoader.prototype.normalize = function (key, parentKey, metadata) {
+RegisterLoader.prototype.normalize = function (key, parentKey, metadata, parentMetadata) {
   // normalization shortpath for already in registry
   if (this[REGISTER_REGISTRY][key] || this.registry._registry[key])
     return key;
@@ -66,10 +66,10 @@ function ensureResolution (resolvedKey) {
   return resolvedKey;
 }
 
-function resolve (loader, key, parentKey, metadata) {
+function resolve (loader, key, parentKey, metadata, parentMetadata) {
   return Promise.resolve()
   .then(function () {
-    return loader.normalize(key, parentKey, metadata);
+    return loader.normalize(key, parentKey, metadata, parentMetadata);
   })
   .then(ensureResolution)
   .catch(function (err) {
@@ -78,7 +78,8 @@ function resolve (loader, key, parentKey, metadata) {
 }
 
 RegisterLoader.prototype[Loader.resolve] = function (key, parentKey) {
-  return resolve(this, key, parentKey, this.createMetadata());
+  var parentLoad = this[REGISTER_REGISTRY][parentKey];
+  return resolve(this, key, parentKey, this.createMetadata(), parentLoad && parentLoad.metadata);
 };
 
 // once evaluated, the linkRecord is set to undefined leaving just the other load record properties
@@ -91,6 +92,9 @@ function createLoadRecord (key, registration) {
     // defined System.register cache
     registration: registration,
 
+    // load record metadata
+    metadata: undefined,
+
     // module namespace object
     module: undefined,
 
@@ -101,8 +105,6 @@ function createLoadRecord (key, registration) {
 
     // in-flight linking record
     linkRecord: {
-      metadata: undefined,
-
       // promise for instantiated
       instantiatePromise: undefined,
       dependencies: undefined,
@@ -172,8 +174,9 @@ function resolveInstantiate (loader, key, parentKey, registry, registerRegistry)
   if (load && !load.module)
     return instantiate(loader, load, load.linkRecord, registry, registerRegistry);
 
+  var parentLoad = registerRegistry[parentKey];
   var metadata = loader.createMetadata();
-  return resolve(loader, key, parentKey, metadata)
+  return resolve(loader, key, parentKey, metadata, parentLoad && parentLoad.metadata)
   .then(function (resolvedKey) {
     // main loader registry always takes preference
     module = registry[resolvedKey];
@@ -193,7 +196,7 @@ function resolveInstantiate (loader, key, parentKey, registry, registerRegistry)
     if (!link)
       return load;
 
-    link.metadata = link.metadata || metadata;
+    load.metadata = load.metadata || metadata;
     return instantiate(loader, load, link, registry, registerRegistry);
   });
 }
@@ -202,7 +205,7 @@ function instantiate (loader, load, link, registry, registerRegistry) {
   return link.instantiatePromise || (link.instantiatePromise =
   // if there is already an existing registration, skip running instantiate
   (load.registration ? Promise.resolve() : Promise.resolve().then(function () {
-    return loader.instantiate(load.key, link.metadata);
+    return loader.instantiate(load.key, load.metadata);
   }))
   .then(function (instantiation) {
     // direct module return from instantiate -> we're done
@@ -256,7 +259,7 @@ function instantiate (loader, load, link, registry, registerRegistry) {
 }
 
 // like resolveInstantiate, but returning load records for linking
-function resolveInstantiateDep (loader, key, parentKey, registry, registerRegistry, traceDepMap) {
+function resolveInstantiateDep (loader, key, parentKey, parentMetadata, registry, registerRegistry, traceDepMap) {
   // normalization shortpaths for already-normalized key
   // DISABLED to prioritise consistent resolver calls
   // could add a plain name filter, but doesn't yet seem necessary for perf
@@ -280,9 +283,8 @@ function resolveInstantiateDep (loader, key, parentKey, registry, registerRegist
       traceDepMap[key] = key;
     return instantiate(loader, load, load.linkRecord, registry, registerRegistry);
   } */
-
   var metadata = loader.createMetadata();
-  return resolve(loader, key, parentKey, metadata)
+  return resolve(loader, key, parentKey, metadata, parentMetadata)
   .then(function (resolvedKey) {
     if (traceDepMap)
       traceDepMap[key] = key;
@@ -306,7 +308,7 @@ function resolveInstantiateDep (loader, key, parentKey, registry, registerRegist
     if (!link)
       return load;
 
-    link.metadata = link.metadata || metadata;
+    load.metadata = load.metadata || metadata;
     return instantiate(loader, load, link, registry, registerRegistry);
   });
 }
@@ -316,7 +318,7 @@ function traceLoad (load, link) {
     key: load.key,
     dependencies: link.dependencies,
     depMap: link.depMap || {},
-    metadata: link.metadata
+    metadata: load.metadata
   };
 }
 
@@ -396,7 +398,7 @@ function instantiateDeps (loader, load, link, registry, registerRegistry, seen) 
     var depsInstantiatePromises = Array(link.dependencies.length);
 
     for (var i = 0; i < link.dependencies.length; i++)
-      depsInstantiatePromises[i] = resolveInstantiateDep(loader, link.dependencies[i], load.key, registry, registerRegistry, loader.trace && (link.depMap = {}));
+      depsInstantiatePromises[i] = resolveInstantiateDep(loader, link.dependencies[i], load.key, load.metadata, registry, registerRegistry, loader.trace && (link.depMap = {}));
 
     return Promise.all(depsInstantiatePromises);
   })
@@ -682,15 +684,11 @@ function doEvaluate (load, link, registry, registerRegistry, seen) {
     if (load.importerSetters)
       for (var i = 0; i < load.importerSetters.length; i++)
         load.importerSetters[i](load.module);
+    load.importerSetters = undefined;
+  }
 
-    // once executed, non-es modules can be removed from the private registry
-    // since we don't need to store binding update metadata
-    if (registerRegistry[load.key] === load)
-      registerRegistry[load.key] = undefined;
-  }
-  else {
-    load.linkRecord = undefined;
-  }
+  // dispose link record
+  load.linkRecord = undefined;
 }
 
 // {} is the closest we can get to call(undefined)
