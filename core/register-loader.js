@@ -78,9 +78,7 @@ function resolve (loader, key, parentKey, metadata) {
   });
 }
 
-var RESOLVE = Loader.resolve;
-
-RegisterLoader.prototype[RESOLVE] = function (key, parentKey) {
+RegisterLoader.prototype[Loader.resolve] = function (key, parentKey) {
   return resolve(this, key, parentKey, this.createMetadata());
 };
 
@@ -261,8 +259,9 @@ function instantiate (loader, load, link, registry, registerRegistry) {
 // like resolveInstantiate, but returning load records for linking
 function resolveInstantiateDep (loader, key, parentKey, registry, registerRegistry, traceDepMap) {
   // normalization shortpaths for already-normalized key
+  // DISABLED to prioritise consistent resolver calls
   // could add a plain name filter, but doesn't yet seem necessary for perf
-  var load = registerRegistry[key];
+  /* var load = registerRegistry[key];
   var module = registry[key];
 
   if (module) {
@@ -281,7 +280,7 @@ function resolveInstantiateDep (loader, key, parentKey, registry, registerRegist
     if (traceDepMap)
       traceDepMap[key] = key;
     return instantiate(loader, load, load.linkRecord, registry, registerRegistry);
-  }
+  } */
 
   var metadata = loader.createMetadata();
   return resolve(loader, key, parentKey, metadata)
@@ -290,8 +289,8 @@ function resolveInstantiateDep (loader, key, parentKey, registry, registerRegist
       traceDepMap[key] = key;
 
     // similar logic to above
-    load = registerRegistry[resolvedKey];
-    module = registry[resolvedKey];
+    var load = registerRegistry[resolvedKey];
+    var module = registry[resolvedKey];
 
     // main loader registry always takes preference
     if (module && (!load || load.module && module !== load.module))
