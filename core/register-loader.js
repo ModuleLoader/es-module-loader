@@ -57,7 +57,9 @@ RegisterLoader.prototype.instantiate = function (key, metadata) {};
 // it can run as a single hidden class throughout the normalize
 // and instantiate pipeline hooks in the js engine
 RegisterLoader.prototype.createMetadata = function () {
-  return {};
+  return {
+    registered: false
+  };
 };
 
 function ensureResolution (resolvedKey) {
@@ -78,7 +80,7 @@ function resolve (loader, key, parentKey, metadata, parentMetadata) {
 }
 
 RegisterLoader.prototype[Loader.resolve] = function (key, parentKey) {
-  var parentLoad = this[REGISTER_REGISTRY][parentKey];
+  var parentLoad = parentKey && this[REGISTER_REGISTRY][parentKey];
   return resolve(this, key, parentKey, this.createMetadata(), parentLoad && parentLoad.metadata);
 };
 
@@ -511,6 +513,7 @@ RegisterLoader.prototype.register = function (key, deps, declare) {
   else {
     var load = this[REGISTER_REGISTRY][key] || createLoadRecord.call(this, key, undefined);
     load.registration = [deps, declare, false];
+    load.metadata.registered = true;
   }
 };
 
@@ -527,6 +530,7 @@ RegisterLoader.prototype.registerDynamic = function (key, deps, execute) {
   else {
     var load = this[REGISTER_REGISTRY][key] || createLoadRecord.call(this, key, undefined);
     load.registration = [deps, execute === true && arguments[3] || execute === false && makeNonExecutingRequire(deps, arguments[3]) || execute, true];
+    load.metadata.registered = true;
   }
 };
 
@@ -553,6 +557,7 @@ RegisterLoader.prototype.processRegisterContext = function (contextKey) {
   // returning the defined value allows avoiding an extra lookup for custom instantiate
   var load = this[REGISTER_REGISTRY][contextKey] || createLoadRecord.call(this, contextKey, undefined);
   load.registration = registeredLastAnon;
+  load.metadata.registered = true;
 };
 
 // ContextualLoader class
