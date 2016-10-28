@@ -110,7 +110,7 @@ class MyCustomLoader extends RegisterLoader {
   /*
    * Default instantiate hook
    */
-  [RegisterLoader.instantiate](key, metadata) {
+  [RegisterLoader.instantiate](key, metadata, processRegister) {
     return undefined;
   }
 }
@@ -145,20 +145,17 @@ For example:
 ```
 
 When using the anonymous form of System.register - `loader.register(deps, declare)`, in order to know
-the context in which it was called, it is necessary to call the `loader.processRegisterContext(contextKey)` method:
+the context in which it was called, it is necessary to call the `processAnonRegister` method passed to instantiate:
 
 ```javascript
-  [RegisterLoader.instantiate](key, metadata) {
+  [RegisterLoader.instantiate](key, metadata, processAnonRegister) {
     this.register(deps, declare);
-    this.processRegisterContext(key);
+    processAnonRegister();
     return undefined;
   }
 ```
 
-The loader can then match the anonymous register call to the right module key. This is used to support `<script>` loading
-of anonymous `System.register` modules.
-
-The `key` and `contextKey` provided to `register` or `processRegisterContext` must be the exact key to use in the registry. If not, the module will not be detected correctly.
+The loader can then match the anonymous `System.register` call to correct module in the registry. This is used to support `<script>` loading.
 
 ##### 2. Instantiating Legacy Modules via System.registerDynamic
 

@@ -50,7 +50,7 @@ RegisterLoader.prototype.normalize = function (key, parentKey, metadata, parentM
   return resolveUrlToParentIfNotPlain(key, parentKey);
 }
 
-RegisterLoader.prototype.instantiate = function (key, metadata) {};
+RegisterLoader.prototype.instantiate = function (key, processRegister, metadata) {};
 
 // this function is an optimization to allow loader extensions to
 // implement it to set the metadata object shape upfront to ensure
@@ -199,15 +199,32 @@ function resolveInstantiate (loader, key, parentKey, registry, registerRegistry)
       return load;
 
     load.metadata = load.metadata || metadata;
+    if (load.registration)
+      load.metadata.registered = true;
+
     return instantiate(loader, load, link, registry, registerRegistry);
   });
+}
+
+function createProcessAnonRegister (loader, load) {
+  return function () {
+    var registeredLastAnon = loader[REGISTERED_LAST_ANON];
+
+    if (!registeredLastAnon)
+      return;
+
+    loader[REGISTERED_LAST_ANON] = undefined;
+
+    load.registration = registeredLastAnon;
+    load.metadata.registered = true;
+  };
 }
 
 function instantiate (loader, load, link, registry, registerRegistry) {
   return link.instantiatePromise || (link.instantiatePromise =
   // if there is already an existing registration, skip running instantiate
   (load.registration ? Promise.resolve() : Promise.resolve().then(function () {
-    return loader.instantiate(load.key, load.metadata);
+    return loader.instantiate(load.key, load.metadata, loader.instantiate.length > 2 && createProcessAnonRegister(loader, load));
   }))
   .then(function (instantiation) {
     // direct module return from instantiate -> we're done
@@ -311,6 +328,9 @@ function resolveInstantiateDep (loader, key, parentKey, parentMetadata, registry
       return load;
 
     load.metadata = load.metadata || metadata;
+    if (load.registration)
+      load.metadata.registered = true;
+
     return instantiate(loader, load, link, registry, registerRegistry);
   });
 }
@@ -513,7 +533,6 @@ RegisterLoader.prototype.register = function (key, deps, declare) {
   else {
     var load = this[REGISTER_REGISTRY][key] || createLoadRecord.call(this, key, undefined);
     load.registration = [deps, declare, false];
-    load.metadata.registered = true;
   }
 };
 
@@ -530,7 +549,6 @@ RegisterLoader.prototype.registerDynamic = function (key, deps, execute) {
   else {
     var load = this[REGISTER_REGISTRY][key] || createLoadRecord.call(this, key, undefined);
     load.registration = [deps, execute === true && arguments[3] || execute === false && makeNonExecutingRequire(deps, arguments[3]) || execute, true];
-    load.metadata.registered = true;
   }
 };
 
@@ -546,6 +564,7 @@ function makeNonExecutingRequire (deps, execute) {
   };
 }
 
+// NB this is being deprecated
 RegisterLoader.prototype.processRegisterContext = function (contextKey) {
   var registeredLastAnon = this[REGISTERED_LAST_ANON];
 
