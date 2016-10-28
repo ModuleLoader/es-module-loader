@@ -1,6 +1,6 @@
 # ES Module Loader Polyfill [![Build Status][travis-image]][travis-url]
 
-Provides [low-level hooks](#loader-hooks) for creating ES module loaders, roughly based on the API of the [WhatWG loader spec](https://github.com/whatwg/loader),
+Provides [low-level hooks](#registerloader-hooks) for creating ES module loaders, roughly based on the API of the [WhatWG loader spec](https://github.com/whatwg/loader),
 but with [adjustments](#spec-differences) to match the current proposals for the HTML modules specification, [unspecified WhatWG changes](https://github.com/whatwg/loader/issues/147), and [NodeJS ES module adoption](https://github.com/nodejs/node/issues/8866).
 
 Supports the [loader import and registry API](#base-loader-polyfill-api) with the [System.register](docs/system-register.md) module format to provide exact module loading semantics for ES modules in environments today. In addition, support for the [System.registerDynamic](docs/system-register-dynamic.md) is provided to allow the linking
