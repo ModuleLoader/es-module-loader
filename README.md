@@ -110,7 +110,7 @@ class MyCustomLoader extends RegisterLoader {
   /*
    * Default instantiate hook
    */
-  [RegisterLoader.instantiate](key, metadata, processRegister) {
+  [RegisterLoader.instantiate](key, metadata, processAnonRegister) {
     return undefined;
   }
 }
