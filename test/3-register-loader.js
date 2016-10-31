@@ -13,30 +13,30 @@ describe('System Register Loader', function() {
       assert(loader instanceof SystemRegisterLoader);
     });
 
-    it('Should import a module', async function() {
+    it('Should import a module', async function () {
       var m = await loader.import('./register-modules/no-imports.js');
       assert(m);
       assert.equal(m.asdf, 'asdf');
     });
 
-    it('Should import a module cached', async function() {
+    it('Should import a module cached', async function () {
       var m1 = await loader.import('./register-modules/no-imports.js');
       var m2 = await loader.import('./register-modules/no-imports.js');
       assert.equal(m1.asdf, 'asdf');
       assert.equal(m1, m2);
     });
 
-    it('should import an es module with its dependencies', async function() {
+    it('should import an es module with its dependencies', async function () {
       var m = await loader.import('./register-modules/es6-withdep.js');
       assert.equal(m.p, 'p');
     });
 
-    it('should import without bindings', async function() {
+    it('should import without bindings', async function () {
       var m = await loader.import('./register-modules/direct.js');
       assert(!!m);
     });
 
-    it('should support various es syntax', async function() {
+    it('should support various es syntax', async function () {
       var m = await loader.import('./register-modules/es6-file.js');
 
       assert.equal(typeof m.q, 'function');
@@ -54,7 +54,7 @@ describe('System Register Loader', function() {
         throw new Error('Supposed to throw');
     });
 
-    it('should resolve various import syntax', async function() {
+    it('should resolve various import syntax', async function () {
       var m = await loader.import('./register-modules/import.js');
       assert.equal(typeof m.a, 'function');
       assert.equal(m.b, 4);
@@ -64,7 +64,7 @@ describe('System Register Loader', function() {
       assert.equal(typeof m.q.foo, 'function');
     });
 
-    it('should support __moduleName', async function() {
+    it('should support __moduleName', async function () {
       var m = await loader.import('./register-modules/moduleName.js');
       assert.equal(m.name, pathToFileUrl(path.resolve('test/fixtures/register-modules/moduleName.js')));
     });
@@ -73,7 +73,7 @@ describe('System Register Loader', function() {
   describe('Circular dependencies', function() {
 
 
-    it('should resolve circular dependencies', async function() {
+    it('should resolve circular dependencies', async function () {
       var m1 = await loader.import('./register-modules/circular1.js');
       var m2 = await loader.import('./register-modules/circular2.js');
 
@@ -87,7 +87,7 @@ describe('System Register Loader', function() {
       assert.equal(m1.output2, 'test circular 1');
     });
 
-    it('should update circular dependencies', async function() {
+    it('should update circular dependencies', async function () {
       var m = await loader.import('./register-modules/even.js');
       assert.equal(m.counter, 1);
       assert(m.even(10));
@@ -106,37 +106,37 @@ describe('System Register Loader', function() {
       });
     }
 
-    it('should load in order (a)', async function() {
+    it('should load in order (a)', async function () {
       await assertLoadOrder('a.js', ['a', 'b']);
     });
 
-    it('should load in order (c)', async function() {
+    it('should load in order (c)', async function () {
       await assertLoadOrder('c.js', ['c', 'a', 'b']);
     });
 
-    it('should load in order (s)', async function() {
+    it('should load in order (s)', async function () {
       await assertLoadOrder('s.js', ['s', 'c', 'a', 'b']);
     });
 
-    it('should load in order (_a)', async function() {
+    it('should load in order (_a)', async function () {
       await assertLoadOrder('_a.js', ['b', 'd', 'g', 'a']);
     });
 
-    it('should load in order (_e)', async function() {
+    it('should load in order (_e)', async function () {
       await assertLoadOrder('_e.js', ['c', 'e']);
     });
 
-    it('should load in order (_f)', async function() {
+    it('should load in order (_f)', async function () {
       await assertLoadOrder('_f.js', ['g', 'f']);
     });
 
-    it('should load in order (_h)', async function() {
+    it('should load in order (_h)', async function () {
       await assertLoadOrder('_h.js', ['i', 'a', 'h']);
     });
   });
 
   describe('Export variations', function () {
-    it('should resolve different export syntax', async function() {
+    it('should resolve different export syntax', async function () {
       var m = await loader.import('./register-modules/export.js');
       assert.equal(m.p, 5);
       assert.equal(typeof m.foo, 'function');
@@ -147,35 +147,35 @@ describe('System Register Loader', function() {
       assert.equal(typeof m.m, 'object');
     });
 
-    it('should resolve "export default"', async function() {
+    it('should resolve "export default"', async function () {
       var m = await loader.import('./register-modules/export-default.js');
       assert.equal(m.default(), 'test');
     });
 
-    it('should support simple re-exporting', async function() {
+    it('should support simple re-exporting', async function () {
       var m = await loader.import('./register-modules/reexport1.js');
       assert.equal(m.p, 5);
     });
 
-    it('should support re-exporting binding', async function() {
+    it('should support re-exporting binding', async function () {
       await loader.import('./register-modules/reexport-binding.js');
       var m = await loader.import('./register-modules/rebinding.js');
       assert.equal(m.p, 4);
     });
 
-    it('should support re-exporting with a new name', async function() {
+    it('should support re-exporting with a new name', async function () {
       var m = await loader.import('./register-modules/reexport2.js');
       assert.equal(m.q, 4);
       assert.equal(m.z, 5);
     });
 
-    it('should support re-exporting', async function() {
+    it('should support re-exporting', async function () {
       var m = await loader.import('./register-modules/export-star.js');
       assert.equal(m.foo, 'foo');
       assert.equal(m.bar, 'bar');
     });
 
-    it.skip('should support re-exporting overwriting', async function() {
+    it.skip('should support re-exporting overwriting', async function () {
       var m = await loader.import('./register-modules/export-star2.js');
       assert.equal(m.bar, 'bar');
       assert.equal(typeof m.foo, 'function');
@@ -196,17 +196,22 @@ describe('System Register Loader', function() {
       throw new Error('Test supposed to fail');
     }
 
-    it('should throw if on syntax error', async function() {
+    it('should give a plain name error', async function () {
+      var err = await getImportError('plain-name');
+      assert.equal(err, 'Error: No resolution found.\n  Resolving dependency "plain-name" to ' + fileUrlToPath(loader.key) + '\n  Loading plain-name');
+    });
+
+    it('should throw if on syntax error', async function () {
       var err = await getImportError('./register-modules/main.js');
       assert.equal(err, 'Error: dep error\n  Evaluating ' + testPath + 'deperror.js\n  Evaluating ' + testPath + 'main.js\n  Loading ./register-modules/main.js');
     });
 
-    it('should throw what the script throws', async function() {
+    it('should throw what the script throws', async function () {
       var err = await getImportError('./register-modules/deperror.js');
       assert.equal(err, 'Error: dep error\n  Evaluating ' + testPath + 'deperror.js\n  Loading ./register-modules/deperror.js');
     });
 
-    it('404 error', async function() {
+    it('404 error', async function () {
       var err = await getImportError('./register-modules/load-non-existent.js');
       var lines = err.split('\n  ');
       assert(lines[0].startsWith('Error: '));
@@ -225,7 +230,7 @@ describe('System Register Loader', function() {
       assert.equal(m.named, 'name!');
     });
 
-    it('should load mixed bundles of register and registerDynamic', async function() {
+    it('should load mixed bundles of register and registerDynamic', async function () {
       new Module().require(path.resolve(fileUrlToPath(loader.key), 'dynamic-modules/mixed-bundle.js'));
       var m = await loader.import('tree/first');
       assert.equal(m.p, 5);

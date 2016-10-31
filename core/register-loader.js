@@ -75,7 +75,7 @@ function resolve (loader, key, parentKey, metadata, parentMetadata) {
   })
   .then(ensureResolution)
   .catch(function (err) {
-    throw addToError(err, 'Resolving dependency "' + key + '" of ' + parentKey);
+    throw addToError(err, 'Resolving dependency "' + key + '" to ' + parentKey);
   });
 }
 
