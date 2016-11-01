@@ -154,11 +154,11 @@ RegisterLoader.prototype[Loader.resolveInstantiate] = function (key, parentKey) 
 
     // resolveInstantiate always returns a load record with a link record and no module value
     if (instantiated.linkRecord.linked)
-      return ensureEvaluate(loader, instantiated, instantiated.linkRecord, registry, registerRegistry);
+      return ensureEvaluate(loader, instantiated, instantiated.linkRecord, registry, registerRegistry, []);
 
     return instantiateDeps(loader, instantiated, instantiated.linkRecord, registry, registerRegistry, [instantiated])
     .then(function () {
-      return ensureEvaluate(loader, instantiated, instantiated.linkRecord, registry, registerRegistry);
+      return ensureEvaluate(loader, instantiated, instantiated.linkRecord, registry, registerRegistry, []);
     })
     .catch(function (err) {
       clearLoadErrors(loader, instantiated);
@@ -608,14 +608,19 @@ ContextualLoader.prototype.load = function (key) {
 };
 
 // this is the execution function bound to the Module namespace record
-function ensureEvaluate (loader, load, link, registry, registerRegistry) {
+function ensureEvaluate (loader, load, link, registry, registerRegistry, seen) {
   if (load.module)
     return load.module;
 
   if (link.error)
     throw link.error;
 
-  var err = doEvaluate(loader, load, link, registry, registerRegistry, []);
+  if (seen.indexOf(load) !== -1)
+    return load.linkRecord.moduleObj;
+
+  // for ES loads we always run ensureEvaluate on top-level, so empty seen is passed regardless
+  // for dynamic loads, we pass seen if also dynamic
+  var err = doEvaluate(loader, load, link, registry, registerRegistry, seen.length && load.setters ? [] : seen);
   if (err) {
     clearLoadErrors(loader, load);
     throw err;
@@ -630,31 +635,12 @@ function makeDynamicRequire (loader, key, dependencies, dependencyInstantiations
     for (var i = 0; i < dependencies.length; i++) {
       if (dependencies[i] === name) {
         var depLoad = dependencyInstantiations[i];
-        var err;
-
         var module;
 
-        if (depLoad instanceof Module) {
+        if (depLoad instanceof Module)
           module = depLoad;
-        }
-        else if (depLoad.module) {
-          module = depLoad.module;
-        }
-        else if (depLoad.linkRecord.error) {
-          err = depLoad.linkRecord.error;
-        }
-        else if (seen.indexOf(depLoad) === -1) {
-          err = doEvaluate(loader, depLoad, depLoad.linkRecord, registry, registerRegistry, depLoad.setters ? [] : seen);
-          module = depLoad.module;
-        }
-        else {
-          module = depLoad.linkRecord.moduleObj;
-        }
-
-        if (err) {
-          clearLoadErrors(loader, depLoad);
-          throw err;
-        }
+        else
+          module = ensureEvaluate(loader, depLoad, depLoad.linkRecord, registry, registerRegistry, seen);
 
         return module.__useDefault ? module.default : module;
       }
