@@ -9,7 +9,7 @@ export default RegisterLoader;
  *
  * Builds directly on top of loader polyfill to provide:
  * - loader.register support
- * - hookable higher-level normalize with metadata argument
+ * - hookable higher-level resolve with metadata argument
  * - instantiate hook with metadata arugment returning a ModuleNamespace or undefined for es module loading
  * - loader error behaviour as in HTML and loader specs, clearing failed modules from registration cache synchronously
  * - build tracing support by providing a .trace=true and .loads object format
@@ -202,9 +202,11 @@ function resolveInstantiate (loader, key, parentKey, registry, registerRegistry)
     if (!link)
       return load;
 
-    load.metadata = load.metadata || metadata;
-    if (load.registration)
-      load.metadata.registered = true;
+    if (!load.metadata) {
+      load.metadata = metadata;
+      if (load.registration)
+        load.metadata.registered = true;
+    }
 
     return instantiate(loader, load, link, registry, registerRegistry);
   });
@@ -355,7 +357,7 @@ function traceLoad (load, link) {
  *
  * Sets the default value to the module, while also reading off named exports carefully.
  */
-function copyNamedExports(exports, moduleObj) {
+function copyNamedExports (exports, moduleObj) {
   if ((typeof exports === 'object' || typeof exports === 'function') && exports !== global) {
     for (var p in exports)
       defineOrCopyProperty(moduleObj, exports, p);
@@ -363,7 +365,7 @@ function copyNamedExports(exports, moduleObj) {
   moduleObj.default = exports;
 }
 
-function defineOrCopyProperty(targetObj, sourceObj, propName) {
+function defineOrCopyProperty (targetObj, sourceObj, propName) {
   // don't trigger getters/setters in environments that support them
   try {
     var d;
@@ -536,6 +538,8 @@ RegisterLoader.prototype.register = function (key, deps, declare) {
   else {
     var load = this[REGISTER_REGISTRY][key] || createLoadRecord.call(this, key, undefined);
     load.registration = [deps, declare, false];
+    if (load.metadata)
+      load.metadata.registered = true;
   }
 };
 
@@ -552,6 +556,8 @@ RegisterLoader.prototype.registerDynamic = function (key, deps, execute) {
   else {
     var load = this[REGISTER_REGISTRY][key] || createLoadRecord.call(this, key, undefined);
     load.registration = [deps, execute === true && arguments[3] || execute === false && makeNonExecutingRequire(deps, arguments[3]) || execute, true];
+    if (load.metadata)
+      load.metadata.registered = true;
   }
 };
 
@@ -618,7 +624,7 @@ function ensureEvaluate (loader, load, link, registry, registerRegistry) {
   return load.module;
 }
 
-function makeDynamicRequire (loader, key, dependencies, dependencyInstantiations, registry, registerRegistry) {
+function makeDynamicRequire (loader, key, dependencies, dependencyInstantiations, registry, registerRegistry, seen) {
   // we can only require from already-known dependencies
   return function (name) {
     for (var i = 0; i < dependencies.length; i++) {
@@ -628,10 +634,27 @@ function makeDynamicRequire (loader, key, dependencies, dependencyInstantiations
 
         var module;
 
-        if (depLoad instanceof Module)
+        if (depLoad instanceof Module) {
           module = depLoad;
-        else
-          module = ensureEvaluate(loader, depLoad, depLoad.linkRecord, registry, registerRegistry);
+        }
+        else if (depLoad.module) {
+          module = depLoad.module;
+        }
+        else if (depLoad.linkRecord.error) {
+          err = depLoad.linkRecord.error;
+        }
+        else if (seen.indexOf(depLoad) === -1) {
+          err = doEvaluate(loader, depLoad, depLoad.linkRecord, registry, registerRegistry, depLoad.setters ? [] : seen);
+          module = depLoad.module;
+        }
+        else {
+          module = depLoad.linkRecord.moduleObj;
+        }
+
+        if (err) {
+          clearLoadErrors(loader, depLoad);
+          throw err;
+        }
 
         return module.__useDefault ? module.default : module;
       }
@@ -667,7 +690,9 @@ function doEvaluate (loader, load, link, registry, registerRegistry, seen) {
           if (depLink.error)
             err = depLink.error;
           else
-            err = doEvaluate(loader, depLoad, depLink, registry, registerRegistry, seen);
+            // dynamic / declarative boundaries clear the "seen" list
+            // we just let cross format circular throw as would happen in real implementations
+            err = doEvaluate(loader, depLoad, depLink, registry, registerRegistry, depLink.setters ? seen : []);
         }
       }
 
@@ -686,16 +711,25 @@ function doEvaluate (loader, load, link, registry, registerRegistry, seen) {
     // System.registerDynamic execute
     // "this" is "exports" in CJS
     else {
-      var module = { exports: link.moduleObj.default, id: load.key };
+      var module = { id: load.key };
+      var moduleObj = link.moduleObj;
+      Object.defineProperty(module, 'exports', {
+        set: function (exports) {
+          moduleObj.default = exports;
+        },
+        get: function () {
+          return moduleObj.default;
+        }
+      });
       err = doExecute(link.execute, module.exports, [
-        makeDynamicRequire(loader, load.key, link.dependencies, link.dependencyInstantiations, registry, registerRegistry),
+        makeDynamicRequire(loader, load.key, link.dependencies, link.dependencyInstantiations, registry, registerRegistry, seen),
         module.exports,
         module
       ]);
 
       // copy module.exports onto the module object
       if (!err)
-        copyNamedExports(module.exports, link.moduleObj);
+        copyNamedExports(module.exports, moduleObj);
     }
   }
 
