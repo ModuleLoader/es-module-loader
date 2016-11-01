@@ -549,27 +549,29 @@ RegisterLoader.prototype.register = function (key, deps, declare) {
 RegisterLoader.prototype.registerDynamic = function (key, deps, execute) {
   // anonymous modules get stored as lastAnon
   if (typeof key !== 'string') {
-    this[REGISTERED_LAST_ANON] = [key, deps === true && execute || deps === false && makeNonExecutingRequire(key, execute) || deps, true];
+    this[REGISTERED_LAST_ANON] = [key, typeof deps === 'boolean' ? dynamicExecuteCompat(key, deps, execute) : deps, true];
   }
 
   // everything else registers into the register cache
   else {
     var load = this[REGISTER_REGISTRY][key] || createLoadRecord.call(this, key, undefined);
-    load.registration = [deps, execute === true && arguments[3] || execute === false && makeNonExecutingRequire(deps, arguments[3]) || execute, true];
+    load.registration = [deps, typeof execute === 'boolean' ? dynamicExecuteCompat(deps, execute, arguments[3]) : execute, true];
     if (load.metadata)
       load.metadata.registered = true;
   }
 };
 
-function makeNonExecutingRequire (deps, execute) {
+function dynamicExecuteCompat (deps, executingRequire, execute) {
   return function(require, exports, module) {
     // evaluate deps first
-    for (var i = 0; i < deps.length; i++)
-      require(deps[i]);
+    if (executingRequire)
+      for (var i = 0; i < deps.length; i++)
+        require(deps[i]);
 
     // then run execution function
     // also provide backwards compat for no return value
-    module.exports = execute.apply(this, arguments) || module.exports;
+    // previous 4 argument form of System.register had "this" as global value
+    module.exports = execute.apply(global, arguments) || module.exports;
   };
 }
 
