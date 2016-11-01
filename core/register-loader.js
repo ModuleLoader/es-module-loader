@@ -148,6 +148,10 @@ RegisterLoader.prototype[Loader.resolveInstantiate] = function (key, parentKey) 
     if (instantiated instanceof Module)
       return instantiated;
 
+    // if already beaten to linked, return
+    if (instantiated.module)
+      return instantiated.module;
+
     // resolveInstantiate always returns a load record with a link record and no module value
     if (instantiated.linkRecord.linked)
       return ensureEvaluate(loader, instantiated, instantiated.linkRecord, registry, registerRegistry);
