@@ -154,11 +154,11 @@ RegisterLoader.prototype[Loader.resolveInstantiate] = function (key, parentKey) 
 
     // resolveInstantiate always returns a load record with a link record and no module value
     if (instantiated.linkRecord.linked)
-      return ensureEvaluate(loader, instantiated, instantiated.linkRecord, registry, registerRegistry, []);
+      return ensureEvaluate(loader, instantiated, instantiated.linkRecord, registry, registerRegistry, undefined);
 
     return instantiateDeps(loader, instantiated, instantiated.linkRecord, registry, registerRegistry, [instantiated])
     .then(function () {
-      return ensureEvaluate(loader, instantiated, instantiated.linkRecord, registry, registerRegistry, []);
+      return ensureEvaluate(loader, instantiated, instantiated.linkRecord, registry, registerRegistry, undefined);
     })
     .catch(function (err) {
       clearLoadErrors(loader, instantiated);
@@ -615,12 +615,12 @@ function ensureEvaluate (loader, load, link, registry, registerRegistry, seen) {
   if (link.error)
     throw link.error;
 
-  if (seen.indexOf(load) !== -1)
+  if (seen && seen.indexOf(load) !== -1)
     return load.linkRecord.moduleObj;
 
   // for ES loads we always run ensureEvaluate on top-level, so empty seen is passed regardless
   // for dynamic loads, we pass seen if also dynamic
-  var err = doEvaluate(loader, load, link, registry, registerRegistry, seen.length && load.setters ? [] : seen);
+  var err = doEvaluate(loader, load, link, registry, registerRegistry, load.setters ? [] : seen || []);
   if (err) {
     clearLoadErrors(loader, load);
     throw err;
