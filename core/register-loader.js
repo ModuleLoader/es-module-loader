@@ -254,7 +254,7 @@ function instantiate (loader, load, link, registry, registerRegistry) {
     // process System.registerDynamic declaration
     if (registration[2]) {
       link.moduleObj.default = {};
-      Object.defineProperty(link.moduleObj, '__useDefault', { value: true });
+      link.moduleObj.__useDefault = true;
       link.execute = registration[1];
     }
 
@@ -352,27 +352,25 @@ function traceLoad (load, link) {
  * Sets the default value to the module, while also reading off named exports carefully.
  */
 function copyNamedExports(exports, moduleObj) {
-  // don't trigger getters/setters in environments that support them
-  if ((typeof exports != 'object' && typeof exports != 'function') || exports === global)
-    return;
-
-  for (var p in exports)
-    if (p !== 'default')
+  if ((typeof exports === 'object' || typeof exports === 'function') && exports !== global) {
+    for (var p in exports)
       defineOrCopyProperty(moduleObj, exports, p);
-
+  }
   moduleObj.default = exports;
 }
 
 function defineOrCopyProperty(targetObj, sourceObj, propName) {
+  // don't trigger getters/setters in environments that support them
   try {
     var d;
-    if (d = Object.getOwnPropertyDescriptor(sourceObj, propName))
-      Object.defineProperty(targetObj, propName, d);
+    if (d = Object.getOwnPropertyDescriptor(sourceObj, propName)) {
+      // only copy data descriptors
+      if (d.value)
+        targetObj[propName] = d.value;
+    }
   }
-  catch (ex) {
-    // Object.getOwnPropertyDescriptor threw an exception, fall back to normal set property
-    // we dont need hasOwnProperty here because getOwnPropertyDescriptor would have returned undefined above
-    targetObj[propName] = sourceObj[propName];
+  catch (e) {
+    // Object.getOwnPropertyDescriptor threw an exception -> not own property
   }
 }
 
@@ -390,7 +388,8 @@ function registerDeclarative (loader, load, link, declare) {
 
     if (typeof name == 'object') {
       for (var p in name)
-        moduleObj[p] = name[p];
+        if (p !== '__useDefault')
+          moduleObj[p] = name[p];
     }
     else {
       moduleObj[name] = value;
@@ -606,7 +605,7 @@ function ensureEvaluate (loader, load, link, registry, registerRegistry) {
   if (link.error)
     throw link.error;
 
-  var err = doEvaluate(load, link, registry, registerRegistry, []);
+  var err = doEvaluate(loader, load, link, registry, registerRegistry, []);
   if (err) {
     clearLoadErrors(loader, load);
     throw err;
@@ -615,7 +614,7 @@ function ensureEvaluate (loader, load, link, registry, registerRegistry) {
   return load.module;
 }
 
-function makeDynamicRequire (key, dependencies, dependencyInstantiations, registry, registerRegistry) {
+function makeDynamicRequire (loader, key, dependencies, dependencyInstantiations, registry, registerRegistry) {
   // we can only require from already-known dependencies
   return function (name) {
     for (var i = 0; i < dependencies.length; i++) {
@@ -639,7 +638,7 @@ function makeDynamicRequire (key, dependencies, dependencyInstantiations, regist
 
 // ensures the given es load is evaluated
 // returns the error if any
-function doEvaluate (load, link, registry, registerRegistry, seen) {
+function doEvaluate (loader, load, link, registry, registerRegistry, seen) {
   seen.push(load);
 
   var err;
@@ -664,7 +663,7 @@ function doEvaluate (load, link, registry, registerRegistry, seen) {
           if (depLink.error)
             err = depLink.error;
           else
-            err = doEvaluate(depLoad, depLink, registry, registerRegistry, seen);
+            err = doEvaluate(loader, depLoad, depLink, registry, registerRegistry, seen);
         }
       }
 
@@ -685,7 +684,7 @@ function doEvaluate (load, link, registry, registerRegistry, seen) {
     else {
       var module = { exports: link.moduleObj.default, id: load.key };
       err = doExecute(link.execute, module.exports, [
-        makeDynamicRequire(load.key, link.dependencies, link.dependencyInstantiations, registry, registerRegistry),
+        makeDynamicRequire(loader, load.key, link.dependencies, link.dependencyInstantiations, registry, registerRegistry),
         module.exports,
         module
       ]);
