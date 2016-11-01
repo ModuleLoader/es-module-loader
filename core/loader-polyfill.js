@@ -239,9 +239,6 @@ function extendNamespace (key) {
     enumerable: true,
     get: function () {
       return this[BASE_OBJECT][key];
-    },
-    set: function () {
-      throw new TypeError('Module exports cannot be changed externally.');
     }
   });
 }
