@@ -211,7 +211,7 @@ Also not in the spec, this allows useful tooling to build on top of the loader.
 ```javascript
 {
   key, // String, key
-  dependencies, // Array, unnormalized dependencies
+  deps, // Array, unnormalized dependencies
   depMap, // Object, mapping unnormalized dependencies to normalized dependencies
   metadata // Object, exactly as from normalize and instantiate hooks
 }

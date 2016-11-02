@@ -240,7 +240,7 @@ function instantiate (loader, load, link, registry, registerRegistry) {
 
       registerRegistry[load.key] = undefined;
       if (loader.trace)
-        traceLoad(load, link);
+        traceLoad(loader, load, link);
       return registry[load.key] = instantiation;
     }
 
@@ -273,7 +273,7 @@ function instantiate (loader, load, link, registry, registerRegistry) {
     if (!link.dependencies.length) {
       link.linked = true;
       if (loader.trace)
-        traceLoad(load, link);
+        traceLoad(loader, load, link);
     }
 
     return load;
@@ -341,10 +341,13 @@ function resolveInstantiateDep (loader, key, parentKey, parentMetadata, registry
   });
 }
 
-function traceLoad (load, link) {
+function traceLoad (loader, load, link) {
   loader.loads[load.key] = {
     key: load.key,
+    // we provide both deps and dependencies
+    // NB dependencies will be deprecated
     dependencies: link.dependencies,
+    deps: link.dependencies,
     depMap: link.depMap || {},
     metadata: load.metadata
   };
@@ -477,7 +480,7 @@ function instantiateDeps (loader, load, link, registry, registerRegistry, seen) 
     // this can run multiple times, but so what
     link.linked = true;
     if (loader.trace)
-      traceLoad(load, link);
+      traceLoad(loader, load, link);
 
     return load;
   })
