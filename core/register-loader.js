@@ -48,7 +48,7 @@ RegisterLoader.prototype.normalize = function (key, parentKey, metadata, parentM
   if (this[REGISTER_REGISTRY][key] || this.registry._registry[key])
     return key;
   return resolveUrlToParentIfNotPlain(key, parentKey);
-}
+};
 
 RegisterLoader.prototype.instantiate = function (key, processRegister, metadata) {};
 
