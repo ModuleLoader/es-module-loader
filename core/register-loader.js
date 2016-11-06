@@ -362,8 +362,9 @@ function traceLoad (loader, load, link) {
  */
 function copyNamedExports (exports, moduleObj) {
   if ((typeof exports === 'object' || typeof exports === 'function') && exports !== global) {
-    for (var p in exports)
-      defineOrCopyProperty(moduleObj, exports, p);
+    var props = Object.getOwnPropertyNames(exports);
+    for (var i = 0; i < props.length; i++)
+      defineOrCopyProperty(moduleObj, exports, props[i]);
   }
   moduleObj.default = exports;
 }

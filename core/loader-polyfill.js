@@ -219,7 +219,7 @@ function Module (baseObject, evaluate) {
     });
   }
   else {
-    Object.keys(baseObject).forEach(extendNamespace, this);
+    var props = Object.getOwnPropertyNames(baseObject).forEach(extendNamespace, this);
   }
 };
 // 8.4.2
