@@ -680,7 +680,7 @@ function doEvaluate (loader, load, link, registry, registerRegistry, seen) {
       // ES or dynamic execute
       else {
         depLink = depLoad.linkRecord;
-        if (depLink && !depLink.module && seen.indexOf(depLoad) === -1) {
+        if (depLink && seen.indexOf(depLoad) === -1) {
           if (depLink.error)
             err = depLink.error;
           else
