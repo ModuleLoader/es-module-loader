@@ -360,6 +360,8 @@ function traceLoad (loader, load, link) {
  *
  * Sets the default value to the module, while also reading off named exports carefully.
  */
+
+// NB re-evaluate if this will even exist, and if it should be restricted to valid identifiers only
 function copyNamedExports (exports, moduleObj) {
   if ((typeof exports === 'object' || typeof exports === 'function') && exports !== global) {
     var props = Object.getOwnPropertyNames(exports);
@@ -566,7 +568,7 @@ RegisterLoader.prototype.registerDynamic = function (key, deps, execute) {
 };
 
 function dynamicExecuteCompat (deps, executingRequire, execute) {
-  return function(require, exports, module) {
+  return function (require, exports, module) {
     // evaluate deps first
     if (!executingRequire)
       for (var i = 0; i < deps.length; i++)

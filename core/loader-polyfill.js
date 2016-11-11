@@ -219,7 +219,7 @@ function Module (baseObject, evaluate) {
     });
   }
   else {
-    var props = Object.getOwnPropertyNames(baseObject).forEach(extendNamespace, this);
+    Object.getOwnPropertyNames(baseObject).forEach(extendNamespace, this);
   }
 };
 // 8.4.2
@@ -227,6 +227,8 @@ Module.prototype = Object.create(null);
 
 if (typeof Symbol !== 'undefined' && Symbol.toStringTag)
   Module.prototype[Symbol.toStringTag] = 'Module';
+
+// NB remove the toString fallback here in next major
 else
   Object.defineProperty(Module.prototype, 'toString', {
     value: function () {
