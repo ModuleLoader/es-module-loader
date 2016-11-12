@@ -96,14 +96,26 @@ Implementing a loader on top of the `RegisterLoader` base class involves extendi
 
 ```javascript
 import RegisterLoader from 'es-module-loader/core/register-loader.js';
+import { ModuleNamespace } from 'es-module-loader/core/loader-polyfill.js';
 
 class MyCustomLoader extends RegisterLoader {
+  /*
+   * Constructor
+   * Purely for completeness in this example
+   */
   constructor(baseKey) {
     super(baseKey);
   }
 
   /*
    * Default resolve hook
+   *
+   * The default parent resolution matches the HTML spec module resolution
+   * So super[RegisterLoader.resolve](key, parentKey) will return:
+   *  - undefined if "key" is a plain names (eg 'lodash')
+   *  - URL resolution if "key" is a relative URL (eg './x' will resolve to parentKey as a URL, or the baseURI)
+   *
+   * So relativeResolved becomes either a fully normalized URL or a plain name (|| key) in this example
    */
   [RegisterLoader.resolve](key, parentKey, metadata) {
     var relativeResolved = super[RegisterLoader.resolve](key, parentKey, metadata) || key;
@@ -112,18 +124,20 @@ class MyCustomLoader extends RegisterLoader {
 
   /*
    * Default instantiate hook
+   *
+   * This is one form of instantiate which is to return a ModuleNamespace directly
+   * This will result in every module supporting:
+   *
+   *   import { moduleName } from 'my-module-name';
+   *   assert(moduleName === 'my-module-name');
    */
   [RegisterLoader.instantiate](key, metadata, processAnonRegister) {
-    return undefined;
+    return new ModuleNamespace({ moduleName: key });
   }
 }
 ```
 
-The default loader as described above would support loading modules if they have already been registered by key via
-`loader.register` calls (the `System.register` module format, where `System` is the global loader name).
-
-The return value of `resolve` is the final key that is set in the registry (available and iterable as per the spec
-at `loader.registry`).
+The return value of `resolve` is the final key that is set in the registry.
 
 The default normalization provided (`super[RegisterLoader.resolve]` above) follows the same approach as the HTML specification for module resolution, whereby _plain module names_ that are not valid URLs, and not starting with `./`, `../` or `/` return `undefined`.
 
@@ -131,9 +145,31 @@ So for example `lodash` will return `undefined`, while `./x` will resolve to `[b
 
 #### Instantiate Hook
 
-The `instantiate` hook of the RegisterLoader takes the following formats:
+Using these three types of return values for the `RegisterLoader` instantiate hook,
+we can recreate ES module semantics interacting with legacy module formats:
 
-##### 1. Instantiating ES Modules via System.register
+##### 1. Instantiating Dynamic Modules via ModuleNamespace
+
+If the exact module definition is already known, or loaded through another method (like calling out fully to the Node require in the node-es-module-loader),
+then the direct module namespace value can be returned from instantiate:
+
+```javascript
+
+import { ModuleNamespace } from 'es-module-loader/core/loader-polyfill.js';
+
+// ...
+
+  instantiate(key, metadata) {
+    var module = customModuleLoad(key);
+
+    return new ModuleNamespace({
+      default: module,
+      customExport: 'value'
+    });
+  }
+```
+
+##### 2. Instantiating ES Modules via System.register
 
 When instantiate returns `undefined`, it is assumed that the module key has already been registered through a
 `loader.register(key, deps, declare)` call, following the System.register module format.
@@ -142,6 +178,7 @@ For example:
 
 ```javascript
   [RegisterLoader.instantate](key, metadata) {
+    // System.register
     this.register(key, ['./dep'], function (_export) {
       // ...
     });
@@ -155,6 +192,7 @@ the context in which it was called, it is necessary to call the `processAnonRegi
 
 ```javascript
   [RegisterLoader.instantiate](key, metadata, processAnonRegister) {
+    // System.register
     this.register(deps, declare);
 
     processAnonRegister();
@@ -168,7 +206,7 @@ The loader can then match the anonymous `System.register` call to correct module
 > System.register is not designed to be a handwritten module format, and would usually generated from a Babel or TypeScript conversion into the "system"
  module format.
 
-##### 2. Instantiating Legacy Modules via System.registerDynamic
+##### 3. Instantiating Legacy Modules via System.registerDynamic
 
 This is identical to the `System.register` process above, only running `loader.registerDynamic` instead of `loader.register`:
 
@@ -187,30 +225,6 @@ This is identical to the `System.register` process above, only running `loader.r
 ```
 
 For more information on the `System.registerDynamic` format [see the format explanation](docs/system-register-dynamic.md).
-
-##### 3. Instantiating Dynamic Modules via ModuleNamespace
-
-If the exact module definition is already known, or loaded through another method (like calling out fully to the Node require in the node-es-module-loader),
-then the direct module namespace value can be returned from instantiate:
-
-```javascript
-
-import { ModuleNamespace } from 'es-module-loader/core/loader-polyfill.js';
-
-// ...
-
-  instantiate(key, metadata) {
-    var module = customModuleLoad(key);
-
-    return new ModuleNamespace({ default: module, customExport: 'value' });
-  }
-```
-
-Using these three types of return values for instantiate, we can thus recreate ES module semantics interacting with legacy module formats.
-
-Note that `ModuleNamespace` is not specified in the WhatWG loader specification - the specification actually uses a `Module.Status` constructor.
-A custom private constructor is used over the spec until there is a stable proposal instead of having
-to track small changes of this spec API over major versions of this project.
 
 ### Performance
 
@@ -249,13 +263,12 @@ Also not in the spec, this allows useful tooling to build on top of the loader.
 The loader API in `core/loader-polyfill.js` matches the API of the current [WhatWG loader](https://whatwg.github.io/loader/) specification as closely as possible, while
 making a best-effort implementation of the upcoming loader simplification changes as descibred in https://github.com/whatwg/loader/issues/147.
 
-Default normalization and error handling is implemented as in the HTML specification for module loading. Default normalization follows the HTML specification treatment of module keys as URLs, with plain names ignored by default (effectively erroring unless altering this behaviour through the hooks). Rejections during resolve, instantiate or execution reject the current in-progress load trees for all dependents, which are immediately and synchronously removed from the registry to allow further loads to retry loading.
-
+- Default normalization and error handling is implemented as in the HTML specification for module loading. Default normalization follows the HTML specification treatment of module keys as URLs, with plain names ignored by default (effectively erroring unless altering this behaviour through the hooks). Rejections during resolve, instantiate or execution reject the current in-progress load trees for all dependents, which are immediately and synchronously removed from the registry to allow further loads to retry loading.
 - A direct `ModuleNamespace` constructor is provided over the `Module` mutator proposal in the WhatWG specification.
- Instead of storing a registry of ModuleStatus objects, we then store a registry of Module Namespace objects. The reason for this is that asynchronous rejection of registry entries as a source of truth leads to partial inconsistent rejection states
+ Instead of storing a registry of `Module.Status` objects, we then store a registry of Module Namespace objects. The reason for this is that asynchronous rejection of registry entries as a source of truth leads to partial inconsistent rejection states
 (it is possible for the tick between the rejection of one load and its parent to have to deal with an overlapping in-progress tree),
 so in order to have a predictable load error rejection process, loads are only stored in the registry as fully-linked Namespace objects
-and not ModuleStatus objects as promises for Namespace objects.
+and not ModuleStatus objects as promises for Namespace objects. The custom private `ModuleNamespace` constructor is used over the `Module.Status` proposal to ensure a stable API instead of tracking in-progress specification work.
 - `Loader` is available as a named export from `core/loader-polyfill.js` but is not by default exported to the `global.Reflect` object.
   This is to allow individual loader implementations to determine their own impact on the environment.
 - A constructor argument is added to the loader that takes the environment `baseKey` to be used as the default normalization parent.
