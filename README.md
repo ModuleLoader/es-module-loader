@@ -6,7 +6,9 @@ but with [adjustments](#spec-differences) to match the current proposals for the
 Supports the [loader import and registry API](#base-loader-polyfill-api) with the [System.register](docs/system-register.md) module format to provide exact module loading semantics for ES modules in environments today. In addition, support for the [System.registerDynamic](docs/system-register-dynamic.md) is provided to allow the linking
 of module graphs consisting of inter-dependent ES modules and CommonJS modules with their respective semantics retained.
 
-This project aims to provide a [highly performant](#performance), minimal, unopinionated loader API on top of which custom loaders [can easily be built](#creating-a-loader). See the [spec differences](#spec-differences) section for a more detailed listing of the tradeoffs made.
+This project aims to provide a fast, minimal, unopinionated loader API on top of which custom loaders can easily be built.
+
+See the [spec differences](#spec-differences) section for a detailed description of some of the specification decisions made.
 
 ES6 Module Loader Polyfill, the previous version of this project was built to the [outdated ES6 loader specification](http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts#august_24_2014_draft_rev_27) and can still be found at the [0.17 branch](https://github.com/ModuleLoader/es-module-loader/tree/0.17).
 
@@ -86,10 +88,11 @@ loader.import('x').then(function (m) {
 
 ### RegisterLoader Hooks
 
-Implementing a loader on top of the `RegisterLoader` base class involves extending that class and providing `resolve` and `instantiate` prototype
-hook methods.
+Instead of just hooking modules within the resolve hook, the `RegisterLoader` base class provides an instantiate hook
+to separate execution from resolution and enable spec linking semantics through the instantiate API.
 
-The instantiate hook convention here is defined by the register loader:
+Implementing a loader on top of the `RegisterLoader` base class involves extending that class and providing these
+`resolve` and `instantiate` prototype hook methods:
 
 ```javascript
 import RegisterLoader from 'es-module-loader/core/register-loader.js';
@@ -128,7 +131,7 @@ So for example `lodash` will return `undefined`, while `./x` will resolve to `[b
 
 #### Instantiate Hook
 
-Hooking of the RegisterLoader is based on the instantiate hook, taking the following forms:
+The `instantiate` hook of the RegisterLoader takes the following formats:
 
 ##### 1. Instantiating ES Modules via System.register
 
@@ -139,7 +142,10 @@ For example:
 
 ```javascript
   [RegisterLoader.instantate](key, metadata) {
-    this.register(key, deps, declare);
+    this.register(key, ['./dep'], function (_export) {
+      // ...
+    });
+
     return undefined;
   }
 ```
@@ -150,16 +156,35 @@ the context in which it was called, it is necessary to call the `processAnonRegi
 ```javascript
   [RegisterLoader.instantiate](key, metadata, processAnonRegister) {
     this.register(deps, declare);
+
     processAnonRegister();
+
     return undefined;
   }
 ```
 
 The loader can then match the anonymous `System.register` call to correct module in the registry. This is used to support `<script>` loading.
 
+> System.register is not designed to be a handwritten module format, and would usually generated from a Babel or TypeScript conversion into the "system"
+ module format.
+
 ##### 2. Instantiating Legacy Modules via System.registerDynamic
 
-This is identical to the `System.register` process above, only running `loader.registerDynamic` instead of `loader.register`.
+This is identical to the `System.register` process above, only running `loader.registerDynamic` instead of `loader.register`:
+
+```javascript
+  [RegisterLoader.instantiate](key, metadata, processAnonRegister) {
+
+    // System.registerDynamic CommonJS wrapper format
+    this.registerDynamic(['dep'], function (require, exports, module) {
+      module.exports = require('dep').y;
+    });
+
+    processAnonRegister();
+
+    return undefined;
+  }
+```
 
 For more information on the `System.registerDynamic` format [see the format explanation](docs/system-register-dynamic.md).
 
@@ -193,12 +218,14 @@ Some simple benchmarks loading System.register modules are provided in the `benc
 
 Each test operation includes a new loader class instantiation, `System.register` declarations, binding setup for ES module trees, loading and execution.
 
+Sample results:
+
 | Test                                      | ES Module Loader 1.3 |
 | ----------------------------------------- |:--------------------:|
-| Importing multiple trees at the same time | 705 ops/sec          |
-| Importing a deep tree of modules          | 4,713 ops/sec        |
-| Importing a single module with deps       | 9,652 ops/sec        |
-| Importing a single module without deps    | 16,279 ops/sec       |
+| Importing multiple trees at the same time | 654 ops/sec          |
+| Importing a deep tree of modules          | 4,162 ops/sec        |
+| Importing a single module with deps       | 8,817 ops/sec        |
+| Importing a single module without deps    | 16,536 ops/sec       |
 
 ### Tracing API
 
