@@ -49,12 +49,12 @@ function Loader (baseKey) {
 // 3.3.1
 Loader.prototype.constructor = Loader;
 // 3.3.2
-Loader.prototype.import = function (key, parent) {
+Loader.prototype.import = Loader.prototype.load = function (key, parent) {
   if (typeof key !== 'string')
     throw new TypeError('Loader import method must be passed a module key string');
   // custom resolveInstantiate combined hook for better perf
   return Promise.resolve(this[RESOLVE_INSTANTIATE](key, parent || this.key))
-  .then(Module.evaluate)
+  //.then(Module.evaluate)
   .catch(function (err) {
     throw addToError(err, 'Loading ' + key + (parent ? ' from ' + parent : ''));
   });
@@ -109,12 +109,13 @@ Loader.prototype.resolve = function (key, parent) {
 // 3.3.4 (import without evaluate)
 // this is not documented because the use of deferred evaluation as in Module.evaluate is not
 // documented, as it is not considered a stable feature to be encouraged
-Loader.prototype.load = function (key, parent) {
+// Loader.prototype.load may well be deprecated if this stays disabled
+/* Loader.prototype.load = function (key, parent) {
   return Promise.resolve(this[RESOLVE_INSTANTIATE](key, parent || this.key))
   .catch(function (err) {
     throw addToError(err, 'Loading ' + key + (parent ? ' from ' + parent : ''));
   });
-};
+}; */
 
 /*
  * 4. Registry
@@ -205,22 +206,22 @@ var BASE_OBJECT = createSymbol('baseObject');
  * Optional evaluation function provides experimental Module.evaluate
  * support for non-executed modules in registry.
  */
-function Module (baseObject, evaluate) {
+function Module (baseObject/*, evaluate*/) {
   Object.defineProperty(this, BASE_OBJECT, {
     value: baseObject
   });
 
   // evaluate defers namespace population
-  if (evaluate) {
+  /* if (evaluate) {
     Object.defineProperty(this, EVALUATE, {
       value: evaluate,
       configurable: true,
       writable: true
     });
   }
-  else {
+  else { */
     Object.getOwnPropertyNames(baseObject).forEach(extendNamespace, this);
-  }
+  //}
 };
 // 8.4.2
 Module.prototype = Object.create(null);
@@ -245,7 +246,7 @@ function extendNamespace (key) {
   });
 }
 
-function doEvaluate (evaluate, context) {
+/* function doEvaluate (evaluate, context) {
   try {
     evaluate.call(context);
   }
@@ -271,4 +272,4 @@ Module.evaluate = function (ns) {
   }
   // make chainable
   return ns;
-};
+}; */

@@ -40,17 +40,18 @@ describe('Loader Polyfill API', function() {
   });
 
   it('Should support Module construction, evaluation and mutation', function() {
-    var evaluated = false;
+    //var evaluated = false;
     var mutator = { a: 'asdf' };
-    var module = new Module(mutator, function() {
+    var module = new Module(mutator);/*, function() {
       evaluated = true;
       mutator.a = 'b';
-    });
+    });*/
 
-    assert.equal(module.a, undefined);
+    assert.equal(module.a, 'asdf');
 
-    Module.evaluate(module);
-    assert(evaluated);
+    //Module.evaluate(module);
+    //assert(evaluated);
+    mutator.a = 'b';
 
     assert.equal(module.a, 'b');
   });
