@@ -191,7 +191,7 @@ Registry.prototype.delete = function (key) {
  * Simple ModuleNamespace Exotic object based on a baseObject
  * We export this for allowing a fast-path for module namespace creation over Module descriptors
  */
-var EVALUATE = createSymbol('evaluate');
+// var EVALUATE = createSymbol('evaluate');
 var BASE_OBJECT = createSymbol('baseObject');
 
 // 8.3.1 Reflect.Module
