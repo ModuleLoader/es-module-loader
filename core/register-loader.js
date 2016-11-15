@@ -708,6 +708,7 @@ function doEvaluate (loader, load, link, registry, registerRegistry, seen) {
       var module = { id: load.key };
       var moduleObj = link.moduleObj;
       Object.defineProperty(module, 'exports', {
+        configurable: true,
         set: function (exports) {
           moduleObj.default = exports;
         },
