@@ -89,7 +89,7 @@ loader.import('x').then(function (m) {
 ### RegisterLoader Hooks
 
 Instead of just hooking modules within the resolve hook, the `RegisterLoader` base class provides an instantiate hook
-to separate execution from resolution and enable spec linking semantics through the instantiate API.
+to separate execution from resolution and enable spec linking semantics.
 
 Implementing a loader on top of the `RegisterLoader` base class involves extending that class and providing these
 `resolve` and `instantiate` prototype hook methods:
@@ -103,7 +103,7 @@ class MyCustomLoader extends RegisterLoader {
    * Constructor
    * Purely for completeness in this example
    */
-  constructor(baseKey) {
+  constructor (baseKey) {
     super(baseKey);
   }
 
@@ -117,7 +117,7 @@ class MyCustomLoader extends RegisterLoader {
    *
    * So relativeResolved becomes either a fully normalized URL or a plain name (|| key) in this example
    */
-  [RegisterLoader.resolve](key, parentKey, metadata) {
+  [RegisterLoader.resolve] (key, parentKey) {
     var relativeResolved = super[RegisterLoader.resolve](key, parentKey, metadata) || key;
     return relativeResolved;
   }
@@ -131,7 +131,7 @@ class MyCustomLoader extends RegisterLoader {
    *   import { moduleName } from 'my-module-name';
    *   assert(moduleName === 'my-module-name');
    */
-  [RegisterLoader.instantiate](key, metadata, processAnonRegister) {
+  [RegisterLoader.instantiate] (key) {
     return new ModuleNamespace({ moduleName: key });
   }
 }
@@ -159,7 +159,7 @@ import { ModuleNamespace } from 'es-module-loader/core/loader-polyfill.js';
 
 // ...
 
-  instantiate(key, metadata) {
+  instantiate (key) {
     var module = customModuleLoad(key);
 
     return new ModuleNamespace({
@@ -177,13 +177,11 @@ When instantiate returns `undefined`, it is assumed that the module key has alre
 For example:
 
 ```javascript
-  [RegisterLoader.instantate](key, metadata) {
+  [RegisterLoader.instantate] (key) {
     // System.register
     this.register(key, ['./dep'], function (_export) {
       // ...
     });
-
-    return undefined;
   }
 ```
 
@@ -191,13 +189,11 @@ When using the anonymous form of System.register - `loader.register(deps, declar
 the context in which it was called, it is necessary to call the `processAnonRegister` method passed to instantiate:
 
 ```javascript
-  [RegisterLoader.instantiate](key, metadata, processAnonRegister) {
+  [RegisterLoader.instantiate] (key, processAnonRegister) {
     // System.register
     this.register(deps, declare);
 
     processAnonRegister();
-
-    return undefined;
   }
 ```
 
@@ -211,16 +207,14 @@ The loader can then match the anonymous `System.register` call to correct module
 This is identical to the `System.register` process above, only running `loader.registerDynamic` instead of `loader.register`:
 
 ```javascript
-  [RegisterLoader.instantiate](key, metadata, processAnonRegister) {
+  [RegisterLoader.instantiate] (key, processAnonRegister) {
 
     // System.registerDynamic CommonJS wrapper format
     this.registerDynamic(['dep'], function (require, exports, module) {
       module.exports = require('dep').y;
     });
-
+    
     processAnonRegister();
-
-    return undefined;
   }
 ```
 

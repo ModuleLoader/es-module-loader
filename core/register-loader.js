@@ -9,8 +9,8 @@ export default RegisterLoader;
  *
  * Builds directly on top of loader polyfill to provide:
  * - loader.register support
- * - hookable higher-level resolve with metadata argument
- * - instantiate hook with metadata arugment returning a ModuleNamespace or undefined for es module loading
+ * - hookable higher-level resolve
+ * - instantiate hook returning a ModuleNamespace or undefined for es module loading
  * - loader error behaviour as in HTML and loader specs, clearing failed modules from registration cache synchronously
  * - build tracing support by providing a .trace=true and .loads object format
  */
@@ -36,31 +36,18 @@ function RegisterLoader (baseKey) {
 RegisterLoader.prototype = Object.create(Loader.prototype);
 RegisterLoader.prototype.constructor = RegisterLoader;
 
-// NB replace with createSymbol('normalize'), ... for next major
-RegisterLoader.normalize = RegisterLoader.resolve = 'normalize';
-RegisterLoader.instantiate = 'instantiate';
-RegisterLoader.createMetadata = 'createMetadata';
-RegisterLoader.processRegisterContext = 'processRegisterContext';
+var RESOLVE = RegisterLoader.resolve = createSymbol('normalize');
+var INSTANTIATE = RegisterLoader.instantiate = createSymbol('instantiate');
 
 // default normalize is the WhatWG style normalizer
-RegisterLoader.prototype.normalize = function (key, parentKey, metadata, parentMetadata) {
+RegisterLoader.prototype[RESOLVE] = function (key, parentKey) {
   // normalization shortpath for already in registry
   if (this[REGISTER_REGISTRY][key] || this.registry._registry[key])
     return key;
   return resolveUrlToParentIfNotPlain(key, parentKey);
 };
 
-RegisterLoader.prototype.instantiate = function (key, processRegister, metadata) {};
-
-// this function is an optimization to allow loader extensions to
-// implement it to set the metadata object shape upfront to ensure
-// it can run as a single hidden class throughout the normalize
-// and instantiate pipeline hooks in the js engine
-RegisterLoader.prototype.createMetadata = function () {
-  return {
-    registered: false
-  };
-};
+RegisterLoader.prototype[INSTANTIATE] = function (key, processAnonRegister) {};
 
 function ensureResolution (resolvedKey) {
   if (resolvedKey === undefined)
@@ -68,10 +55,11 @@ function ensureResolution (resolvedKey) {
   return resolvedKey;
 }
 
-function resolve (loader, key, parentKey, metadata, parentMetadata) {
+function resolve (key, parentKey) {
+  var loader = this;
   return Promise.resolve()
   .then(function () {
-    return loader.normalize(key, parentKey, metadata, parentMetadata);
+    return loader[RESOLVE](key, parentKey);
   })
   .then(ensureResolution)
   .catch(function (err) {
@@ -79,10 +67,7 @@ function resolve (loader, key, parentKey, metadata, parentMetadata) {
   });
 }
 
-RegisterLoader.prototype[Loader.resolve] = function (key, parentKey) {
-  var parentLoad = parentKey && this[REGISTER_REGISTRY][parentKey];
-  return resolve(this, key, parentKey, this.createMetadata(), parentLoad && parentLoad.metadata);
-};
+RegisterLoader.prototype[Loader.resolve] = resolve;
 
 // once evaluated, the linkRecord is set to undefined leaving just the other load record properties
 // this allows tracking new binding listeners for es modules through importerSetters
@@ -93,9 +78,6 @@ function createLoadRecord (key, registration) {
 
     // defined System.register cache
     registration: registration,
-
-    // load record metadata
-    metadata: undefined,
 
     // module namespace object
     module: undefined,
@@ -180,9 +162,7 @@ function resolveInstantiate (loader, key, parentKey, registry, registerRegistry)
   if (load && !load.module)
     return instantiate(loader, load, load.linkRecord, registry, registerRegistry);
 
-  var parentLoad = registerRegistry[parentKey];
-  var metadata = loader.createMetadata();
-  return resolve(loader, key, parentKey, metadata, parentLoad && parentLoad.metadata)
+  return resolve.call(loader, key, parentKey)
   .then(function (resolvedKey) {
     // main loader registry always takes preference
     module = registry[resolvedKey];
@@ -202,12 +182,6 @@ function resolveInstantiate (loader, key, parentKey, registry, registerRegistry)
     if (!link)
       return load;
 
-    if (!load.metadata) {
-      load.metadata = metadata;
-      if (load.registration)
-        load.metadata.registered = true;
-    }
-
     return instantiate(loader, load, link, registry, registerRegistry);
   });
 }
@@ -217,12 +191,13 @@ function createProcessAnonRegister (loader, load) {
     var registeredLastAnon = loader[REGISTERED_LAST_ANON];
 
     if (!registeredLastAnon)
-      return;
+      return !!load.registration;
 
     loader[REGISTERED_LAST_ANON] = undefined;
 
     load.registration = registeredLastAnon;
-    load.metadata.registered = true;
+
+    return true;
   };
 }
 
@@ -230,7 +205,7 @@ function instantiate (loader, load, link, registry, registerRegistry) {
   return link.instantiatePromise || (link.instantiatePromise =
   // if there is already an existing registration, skip running instantiate
   (load.registration ? Promise.resolve() : Promise.resolve().then(function () {
-    return loader.instantiate(load.key, load.metadata, loader.instantiate.length > 2 && createProcessAnonRegister(loader, load));
+    return loader[INSTANTIATE](load.key, loader[INSTANTIATE].length > 1 && createProcessAnonRegister(loader, load));
   }))
   .then(function (instantiation) {
     // direct module return from instantiate -> we're done
@@ -284,7 +259,7 @@ function instantiate (loader, load, link, registry, registerRegistry) {
 }
 
 // like resolveInstantiate, but returning load records for linking
-function resolveInstantiateDep (loader, key, parentKey, parentMetadata, registry, registerRegistry, traceDepMap) {
+function resolveInstantiateDep (loader, key, parentKey, registry, registerRegistry, traceDepMap) {
   // normalization shortpaths for already-normalized key
   // DISABLED to prioritise consistent resolver calls
   // could add a plain name filter, but doesn't yet seem necessary for perf
@@ -308,8 +283,7 @@ function resolveInstantiateDep (loader, key, parentKey, parentMetadata, registry
       traceDepMap[key] = key;
     return instantiate(loader, load, load.linkRecord, registry, registerRegistry);
   } */
-  var metadata = loader.createMetadata();
-  return resolve(loader, key, parentKey, metadata, parentMetadata)
+  return resolve.call(loader, key, parentKey)
   .then(function (resolvedKey) {
     if (traceDepMap)
       traceDepMap[key] = key;
@@ -333,10 +307,6 @@ function resolveInstantiateDep (loader, key, parentKey, parentMetadata, registry
     if (!link)
       return load;
 
-    load.metadata = load.metadata || metadata;
-    if (load.registration)
-      load.metadata.registered = true;
-
     return instantiate(loader, load, link, registry, registerRegistry);
   });
 }
@@ -344,12 +314,8 @@ function resolveInstantiateDep (loader, key, parentKey, parentMetadata, registry
 function traceLoad (loader, load, link) {
   loader.loads[load.key] = {
     key: load.key,
-    // we provide both deps and dependencies
-    // NB dependencies will be deprecated
-    dependencies: link.dependencies,
     deps: link.dependencies,
-    depMap: link.depMap || {},
-    metadata: load.metadata
+    depMap: link.depMap || {}
   };
 }
 
@@ -431,7 +397,7 @@ function instantiateDeps (loader, load, link, registry, registerRegistry, seen) 
     var depsInstantiatePromises = Array(link.dependencies.length);
 
     for (var i = 0; i < link.dependencies.length; i++)
-      depsInstantiatePromises[i] = resolveInstantiateDep(loader, link.dependencies[i], load.key, load.metadata, registry, registerRegistry, loader.trace && (link.depMap = {}));
+      depsInstantiatePromises[i] = resolveInstantiateDep(loader, link.dependencies[i], load.key, registry, registerRegistry, loader.trace && (link.depMap = {}));
 
     return Promise.all(depsInstantiatePromises);
   })
@@ -544,8 +510,6 @@ RegisterLoader.prototype.register = function (key, deps, declare) {
   else {
     var load = this[REGISTER_REGISTRY][key] || createLoadRecord.call(this, key, undefined);
     load.registration = [deps, declare, false];
-    if (load.metadata)
-      load.metadata.registered = true;
   }
 };
 
@@ -562,8 +526,6 @@ RegisterLoader.prototype.registerDynamic = function (key, deps, execute) {
   else {
     var load = this[REGISTER_REGISTRY][key] || createLoadRecord.call(this, key, undefined);
     load.registration = [deps, typeof execute === 'boolean' ? dynamicExecuteCompat(deps, execute, arguments[3]) : execute, true];
-    if (load.metadata)
-      load.metadata.registered = true;
   }
 };
 
@@ -580,21 +542,6 @@ function dynamicExecuteCompat (deps, executingRequire, execute) {
     module.exports = execute.apply(global, arguments) || module.exports;
   };
 }
-
-// NB this is being deprecated
-RegisterLoader.prototype.processRegisterContext = function (contextKey) {
-  var registeredLastAnon = this[REGISTERED_LAST_ANON];
-
-  if (!registeredLastAnon)
-    return;
-
-  this[REGISTERED_LAST_ANON] = undefined;
-
-  // returning the defined value allows avoiding an extra lookup for custom instantiate
-  var load = this[REGISTER_REGISTRY][contextKey] || createLoadRecord.call(this, contextKey, undefined);
-  load.registration = registeredLastAnon;
-  load.metadata.registered = true;
-};
 
 // ContextualLoader class
 // backwards-compatible with previous System.register context argument by exposing .id
