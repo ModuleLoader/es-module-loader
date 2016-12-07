@@ -1,6 +1,6 @@
 import RegisterLoader from '../../core/register-loader.js';
 import { isBrowser, isNode, global, baseURI, fileUrlToPath } from '../../core/common.js';
-import { resolveUrlIfNotPlain } from '../../core/resolve.js';
+import { resolveIfNotPlain } from '../../core/resolve.js';
 
 /*
  * Example System Register loader
@@ -10,7 +10,7 @@ import { resolveUrlIfNotPlain } from '../../core/resolve.js';
  * If the module does not call System.register, an error will be thrown
  */
 function SystemRegisterLoader (baseKey) {
-  baseKey = resolveUrlIfNotPlain(baseKey || (isNode ? process.cwd() : '.'), baseURI) || baseKey;
+  baseKey = resolveIfNotPlain(baseKey || (isNode ? process.cwd() : '.'), baseURI) || baseKey;
   RegisterLoader.call(this, baseKey);
 
   var loader = this;

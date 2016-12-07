@@ -3,12 +3,12 @@ import { isNode } from './common.js';
 /*
  * Optimized URL normalization assuming a syntax-valid URL parent
  */
-export function resolveUrlIfNotPlain (relUrl, parentUrl) {
-  return relativeResolveUrl(relUrl, parentUrl) || sanitizeUrl(relUrl);
+export function resolveIfNotPlain (relUrl, parentUrl) {
+  return resolveIfRelative(relUrl, parentUrl) || sanitizeIfUrl(relUrl);
 }
 
 // relative resolves and verifies (by returning undefined if not a relative URL syntax)
-export function relativeResolveUrl (relUrl, parentUrl) {
+export function resolveIfRelative (relUrl, parentUrl) {
   function throwResolveError () {
     throw new RangeError('Unable to resolve "' + relUrl + '" to ' + parentUrl);
   }
@@ -118,7 +118,7 @@ export function relativeResolveUrl (relUrl, parentUrl) {
 
 // sanitizes and verifies (by returning undefined if not a valid URL-like form)
 // Windows filepath compatibility is an added convenience here
-export function sanitizeUrl (url) {
+export function sanitizeIfUrl (url) {
   // already a URL
   var protocolIndex = url.indexOf(':');
   if (protocolIndex !== -1) {

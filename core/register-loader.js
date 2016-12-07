@@ -1,5 +1,5 @@
 import { Loader, Module, } from './loader-polyfill.js';
-import { resolveUrlIfNotPlain } from './resolve.js';
+import { resolveIfNotPlain } from './resolve.js';
 import { addToError, global, createSymbol } from './common.js';
 
 export default RegisterLoader;
@@ -44,7 +44,7 @@ RegisterLoader.prototype[RESOLVE] = function (key, parentKey) {
   // normalization shortpath for already in registry
   if (this[REGISTER_REGISTRY][key] || this.registry._registry[key])
     return key;
-  return resolveUrlIfNotPlain(key, parentKey);
+  return resolveIfNotPlain(key, parentKey);
 };
 
 RegisterLoader.prototype[INSTANTIATE] = function (key, processAnonRegister) {};
