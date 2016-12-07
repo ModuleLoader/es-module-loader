@@ -3,7 +3,7 @@ import { isNode } from './common.js';
 /*
  * Optimized URL normalization assuming a syntax-valid URL parent
  */
-export function resolveUrlToParentIfNotPlain (relUrl, parentUrl) {
+export function resolveUrlIfNotPlain (relUrl, parentUrl) {
   return relativeResolveUrl(relUrl, parentUrl) || sanitizeUrl(relUrl);
 }
 

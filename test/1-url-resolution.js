@@ -1,26 +1,26 @@
-import { resolveUrlToParentIfNotPlain } from '../core/resolve.js';
+import { resolveUrlIfNotPlain } from '../core/resolve.js';
 import assert from 'assert';
 
 describe('Simple normalization tests', function() {
   it('Should resolve windows paths as file:/// URLs', function() {
-    assert.equal(resolveUrlToParentIfNotPlain('c:\\some\\path', 'file:///c:/adsf/asdf'), 'file:///c:/some/path');
+    assert.equal(resolveUrlIfNotPlain('c:\\some\\path', 'file:///c:/adsf/asdf'), 'file:///c:/some/path');
   });
   it('Should resolve relative windows paths', function() {
-    assert.equal(resolveUrlToParentIfNotPlain('./test.js', 'file:///C:/some/path/'), 'file:///C:/some/path/test.js');
+    assert.equal(resolveUrlIfNotPlain('./test.js', 'file:///C:/some/path/'), 'file:///C:/some/path/test.js');
   });
   it('Should resolve unix file paths as file:/// URLs', function() {
-    assert.equal(resolveUrlToParentIfNotPlain('/some/file/path.js', 'file:///home/path/to/project'), 'file:///some/file/path.js');
+    assert.equal(resolveUrlIfNotPlain('/some/file/path.js', 'file:///home/path/to/project'), 'file:///some/file/path.js');
   });
   it('Should be able to resolve to plain names', function() {
-    assert.equal(resolveUrlToParentIfNotPlain('../../asdf/./asdf/.asdf/asdf', 'a/b/c/d'), 'a/asdf/asdf/.asdf/asdf');
+    assert.equal(resolveUrlIfNotPlain('../../asdf/./asdf/.asdf/asdf', 'a/b/c/d'), 'a/asdf/asdf/.asdf/asdf');
   });
   it('Should support resolving plain URI forms', function() {
-    assert.equal(resolveUrlToParentIfNotPlain('./asdf', 'npm:lodash/'), 'npm:lodash/asdf');
+    assert.equal(resolveUrlIfNotPlain('./asdf', 'npm:lodash/'), 'npm:lodash/asdf');
   });
   it('Should not support backtracking below base in plain URI forms', function() {
     var thrown = false;
     try {
-      resolveUrlToParentIfNotPlain('../asdf', 'npm:lodash/path');
+      resolveUrlIfNotPlain('../asdf', 'npm:lodash/path');
     }
     catch(e) {
       thrown = true;
@@ -31,7 +31,7 @@ describe('Simple normalization tests', function() {
   it('Should not support backtracking exactly to the base in plain URI forms', function() {
     var thrown = false;
     try {
-      resolveUrlToParentIfNotPlain('../', 'npm:lodash/asdf/y');
+      resolveUrlIfNotPlain('../', 'npm:lodash/asdf/y');
     }
     catch(e) {
       thrown = true;
@@ -40,22 +40,22 @@ describe('Simple normalization tests', function() {
       throw new Error('Test should not have thrown a RangeError exception');
   });
   it('Should support "." for resolution', function() {
-    assert.equal(resolveUrlToParentIfNotPlain('.', 'https://www.google.com/asdf/asdf'), 'https://www.google.com/asdf/');
+    assert.equal(resolveUrlIfNotPlain('.', 'https://www.google.com/asdf/asdf'), 'https://www.google.com/asdf/');
   });
   it('Should support ".." resolution', function() {
-    assert.equal(resolveUrlToParentIfNotPlain('..', 'https://www.google.com/asdf/asdf/asdf'), 'https://www.google.com/asdf/');
+    assert.equal(resolveUrlIfNotPlain('..', 'https://www.google.com/asdf/asdf/asdf'), 'https://www.google.com/asdf/');
   });
   it('Should support "./" for resolution', function() {
-    assert.equal(resolveUrlToParentIfNotPlain('./', 'https://www.google.com/asdf/asdf'), 'https://www.google.com/asdf/');
+    assert.equal(resolveUrlIfNotPlain('./', 'https://www.google.com/asdf/asdf'), 'https://www.google.com/asdf/');
   });
   it('Should support "../" resolution', function() {
-    assert.equal(resolveUrlToParentIfNotPlain('../', 'https://www.google.com/asdf/asdf/asdf'), 'https://www.google.com/asdf/');
+    assert.equal(resolveUrlIfNotPlain('../', 'https://www.google.com/asdf/asdf/asdf'), 'https://www.google.com/asdf/');
   });
   it('Should leave a trailing "/"', function() {
-    assert.equal(resolveUrlToParentIfNotPlain('./asdf/', 'file:///x/y'), 'file:///x/asdf/');
+    assert.equal(resolveUrlIfNotPlain('./asdf/', 'file:///x/y'), 'file:///x/asdf/');
   });
   it('Should leave a trailing "//"', function() {
-    assert.equal(resolveUrlToParentIfNotPlain('./asdf//', 'file:///x/y'), 'file:///x/asdf//');
+    assert.equal(resolveUrlIfNotPlain('./asdf//', 'file:///x/y'), 'file:///x/asdf//');
   });
 });
 
@@ -118,7 +118,7 @@ describe('URL resolution selected WhatWG URL spec tests', function() {
     it('Should resolve "' + test.input + '" to "' + test.base + '"', function() {
       var failed = false;
       try {
-        var resolved = resolveUrlToParentIfNotPlain(test.input, test.base) || resolveUrlToParentIfNotPlain('./' + test.input, test.base);
+        var resolved = resolveUrlIfNotPlain(test.input, test.base) || resolveUrlIfNotPlain('./' + test.input, test.base);
       }
       catch(e) {
         failed = true;
