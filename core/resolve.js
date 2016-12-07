@@ -4,33 +4,29 @@ import { isNode } from './common.js';
  * Optimized URL normalization assuming a syntax-valid URL parent
  */
 export function resolveUrlToParentIfNotPlain (relUrl, parentUrl) {
+  return relativeResolveUrl(relUrl, parentUrl) || sanitizeUrl(relUrl);
+}
 
+// relative resolves and verifies (by returning undefined if not a relative URL syntax)
+export function relativeResolveUrl (relUrl, parentUrl) {
   function throwResolveError () {
     throw new RangeError('Unable to resolve "' + relUrl + '" to ' + parentUrl);
   }
 
-  var protocolIndex = relUrl.indexOf(':');
-  if (protocolIndex !== -1) {
-    if (isNode) {
-      // Windows filepath compatibility (unique to SystemJS, not in URL spec at all)
-      // C:\x becomes file:///c:/x (we don't support C|\x)
-      if (relUrl[1] === ':' && relUrl[2] === '\\' && relUrl[0].match(/[a-z]/i) && parentUrl.substr(0, 5) === 'file:')
-        return 'file:///' + relUrl.replace(/\\/g, '/');
-    }
-    return relUrl;
-  }
-
   var parentProtocol = parentUrl && parentUrl.substr(0, parentUrl.indexOf(':') + 1);
 
+  var firstChar = relUrl[0];
+  var secondChar = relUrl[1];
+
   // protocol-relative
-  if (relUrl[0] === '/' && relUrl[1] === '/') {
+  if (firstChar === '/' && secondChar === '/') {
     if (!parentProtocol)
       throwResolveError();
     return parentProtocol + relUrl;
   }
   // relative-url
-  else if (relUrl[0] === '.' && (relUrl[1] === '/' || relUrl[1] === '.' && (relUrl[2] === '/' || relUrl.length === 2) || relUrl.length === 1)
-      || relUrl[0] === '/') {
+  else if (firstChar === '.' && (secondChar === '/' || secondChar === '.' && (relUrl[2] === '/' || relUrl.length === 2) || relUrl.length === 1)
+      || firstChar === '/') {
     var parentIsPlain = !parentProtocol || parentUrl[parentProtocol.length] !== '/';
 
     // read pathname from parent if a URL
@@ -57,7 +53,7 @@ export function resolveUrlToParentIfNotPlain (relUrl, parentUrl) {
       pathname = parentUrl.substr(parentProtocol.length + 1);
     }
 
-    if (relUrl[0] === '/') {
+    if (firstChar === '/') {
       if (parentIsPlain)
         throwResolveError();
       else
@@ -118,6 +114,19 @@ export function resolveUrlToParentIfNotPlain (relUrl, parentUrl) {
 
     return parentUrl.substr(0, parentUrl.length - pathname.length) + output.join('');
   }
+}
 
-  // plain name -> return undefined
+// sanitizes and verifies (by returning undefined if not a valid URL-like form)
+// Windows filepath compatibility is an added convenience here
+export function sanitizeUrl (url) {
+  // already a URL
+  var protocolIndex = url.indexOf(':');
+  if (protocolIndex !== -1) {
+    if (isNode) {
+      // C:\x becomes file:///c:/x (we don't support C|\x)
+      if (url[1] === ':' && url[2] === '\\' && url[0].match(/[a-z]/i))
+        return 'file:///' + url.replace(/\\/g, '/');
+    }
+    return url;
+  }
 }
