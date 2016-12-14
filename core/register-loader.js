@@ -618,23 +618,18 @@ function doEvaluate (loader, load, link, registry, registerRegistry, seen) {
     for (var i = 0; i < link.dependencies.length; i++) {
       depLoad = link.dependencyInstantiations[i];
 
-      // custom Module returned from instantiate
-      // it is the responsibility of the executor to remove the module from the registry on failure
-      if (depLoad instanceof Module) {
-        err = nsEvaluate(depLoad);
-      }
+      if (depLoad instanceof Module)
+        continue;
 
-      // ES or dynamic execute
-      else {
-        depLink = depLoad.linkRecord;
-        if (depLink && seen.indexOf(depLoad) === -1) {
-          if (depLink.error)
-            err = depLink.error;
-          else
-            // dynamic / declarative boundaries clear the "seen" list
-            // we just let cross format circular throw as would happen in real implementations
-            err = doEvaluate(loader, depLoad, depLink, registry, registerRegistry, depLink.setters ? seen : []);
-        }
+      // custom Module returned from instantiate
+      depLink = depLoad.linkRecord;
+      if (depLink && seen.indexOf(depLoad) === -1) {
+        if (depLink.error)
+          err = depLink.error;
+        else
+          // dynamic / declarative boundaries clear the "seen" list
+          // we just let cross format circular throw as would happen in real implementations
+          err = doEvaluate(loader, depLoad, depLink, registry, registerRegistry, depLink.setters ? seen : []);
       }
 
       if (err)
@@ -701,15 +696,6 @@ if (Object.freeze)
 function doExecute (execute, context, args) {
   try {
     execute.apply(context, args);
-  }
-  catch (e) {
-    return e;
-  }
-}
-
-function nsEvaluate (ns) {
-  try {
-    Module.evaluate(ns);
   }
   catch (e) {
     return e;

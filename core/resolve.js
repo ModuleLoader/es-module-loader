@@ -3,16 +3,10 @@ import { isNode } from './common.js';
 /*
  * Optimized URL normalization assuming a syntax-valid URL parent
  */
-export function resolveIfNotPlain (relUrl, parentUrl) {
-  return resolveIfRelative(relUrl, parentUrl) || sanitizeIfUrl(relUrl);
+function throwResolveError () {
+ throw new RangeError('Unable to resolve "' + relUrl + '" to ' + parentUrl);
 }
-
-// relative resolves and verifies (by returning undefined if not a relative URL syntax)
-export function resolveIfRelative (relUrl, parentUrl) {
-  function throwResolveError () {
-    throw new RangeError('Unable to resolve "' + relUrl + '" to ' + parentUrl);
-  }
-
+export function resolveIfNotPlain (relUrl, parentUrl) {
   var parentProtocol = parentUrl && parentUrl.substr(0, parentUrl.indexOf(':') + 1);
 
   var firstChar = relUrl[0];
@@ -21,7 +15,7 @@ export function resolveIfRelative (relUrl, parentUrl) {
   // protocol-relative
   if (firstChar === '/' && secondChar === '/') {
     if (!parentProtocol)
-      throwResolveError();
+      throwResolveError(relUrl, parentUrl);
     return parentProtocol + relUrl;
   }
   // relative-url
@@ -35,7 +29,7 @@ export function resolveIfRelative (relUrl, parentUrl) {
     if (parentIsPlain) {
       // resolving to a plain parent -> skip standard URL prefix, and treat entire parent as pathname
       if (parentUrl === undefined)
-        throwResolveError();
+        throwResolveError(relUrl, parentUrl);
       pathname = parentUrl;
     }
     else if (parentUrl[parentProtocol.length + 1] === '/') {
@@ -55,7 +49,7 @@ export function resolveIfRelative (relUrl, parentUrl) {
 
     if (firstChar === '/') {
       if (parentIsPlain)
-        throwResolveError();
+        throwResolveError(relUrl, parentUrl);
       else
         return parentUrl.substr(0, parentUrl.length - pathname.length - 1) + relUrl;
     }
@@ -97,7 +91,7 @@ export function resolveIfRelative (relUrl, parentUrl) {
 
         // this is the plain URI backtracking error (../, package:x -> error)
         if (parentIsPlain && output.length === 0)
-          throwResolveError();
+          throwResolveError(relUrl, parentUrl);
 
         // trailing . or .. segment
         if (i === segmented.length)
@@ -114,19 +108,16 @@ export function resolveIfRelative (relUrl, parentUrl) {
 
     return parentUrl.substr(0, parentUrl.length - pathname.length) + output.join('');
   }
-}
 
-// sanitizes and verifies (by returning undefined if not a valid URL-like form)
-// Windows filepath compatibility is an added convenience here
-export function sanitizeIfUrl (url) {
-  // already a URL
-  var protocolIndex = url.indexOf(':');
+  // sanitizes and verifies (by returning undefined if not a valid URL-like form)
+  // Windows filepath compatibility is an added convenience here
+  var protocolIndex = relUrl.indexOf(':');
   if (protocolIndex !== -1) {
     if (isNode) {
       // C:\x becomes file:///c:/x (we don't support C|\x)
-      if (url[1] === ':' && url[2] === '\\' && url[0].match(/[a-z]/i))
-        return 'file:///' + url.replace(/\\/g, '/');
+      if (relUrl[1] === ':' && relUrl[2] === '\\' && relUrl[0].match(/[a-z]/i))
+        return 'file:///' + relUrl.replace(/\\/g, '/');
     }
-    return url;
+    return relUrl;
   }
 }
