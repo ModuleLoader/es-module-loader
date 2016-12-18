@@ -1,4 +1,4 @@
-import { resolveUrlToParentIfNotPlain } from '../core/resolve.js';
+import { resolveIfNotPlain } from '../core/resolve.js';
 
 var cases = [
   ['./x', 'https://www.google.com'],
@@ -17,5 +17,5 @@ var cases = [
 var results = [];
 suite.add('Resolve', function() {
   for (var i = 0; i < cases.length; i++)
-    results.push(resolveUrlToParentIfNotPlain(cases[i][0], cases[i][1]));
+    results.push(resolveIfNotPlain(cases[i][0], cases[i][1]));
 });

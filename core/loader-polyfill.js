@@ -169,9 +169,7 @@ Registry.prototype.has = function (key) {
 // 4.4.9
 Registry.prototype.delete = function (key) {
   if (this._registry[key]) {
-    //delete this._registry[key];
-    // much faster...
-    this._registry[key] = undefined;
+    delete this._registry[key];
     return true;
   }
   return false;

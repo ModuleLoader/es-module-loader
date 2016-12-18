@@ -213,7 +213,7 @@ function instantiate (loader, load, link, registry, registerRegistry) {
       if (!(instantiation instanceof Module))
         throw new TypeError('Instantiate did not return a valid Module object.');
 
-      registerRegistry[load.key] = undefined;
+      delete registerRegistry[load.key];
       if (loader.trace)
         traceLoad(loader, load, link);
       return registry[load.key] = instantiation;
@@ -469,7 +469,7 @@ function instantiateDeps (loader, load, link, registry, registerRegistry, seen) 
 function clearLoadErrors (loader, load) {
   // clear from loads
   if (loader[REGISTER_REGISTRY][load.key] === load)
-    loader[REGISTER_REGISTRY][load.key] = undefined;
+    delete loader[REGISTER_REGISTRY][load.key];
 
   var link = load.linkRecord;
 
