@@ -1,8 +1,6 @@
 import { baseURI, addToError, createSymbol } from './common.js';
 
-// multiple exports of Module for backwards compat
-// only ModuleNamespace will remain in next break!
-export { Loader, Module, Module as InternalModuleNamespace, Module as ModuleNamespace }
+export { Loader, Module, Module as ModuleNamespace }
 
 /*
  * Simple Array values shim
@@ -12,7 +10,7 @@ function arrayValues (arr) {
     return arr.values();
 
   if (typeof Symbol === 'undefined' || !Symbol.iterator)
-    throw new Error('Cannot return values iterator unless Symbol.iterator is defined');
+    throw new Error('Symbol.iterator not supported in this browser');
 
   var iterable = {};
   iterable[Symbol.iterator] = function () {
@@ -86,10 +84,6 @@ Loader.prototype[RESOLVE_INSTANTIATE] = function (key, parent) {
   });
 };
 
-Loader.prototype[RESOLVE] = function () {
-  throw new TypeError('No loader resolve hook implementation provided.');
-};
-
 Loader.prototype.resolve = function (key, parent) {
   var loader = this;
   return Promise.resolve()
@@ -131,10 +125,6 @@ function Registry() {
   this._registry = {};
 }
 // 4.4.1
-Registry.prototype.constructor = function () {
-  throw new TypeError('Custom registries cannot be created.');
-};
-
 if (iteratorSupport) {
   // 4.4.2
   Registry.prototype[Symbol.iterator] = function () {
@@ -227,14 +217,8 @@ function Module (baseObject/*, evaluate*/) {
 Module.prototype = Object.create(null);
 
 if (typeof Symbol !== 'undefined' && Symbol.toStringTag)
-  Module.prototype[Symbol.toStringTag] = 'Module';
-
-// NB remove the toString fallback here in next major
-else
-  Object.defineProperty(Module.prototype, 'toString', {
-    value: function () {
-      return '[object Module]';
-    }
+  Object.defineProperty(Module.prototype, Symbol.toStringTag, {
+    value: 'Module'
   });
 
 function extendNamespace (key) {

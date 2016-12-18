@@ -194,7 +194,6 @@ function createProcessAnonRegister (loader, load) {
       return !!load.registration;
 
     loader[REGISTERED_LAST_ANON] = undefined;
-
     load.registration = registeredLastAnon;
 
     return true;
@@ -205,6 +204,7 @@ function instantiate (loader, load, link, registry, registerRegistry) {
   return link.instantiatePromise || (link.instantiatePromise =
   // if there is already an existing registration, skip running instantiate
   (load.registration ? Promise.resolve() : Promise.resolve().then(function () {
+    loader[REGISTERED_LAST_ANON] = undefined;
     return loader[INSTANTIATE](load.key, loader[INSTANTIATE].length > 1 && createProcessAnonRegister(loader, load));
   }))
   .then(function (instantiation) {
