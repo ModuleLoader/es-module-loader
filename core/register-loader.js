@@ -41,9 +41,6 @@ var INSTANTIATE = RegisterLoader.instantiate = createSymbol('instantiate');
 
 // default normalize is the WhatWG style normalizer
 RegisterLoader.prototype[RESOLVE] = function (key, parentKey) {
-  // normalization shortpath for already in registry
-  if (this[REGISTER_REGISTRY][key] || this.registry._registry[key])
-    return key;
   return resolveIfNotPlain(key, parentKey || baseURI);
 };
 
@@ -122,7 +119,7 @@ function createLoadRecord (key, registration) {
 
 RegisterLoader.prototype[Loader.resolveInstantiate] = function (key, parentKey) {
   var loader = this;
-  var registry = loader.registry._registry;
+  var registry = loader.registry[loader.registry._registry];
   var registerRegistry = loader[REGISTER_REGISTRY];
 
   return resolveInstantiate(loader, key, parentKey, registry, registerRegistry)

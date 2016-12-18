@@ -120,8 +120,10 @@ Loader.prototype.resolve = function (key, parent) {
  * as part of simplifying loader API implementation
  */
 var iteratorSupport = typeof Symbol !== 'undefined' && Symbol.iterator;
+var REGISTRY = createSymbol('registry');
 function Registry() {
-  this._registry = {};
+  this[REGISTRY] = {};
+  this._registry = REGISTRY;
 }
 // 4.4.1
 if (iteratorSupport) {
@@ -132,7 +134,7 @@ if (iteratorSupport) {
 
   // 4.4.3
   Registry.prototype.entries = function () {
-    var registry = this._registry;
+    var registry = this[REGISTRY];
     return arrayValues(Object.keys(registry).map(function (key) {
       return [key, registry[key]];
     }));
@@ -141,34 +143,34 @@ if (iteratorSupport) {
 
 // 4.4.4
 Registry.prototype.keys = function () {
-  return arrayValues(Object.keys(this._registry));
+  return arrayValues(Object.keys(this[REGISTRY]));
 };
 // 4.4.5
 Registry.prototype.values = function () {
-  var registry = this._registry;
+  var registry = this[REGISTRY];
   return arrayValues(Object.keys(registry).map(function (key) {
     return registry[key];
   }));
 };
 // 4.4.6
 Registry.prototype.get = function (key) {
-  return this._registry[key];
+  return this[REGISTRY][key];
 };
 // 4.4.7
 Registry.prototype.set = function (key, namespace) {
   if (!(namespace instanceof Module))
     throw new Error('Registry must be set with an instance of Module Namespace');
-  this._registry[key] = namespace;
+  this[REGISTRY][key] = namespace;
   return this;
 };
 // 4.4.8
 Registry.prototype.has = function (key) {
-  return !!this._registry[key];
+  return !!this[REGISTRY][key];
 };
 // 4.4.9
 Registry.prototype.delete = function (key) {
-  if (this._registry[key]) {
-    delete this._registry[key];
+  if (this[REGISTRY][key]) {
+    delete this[REGISTRY][key];
     return true;
   }
   return false;
