@@ -29,8 +29,6 @@ function RegisterLoader () {
 
   // tracing
   this.trace = false;
-  // trace load objects when tracing
-  this.loads = {};
 }
 
 RegisterLoader.prototype = Object.create(Loader.prototype);
@@ -309,6 +307,7 @@ function resolveInstantiateDep (loader, key, parentKey, registry, registerRegist
 }
 
 function traceLoad (loader, load, link) {
+  loader.loads = loader.loads || {};
   loader.loads[load.key] = {
     key: load.key,
     deps: link.dependencies,
