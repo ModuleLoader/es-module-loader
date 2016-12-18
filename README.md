@@ -49,7 +49,7 @@ Any tool can be used to build the loader distribution file from these core modul
 
 The `Loader` and `ModuleNamespace` classes in `core/loader-polyfill.js` provide the basic spec API method shells for a loader instance `loader`:
 
-- *`new Loader(baseKey)`*: Instantiate a new `loader` instance, with the given `baseKey` as the default parentKey for normalizations.
+- *`new Loader()`*: Instantiate a new `loader` instance.
   Defaults to environment baseURI detection in NodeJS and browsers.
 - *`loader.import(key [, parentKey])`*: Promise for importing and executing a given module, returning its module instance.
 - *`loader.resolve(key [, parentKey])`*: Promise for resolving the idempotent fully-normalized string key for a module.
@@ -213,7 +213,7 @@ This is identical to the `System.register` process above, only running `loader.r
     this.registerDynamic(['dep'], function (require, exports, module) {
       module.exports = require('dep').y;
     });
-    
+
     processAnonRegister();
   }
 ```
