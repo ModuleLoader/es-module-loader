@@ -165,11 +165,11 @@ Registry.prototype.set = function (key, namespace) {
 };
 // 4.4.8
 Registry.prototype.has = function (key) {
-  return !!this[REGISTRY][key];
+  return Object.hasOwnProperty.call(this[REGISTRY], key);
 };
 // 4.4.9
 Registry.prototype.delete = function (key) {
-  if (this[REGISTRY][key]) {
+  if (Object.hasOwnProperty.call(this[REGISTRY], key)) {
     delete this[REGISTRY][key];
     return true;
   }

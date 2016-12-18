@@ -664,8 +664,9 @@ function declaredSystemJSLoader() {
   declareBundle(sjsLoader);
   return sjsLoader;
 }
-
-RegisterLoader.prototype.normalize = function(key) { return key; };
+RegisterLoader.prototype[RegisterLoader.resolve] = function(key) {
+  return key;
+};
 function declaredRegisterLoader() {
   var loader = new RegisterLoader();
   declareBundle(loader);
