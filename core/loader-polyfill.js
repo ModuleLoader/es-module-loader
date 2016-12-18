@@ -1,6 +1,6 @@
 import { addToError, createSymbol } from './common.js';
 
-export { Loader, Module, Module as ModuleNamespace }
+export { Loader, ModuleNamespace }
 
 /*
  * Simple Array values shim
@@ -158,7 +158,7 @@ Registry.prototype.get = function (key) {
 };
 // 4.4.7
 Registry.prototype.set = function (key, namespace) {
-  if (!(namespace instanceof Module))
+  if (!(namespace instanceof ModuleNamespace))
     throw new Error('Registry must be set with an instance of Module Namespace');
   this[REGISTRY][key] = namespace;
   return this;
@@ -195,7 +195,7 @@ var BASE_OBJECT = createSymbol('baseObject');
  * Optional evaluation function provides experimental Module.evaluate
  * support for non-executed modules in registry.
  */
-function Module (baseObject/*, evaluate*/) {
+function ModuleNamespace (baseObject/*, evaluate*/) {
   Object.defineProperty(this, BASE_OBJECT, {
     value: baseObject
   });
@@ -213,10 +213,10 @@ function Module (baseObject/*, evaluate*/) {
   //}
 };
 // 8.4.2
-Module.prototype = Object.create(null);
+ModuleNamespace.prototype = Object.create(null);
 
 if (typeof Symbol !== 'undefined' && Symbol.toStringTag)
-  Object.defineProperty(Module.prototype, Symbol.toStringTag, {
+  Object.defineProperty(ModuleNamespace.prototype, Symbol.toStringTag, {
     value: 'Module'
   });
 

@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { Loader, Module, ModuleNamespace } from '../core/loader-polyfill.js';
+import { Loader, ModuleNamespace } from '../core/loader-polyfill.js';
 import { pathToFileUrl } from '../core/common.js';
 
 describe('Loader Polyfill API', function() {
@@ -42,7 +42,7 @@ describe('Loader Polyfill API', function() {
   it('Should support Module construction, evaluation and mutation', function() {
     //var evaluated = false;
     var mutator = { a: 'asdf' };
-    var module = new Module(mutator);/*, function() {
+    var module = new ModuleNamespace(mutator);/*, function() {
       evaluated = true;
       mutator.a = 'b';
     });*/

@@ -4,7 +4,7 @@ import { isNode } from './common.js';
  * Optimized URL normalization assuming a syntax-valid URL parent
  */
 function throwResolveError () {
- throw new RangeError('Unable to resolve "' + relUrl + '" to ' + parentUrl);
+  throw new RangeError('Unable to resolve "' + relUrl + '" to ' + parentUrl);
 }
 export function resolveIfNotPlain (relUrl, parentUrl) {
   var parentProtocol = parentUrl && parentUrl.substr(0, parentUrl.indexOf(':') + 1);

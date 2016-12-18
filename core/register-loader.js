@@ -1,4 +1,4 @@
-import { Loader, Module, } from './loader-polyfill.js';
+import { Loader, ModuleNamespace } from './loader-polyfill.js';
 import { resolveIfNotPlain } from './resolve.js';
 import { addToError, global, createSymbol, baseURI } from './common.js';
 
@@ -122,7 +122,7 @@ RegisterLoader.prototype[Loader.resolveInstantiate] = function (key, parentKey) 
 
   return resolveInstantiate(loader, key, parentKey, registry, registerRegistry)
   .then(function (instantiated) {
-    if (instantiated instanceof Module)
+    if (instantiated instanceof ModuleNamespace)
       return instantiated;
 
     // if already beaten to linked, return
@@ -205,7 +205,7 @@ function instantiate (loader, load, link, registry, registerRegistry) {
   .then(function (instantiation) {
     // direct module return from instantiate -> we're done
     if (instantiation !== undefined) {
-      if (!(instantiation instanceof Module))
+      if (!(instantiation instanceof ModuleNamespace))
         throw new TypeError('Instantiate did not return a valid Module object.');
 
       delete registerRegistry[load.key];
@@ -407,7 +407,7 @@ function instantiateDeps (loader, load, link, registry, registerRegistry, seen) 
         if (setter) {
           var instantiation = dependencyInstantiations[i];
 
-          if (instantiation instanceof Module) {
+          if (instantiation instanceof ModuleNamespace) {
             setter(instantiation);
           }
           else {
@@ -474,7 +474,7 @@ function clearLoadErrors (loader, load) {
 
   if (link.dependencyInstantiations)
     link.dependencyInstantiations.forEach(function (depLoad, index) {
-      if (!depLoad || depLoad instanceof Module)
+      if (!depLoad || depLoad instanceof ModuleNamespace)
         return;
 
       if (depLoad.linkRecord) {
@@ -588,7 +588,7 @@ function makeDynamicRequire (loader, key, dependencies, dependencyInstantiations
         var depLoad = dependencyInstantiations[i];
         var module;
 
-        if (depLoad instanceof Module)
+        if (depLoad instanceof ModuleNamespace)
           module = depLoad;
         else
           module = ensureEvaluate(loader, depLoad, depLoad.linkRecord, registry, registerRegistry, seen);
@@ -614,7 +614,7 @@ function doEvaluate (loader, load, link, registry, registerRegistry, seen) {
     for (var i = 0; i < link.dependencies.length; i++) {
       depLoad = link.dependencyInstantiations[i];
 
-      if (depLoad instanceof Module)
+      if (depLoad instanceof ModuleNamespace)
         continue;
 
       // custom Module returned from instantiate
@@ -669,7 +669,7 @@ function doEvaluate (loader, load, link, registry, registerRegistry, seen) {
   if (err)
     return link.error = addToError(err, 'Evaluating ' + load.key);
 
-  registry[load.key] = load.module = new Module(link.moduleObj);
+  registry[load.key] = load.module = new ModuleNamespace(link.moduleObj);
 
   // if not an esm module, run importer setters and clear them
   // this allows dynamic modules to update themselves into es modules
