@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { Loader, Module, InternalModuleNamespace } from '../core/loader-polyfill.js';
+import { Loader, Module, ModuleNamespace } from '../core/loader-polyfill.js';
 import { pathToFileUrl } from '../core/common.js';
 
 describe('Loader Polyfill API', function() {
@@ -12,11 +12,11 @@ describe('Loader Polyfill API', function() {
   it('Should support the full registry API', function() {
     assert(loader.registry);
 
-    loader.registry.set('asdf', new InternalModuleNamespace({ asdf: 'asdf' }));
+    loader.registry.set('asdf', new ModuleNamespace({ asdf: 'asdf' }));
     assert(loader.registry.has('asdf'));
     var m = loader.registry.get('asdf');
     assert(m);
-    assert(m instanceof InternalModuleNamespace);
+    assert(m instanceof ModuleNamespace);
     assert.equal(m.asdf, 'asdf');
 
     for (var k of loader.registry.keys())

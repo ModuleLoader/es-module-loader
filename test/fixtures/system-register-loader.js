@@ -10,8 +10,8 @@ import { resolveIfNotPlain } from '../../core/resolve.js';
  * If the module does not call System.register, an error will be thrown
  */
 function SystemRegisterLoader (baseKey) {
-  baseKey = resolveIfNotPlain(baseKey || (isNode ? process.cwd() : '.'), baseURI) || baseKey;
-  RegisterLoader.call(this, baseKey);
+  this.baseKey = resolveIfNotPlain(baseKey || (isNode ? process.cwd() : '.'), baseURI) || baseKey;
+  RegisterLoader.call(this);
 
   var loader = this;
 
@@ -37,7 +37,7 @@ SystemRegisterLoader.prototype = Object.create(RegisterLoader.prototype);
 // normalize is never given a relative name like "./x", that part is already handled
 // so we just need to do plain name detect to throw as in the WhatWG spec
 SystemRegisterLoader.prototype[RegisterLoader.resolve] = function (key, parent) {
-  return RegisterLoader.prototype[RegisterLoader.resolve].call(this, key, parent);
+  return RegisterLoader.prototype[RegisterLoader.resolve].call(this, key, parent || this.baseKey);
 };
 
 var fs;

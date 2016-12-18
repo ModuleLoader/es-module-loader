@@ -1,4 +1,4 @@
-import { baseURI, addToError, createSymbol } from './common.js';
+import { addToError, createSymbol } from './common.js';
 
 export { Loader, Module, Module as ModuleNamespace }
 
@@ -40,8 +40,7 @@ function arrayValues (arr) {
  * We skip the entire native internal pipeline, just providing the bare API
  */
 // 3.1.1
-function Loader (baseKey) {
-  this.key = baseKey || baseURI;
+function Loader () {
   this.registry = new Registry();
 }
 // 3.3.1
@@ -51,7 +50,7 @@ Loader.prototype.import = Loader.prototype.load = function (key, parent) {
   if (typeof key !== 'string')
     throw new TypeError('Loader import method must be passed a module key string');
   // custom resolveInstantiate combined hook for better perf
-  return Promise.resolve(this[RESOLVE_INSTANTIATE](key, parent || this.key))
+  return Promise.resolve(this[RESOLVE_INSTANTIATE](key, parent))
   //.then(Module.evaluate)
   .catch(function (err) {
     throw addToError(err, 'Loading ' + key + (parent ? ' from ' + parent : ''));

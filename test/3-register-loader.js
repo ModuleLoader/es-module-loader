@@ -184,7 +184,7 @@ describe('System Register Loader', function() {
 
   describe('Errors', function () {
 
-    var testPath = fileUrlToPath(loader.key) + 'register-modules/';
+    var testPath = fileUrlToPath(loader.baseKey) + 'register-modules/';
 
     async function getImportError(module) {
       try {
@@ -198,7 +198,7 @@ describe('System Register Loader', function() {
 
     it('should give a plain name error', async function () {
       var err = await getImportError('plain-name');
-      assert.equal(err, 'Error: No resolution found.\n  Resolving dependency "plain-name" to ' + fileUrlToPath(loader.key) + '\n  Loading plain-name');
+      assert.equal(err, 'Error: No resolution found.\n  Resolving "plain-name"\n  Loading plain-name');
     });
 
     it('should throw if on syntax error', async function () {
@@ -231,7 +231,7 @@ describe('System Register Loader', function() {
     });
 
     it('should load mixed bundles of register and registerDynamic', async function () {
-      new Module().require(path.resolve(fileUrlToPath(loader.key), 'dynamic-modules/mixed-bundle.js'));
+      new Module().require(path.resolve(fileUrlToPath(loader.baseKey), 'dynamic-modules/mixed-bundle.js'));
       var m = await loader.import('tree/first');
       assert.equal(m.p, 5);
       assert.equal(m.q, 4);

@@ -1,6 +1,6 @@
 import { Loader, Module, } from './loader-polyfill.js';
 import { resolveIfNotPlain } from './resolve.js';
-import { addToError, global, createSymbol } from './common.js';
+import { addToError, global, createSymbol, baseURI } from './common.js';
 
 export default RegisterLoader;
 
@@ -18,8 +18,8 @@ export default RegisterLoader;
 var REGISTER_REGISTRY = createSymbol('registerRegistry');
 var REGISTERED_LAST_ANON = createSymbol('registeredLastAnon');
 
-function RegisterLoader (baseKey) {
-  Loader.apply(this, arguments);
+function RegisterLoader () {
+  Loader.call(this);
 
   // last anonymous System.register call
   this[REGISTERED_LAST_ANON] = undefined;
@@ -44,7 +44,7 @@ RegisterLoader.prototype[RESOLVE] = function (key, parentKey) {
   // normalization shortpath for already in registry
   if (this[REGISTER_REGISTRY][key] || this.registry._registry[key])
     return key;
-  return resolveIfNotPlain(key, parentKey);
+  return resolveIfNotPlain(key, parentKey || baseURI);
 };
 
 RegisterLoader.prototype[INSTANTIATE] = function (key, processAnonRegister) {};
@@ -63,7 +63,7 @@ function resolve (key, parentKey) {
   })
   .then(ensureResolution)
   .catch(function (err) {
-    throw addToError(err, 'Resolving dependency "' + key + '" to ' + parentKey);
+    throw addToError(err, 'Resolving "' + key + '"' + (parentKey ? ' to ' + parentKey : ''));
   });
 }
 
