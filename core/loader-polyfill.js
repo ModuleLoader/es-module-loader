@@ -1,4 +1,4 @@
-import { addToError, createSymbol } from './common.js';
+import { addToError, createSymbol, resolvedPromise } from './common.js';
 
 export { Loader, ModuleNamespace }
 
@@ -45,12 +45,24 @@ function Loader () {
 }
 // 3.3.1
 Loader.prototype.constructor = Loader;
+
+function ensureInstantiated (module) {
+  if (!(module instanceof ModuleNamespace))
+    throw new TypeError('Module instantiation did not return a valid namespace object.');
+  return module;
+}
+
 // 3.3.2
 Loader.prototype.import = function (key, parent) {
   if (typeof key !== 'string')
     throw new TypeError('Loader import method must be passed a module key string');
   // custom resolveInstantiate combined hook for better perf
-  return Promise.resolve(this[RESOLVE_INSTANTIATE](key, parent))
+  var loader = this;
+  return resolvedPromise
+  .then(function () {
+    return loader[RESOLVE_INSTANTIATE](key, parent);
+  })
+  .then(ensureInstantiated)
   //.then(Module.evaluate)
   .catch(function (err) {
     throw addToError(err, 'Loading ' + key + (parent ? ' from ' + parent : ''));
@@ -76,10 +88,7 @@ Loader.prototype[RESOLVE_INSTANTIATE] = function (key, parent) {
   var loader = this;
   return loader.resolve(key, parent)
   .then(function (resolved) {
-    var module = loader.registry.get(resolved);
-    if (!module)
-      throw new Error('Module ' + resolved + ' did not instantiate.');
-    return module;
+    return loader.registry.get(resolved);
   });
 };
 
@@ -91,7 +100,7 @@ function ensureResolution (resolvedKey) {
 
 Loader.prototype.resolve = function (key, parent) {
   var loader = this;
-  return Promise.resolve()
+  return resolvedPromise
   .then(function() {
     return loader[RESOLVE](key, parent);
   })

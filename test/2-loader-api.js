@@ -1,15 +1,16 @@
 import assert from 'assert';
 import { Loader, ModuleNamespace } from '../core/loader-polyfill.js';
+import RegisterLoader from '../core/register-loader.js';
 import { pathToFileUrl } from '../core/common.js';
 
-describe('Loader Polyfill API', function() {
-  var loader = new Loader(pathToFileUrl(process.cwd()));
+describe('Loader Polyfill API', function () {
+  var loader = new Loader();
 
-  it('Should be an instance of itself', function() {
+  it('Should be an instance of itself', function () {
     assert(loader instanceof Loader);
   });
 
-  it('Should support the full registry API', function() {
+  it('Should support the full registry API', function () {
     assert(loader.registry);
 
     loader.registry.set('asdf', new ModuleNamespace({ asdf: 'asdf' }));
@@ -39,7 +40,7 @@ describe('Loader Polyfill API', function() {
     assert.equal(loader.registry.has('asdf'), false);
   });
 
-  it('Should support Module construction, evaluation and mutation', function() {
+  it('Should support Module construction, evaluation and mutation', function () {
     //var evaluated = false;
     var mutator = { a: 'asdf' };
     var module = new ModuleNamespace(mutator);/*, function() {
@@ -54,5 +55,32 @@ describe('Loader Polyfill API', function() {
     mutator.a = 'b';
 
     assert.equal(module.a, 'b');
+  });
+
+  it('Should throw if instantiate hook doesnt instantiate', function () {
+    loader[loader.constructor.resolve] = function (x) {
+      return x;
+    };
+
+    return loader.import('x')
+    .catch(function (e) {
+      assert.equal(e.toString().indexOf('Error: Module instantiation did not return a valid namespace object.'), 0);
+    });
+  });
+});
+
+
+describe('Register Loader API', function () {
+  var loader = new RegisterLoader();
+
+  loader[RegisterLoader.resolve] = function (x) {
+    return x;
+  };
+
+  it('Should throw if instantiate doesnt instantiate', function () {
+    return loader.import('x')
+    .catch(function (e) {
+      assert.equal(e.toString().indexOf('Error: Module instantiation did not call an anonymous or correctly named System.register.'), 0);
+    });
   });
 });
