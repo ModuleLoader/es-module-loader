@@ -198,7 +198,7 @@ describe('System Register Loader', function() {
 
     it('should give a plain name error', async function () {
       var err = await getImportError('plain-name');
-      assert.equal(err, 'Error: No resolution found.\n  Resolving "plain-name"\n  Loading plain-name');
+      assert.equal(err, 'Error: No resolution found.\n  Resolving plain-name\n  Loading plain-name');
     });
 
     it('should throw if on syntax error', async function () {

@@ -46,7 +46,7 @@ function Loader () {
 // 3.3.1
 Loader.prototype.constructor = Loader;
 // 3.3.2
-Loader.prototype.import = Loader.prototype.load = function (key, parent) {
+Loader.prototype.import = function (key, parent) {
   if (typeof key !== 'string')
     throw new TypeError('Loader import method must be passed a module key string');
   // custom resolveInstantiate combined hook for better perf
@@ -74,14 +74,20 @@ var RESOLVE_INSTANTIATE = Loader.resolveInstantiate = createSymbol('resolveInsta
 // this provides compatibility for the resolveInstantiate optimization
 Loader.prototype[RESOLVE_INSTANTIATE] = function (key, parent) {
   var loader = this;
-  return this.resolve(key, parent)
+  return loader.resolve(key, parent)
   .then(function (resolved) {
     var module = loader.registry.get(resolved);
     if (!module)
-      throw new Error('Resolve did not define the "' + resolved + '" module into the registry.');
+      throw new Error('Module ' + resolved + ' did not instantiate.');
     return module;
   });
 };
+
+function ensureResolution (resolvedKey) {
+  if (resolvedKey === undefined)
+    throw new RangeError('No resolution found.');
+  return resolvedKey;
+}
 
 Loader.prototype.resolve = function (key, parent) {
   var loader = this;
@@ -89,11 +95,7 @@ Loader.prototype.resolve = function (key, parent) {
   .then(function() {
     return loader[RESOLVE](key, parent);
   })
-  .then(function (resolvedKey) {
-    if (resolvedKey === undefined)
-      throw new RangeError('No resolution found.');
-    return resolvedKey;
-  })
+  .then(ensureResolution)
   .catch(function (err) {
     throw addToError(err, 'Resolving ' + key + (parent ? ' to ' + parent : ''));
   });

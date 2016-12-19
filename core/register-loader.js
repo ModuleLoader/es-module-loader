@@ -34,35 +34,14 @@ function RegisterLoader () {
 RegisterLoader.prototype = Object.create(Loader.prototype);
 RegisterLoader.prototype.constructor = RegisterLoader;
 
-var RESOLVE = RegisterLoader.resolve = createSymbol('normalize');
 var INSTANTIATE = RegisterLoader.instantiate = createSymbol('instantiate');
 
 // default normalize is the WhatWG style normalizer
-RegisterLoader.prototype[RESOLVE] = function (key, parentKey) {
+RegisterLoader.prototype[RegisterLoader.resolve = Loader.resolve] = function (key, parentKey) {
   return resolveIfNotPlain(key, parentKey || baseURI);
 };
 
 RegisterLoader.prototype[INSTANTIATE] = function (key, processAnonRegister) {};
-
-function ensureResolution (resolvedKey) {
-  if (resolvedKey === undefined)
-    throw new RangeError('No resolution found.');
-  return resolvedKey;
-}
-
-function resolve (key, parentKey) {
-  var loader = this;
-  return Promise.resolve()
-  .then(function () {
-    return loader[RESOLVE](key, parentKey);
-  })
-  .then(ensureResolution)
-  .catch(function (err) {
-    throw addToError(err, 'Resolving "' + key + '"' + (parentKey ? ' to ' + parentKey : ''));
-  });
-}
-
-RegisterLoader.prototype[Loader.resolve] = resolve;
 
 // once evaluated, the linkRecord is set to undefined leaving just the other load record properties
 // this allows tracking new binding listeners for es modules through importerSetters
@@ -157,7 +136,7 @@ function resolveInstantiate (loader, key, parentKey, registry, state) {
   if (load && !load.module)
     return instantiate(loader, load, load.linkRecord, registry, state);
 
-  return resolve.call(loader, key, parentKey)
+  return loader.resolve(key, parentKey)
   .then(function (resolvedKey) {
     // main loader registry always takes preference
     module = registry[resolvedKey];
@@ -278,7 +257,7 @@ function resolveInstantiateDep (loader, key, parentKey, registry, state, traceDe
       traceDepMap[key] = key;
     return instantiate(loader, load, load.linkRecord, registry, state);
   } */
-  return resolve.call(loader, key, parentKey)
+  return loader.resolve(key, parentKey)
   .then(function (resolvedKey) {
     if (traceDepMap)
       traceDepMap[key] = key;
