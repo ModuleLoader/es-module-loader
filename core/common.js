@@ -19,7 +19,7 @@ export function createSymbol (name) {
 }
 
 export function pathToFileUrl (filePath) {
-  return 'file://' + (isWindows ? '/' : '') + filePath;
+  return 'file://' + (isWindows ? '/' : '') + (isWindows ? filePath.replace(/\\/g, '/') : filePath);
 }
 
 export function fileUrlToPath (fileUrl) {
