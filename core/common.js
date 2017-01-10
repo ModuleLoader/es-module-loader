@@ -26,7 +26,7 @@ export function fileUrlToPath (fileUrl) {
   if (fileUrl.substr(0, 7) !== 'file://')
     throw new RangeError(fileUrl + ' is not a valid file url');
   if (isWindows)
-    return fileUrl.substr(8).replace(/\//g, '/');
+    return fileUrl.substr(8).replace(/\\/g, '/');
   else
     return fileUrl.substr(7);
 }

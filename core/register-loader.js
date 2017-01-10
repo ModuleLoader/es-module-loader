@@ -339,7 +339,7 @@ function registerDeclarative (loader, load, link, declare) {
     if (locked)
       return;
 
-    if (typeof name == 'object') {
+    if (typeof name === 'object') {
       for (var p in name)
         if (p !== '__useDefault')
           moduleObj[p] = name[p];
@@ -359,6 +359,8 @@ function registerDeclarative (loader, load, link, declare) {
   if (typeof declared !== 'function') {
     link.setters = declared.setters;
     link.execute = declared.execute;
+    if (declared.exports)
+      link.moduleObj = moduleObj = declared.exports;
   }
   else {
     link.setters = [];
