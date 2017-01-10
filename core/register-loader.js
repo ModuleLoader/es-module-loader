@@ -356,16 +356,10 @@ function registerDeclarative (loader, load, link, declare) {
     return value;
   }, new ContextualLoader(loader, load.key));
 
-  if (typeof declared !== 'function') {
-    link.setters = declared.setters;
-    link.execute = declared.execute;
-    if (declared.exports)
-      link.moduleObj = moduleObj = declared.exports;
-  }
-  else {
-    link.setters = [];
-    link.execute = declared;
-  }
+  link.setters = declared.setters;
+  link.execute = declared.execute;
+  if (declared.exports)
+    link.moduleObj = moduleObj = declared.exports;
 }
 
 function instantiateDeps (loader, load, link, registry, state, seen) {
