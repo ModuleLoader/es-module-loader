@@ -227,7 +227,7 @@ describe('System Register Loader', function() {
     it('should load a System.registerDynamic module', async function () {
       var m = await loader.import('./dynamic-modules/basic-exports.js');
       assert.equal(m.default(), 'ok');
-      assert.equal(m.named, 'name!');
+      assert.equal(m.default.named, 'name!');
     });
 
     it('should load mixed bundles of register and registerDynamic', async function () {

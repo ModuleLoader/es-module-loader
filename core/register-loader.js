@@ -301,32 +301,6 @@ function traceLoad (loader, load, link) {
  *
  * Sets the default value to the module, while also reading off named exports carefully.
  */
-
-// NB re-evaluate if this will even exist, and if it should be restricted to valid identifiers only
-function copyNamedExports (exports, moduleObj) {
-  if ((typeof exports === 'object' || typeof exports === 'function') && exports !== global) {
-    var props = Object.getOwnPropertyNames(exports);
-    for (var i = 0; i < props.length; i++)
-      defineOrCopyProperty(moduleObj, exports, props[i]);
-  }
-  moduleObj.default = exports;
-}
-
-function defineOrCopyProperty (targetObj, sourceObj, propName) {
-  // don't trigger getters/setters in environments that support them
-  try {
-    var d;
-    if (d = Object.getOwnPropertyDescriptor(sourceObj, propName)) {
-      // only copy data descriptors
-      if (d.value)
-        targetObj[propName] = d.value;
-    }
-  }
-  catch (e) {
-    // Object.getOwnPropertyDescriptor threw an exception -> not own property
-  }
-}
-
 function registerDeclarative (loader, load, link, declare) {
   var moduleObj = link.moduleObj;
   var importerSetters = load.importerSetters;
@@ -640,10 +614,6 @@ function doEvaluate (loader, load, link, registry, state, seen) {
         module.exports,
         module
       ]);
-
-      // copy module.exports onto the module object
-      if (!err)
-        copyNamedExports(module.exports, moduleObj);
     }
   }
 
