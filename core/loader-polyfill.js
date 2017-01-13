@@ -1,6 +1,8 @@
-import { addToError, createSymbol, resolvedPromise } from './common.js';
+import { addToError, createSymbol } from './common.js';
 
 export { Loader, ModuleNamespace }
+
+var resolvedPromise = Promise.resolve();
 
 /*
  * Simple Array values shim

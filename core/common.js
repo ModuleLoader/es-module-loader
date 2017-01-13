@@ -8,8 +8,6 @@ export var isWindows = typeof process !== 'undefined' && typeof process.platform
 var envGlobal = typeof self !== 'undefined' ? self : global;
 export { envGlobal as global }
 
-export var resolvedPromise = Promise.resolve();
-
 /*
  * Simple Symbol() shim
  */
