@@ -616,7 +616,7 @@ function doEvaluate (loader, load, link, registry, state, seen) {
       ]);
       // __esModule flag extension support
       if (moduleObj.default && moduleObj.default.__esModule)
-        for (let p in moduleObj.default)
+        for (var p in moduleObj.default)
           if (moduleObj.default.hasOwnProperty(p) && p !== 'default')
             moduleObj[p] = moduleObj.default[p];
     }
