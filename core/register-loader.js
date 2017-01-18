@@ -614,6 +614,11 @@ function doEvaluate (loader, load, link, registry, state, seen) {
         module.exports,
         module
       ]);
+      // __esModule flag extension support
+      if (moduleObj.default && moduleObj.default.__esModule)
+        for (let p in moduleObj.default)
+          if (moduleObj.default.hasOwnProperty(p))
+            moduleObj[p] = moduleObj.default[p];
     }
   }
 

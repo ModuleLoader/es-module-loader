@@ -222,7 +222,7 @@ function ModuleNamespace (baseObject/*, evaluate*/) {
     });
   }
   else { */
-    Object.getOwnPropertyNames(baseObject).forEach(extendNamespace, this);
+    Object.keys(baseObject).forEach(extendNamespace, this);
   //}
 };
 // 8.4.2
