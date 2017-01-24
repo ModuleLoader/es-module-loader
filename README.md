@@ -210,7 +210,7 @@ This is identical to the `System.register` process above, only running `loader.r
   [RegisterLoader.instantiate] (key, processAnonRegister) {
 
     // System.registerDynamic CommonJS wrapper format
-    this.registerDynamic(['dep'], function (require, exports, module) {
+    this.registerDynamic(['dep'], true, function (require, exports, module) {
       module.exports = require('dep').y;
     });
 
