@@ -17,7 +17,7 @@ optional. This allows it to work as both a bundle transport format and a wrapper
 The format of `System.registerDynamic` is designed to closely match CommonJS:
 
 ```javascript
-System.registerDynamic('optional-name', ['unnormalized-dependency'], function (require, exports, module) {
+System.registerDynamic('optional-name', ['unnormalized-dependency'], true, function (require, exports, module) {
   // require is executing - the dependency is only executed when we hit this require
   // Note that we can only require modules that have already been declared through the dependencies
   // array above. This is because synchronous module instantiation is not supported in the loader.
@@ -37,10 +37,4 @@ System.registerDynamic('optional-name', ['unnormalized-dependency'], function (r
 ```
 
 The resultant `ModuleNamespace` object is taken to be the object with the `default` export equal to the `module.exports` value
-from the CommonJS module, and this object is created once execution has completed only.
-
-The `default` binding is still made available to ES modules that might depend on this CommonJS module while execution is in progress,
-so that `import x from 'cjs'` will have a defined binding to `module.exports` even while `cjs` is still executing.
-
-Once executed, the named exports are populated from the iterable properties of `module.exports` so that `import {readFile} from 'fs'`
-can work as long as `fs` is fully executed at the time of `readFile` being accessed.
+from the CommonJS module, with this property set to the exports object from the beginning of the linking phase.
