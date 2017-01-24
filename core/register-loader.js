@@ -607,6 +607,11 @@ function doEvaluate (loader, load, link, registry, state, seen) {
           require(link.dependencies[i]);
 
       err = dynamicExecute(link.execute, require, moduleObj.default, module);
+
+      // pick up defineProperty calls to module.exports when we can
+      if (module.exports !== moduleObj.default)
+        moduleObj.default = module.exports;
+
       // __esModule flag extension support
       if (moduleObj.default && moduleObj.default.__esModule)
         for (var p in moduleObj.default)
