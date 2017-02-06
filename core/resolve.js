@@ -7,6 +7,7 @@ function throwResolveError () {
   throw new RangeError('Unable to resolve "' + relUrl + '" to ' + parentUrl);
 }
 export function resolveIfNotPlain (relUrl, parentUrl) {
+  relUrl = relUrl.trim();
   var parentProtocol = parentUrl && parentUrl.substr(0, parentUrl.indexOf(':') + 1);
 
   var firstChar = relUrl[0];

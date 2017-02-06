@@ -2,6 +2,9 @@ import { resolveIfNotPlain } from '../core/resolve.js';
 import assert from 'assert';
 
 describe('Simple normalization tests', function() {
+  it('Should trim whitespace from URLs', function () {
+    assert.equal(resolveIfNotPlain(' c:\\some\\path ', 'file:///c:/adsf/asdf'), 'file:///c:/some/path');
+  });
   it('Should resolve windows paths as file:/// URLs', function() {
     assert.equal(resolveIfNotPlain('c:\\some\\path', 'file:///c:/adsf/asdf'), 'file:///c:/some/path');
   });
