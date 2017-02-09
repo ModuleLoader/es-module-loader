@@ -3,7 +3,7 @@ import { isNode } from './common.js';
 /*
  * Optimized URL normalization assuming a syntax-valid URL parent
  */
-function throwResolveError () {
+function throwResolveError (relUrl, parentUrl) {
   throw new RangeError('Unable to resolve "' + relUrl + '" to ' + parentUrl);
 }
 export function resolveIfNotPlain (relUrl, parentUrl) {
