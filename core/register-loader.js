@@ -619,9 +619,7 @@ function doEvaluate (loader, load, link, registry, state, seen) {
           if (Object.hasOwnProperty.call(moduleObj.default, p))
             moduleObj[p] = moduleObj.default[p];
         }
-        Object.defineProperty(moduleObj, '__esModule', {
-          value: true
-        });
+        moduleObj.__esModule = true;
       }
     }
   }
