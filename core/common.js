@@ -50,9 +50,11 @@ else if (typeof location != 'undefined') {
 // sanitize out the hash and querystring
 if (baseURI) {
   baseURI = baseURI.split('#')[0].split('?')[0];
-  baseURI = baseURI.substr(0, baseURI.lastIndexOf('/') + 1);
+  var slashIndex = baseURI.lastIndexOf('/');
+  if (slashIndex !== -1)
+    baseURI = baseURI.substr(0, slashIndex + 1);
 }
-else if (typeof process != 'undefined' && process.cwd) {
+else if (typeof process !== 'undefined' && process.cwd) {
   baseURI = 'file://' + (isWindows ? '/' : '') + process.cwd();
   if (isWindows)
     baseURI = baseURI.replace(/\\/g, '/');
