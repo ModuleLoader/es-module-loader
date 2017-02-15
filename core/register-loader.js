@@ -263,7 +263,7 @@ function resolveInstantiateDep (loader, key, parentKey, registry, state, traceDe
   return loader.resolve(key, parentKey)
   .then(function (resolvedKey) {
     if (traceDepMap)
-      traceDepMap[key] = key;
+      traceDepMap[key] = resolvedKey;
 
     // normalization shortpaths for already-normalized key
     var load = state.records[resolvedKey];
