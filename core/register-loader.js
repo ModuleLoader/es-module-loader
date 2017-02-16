@@ -613,14 +613,15 @@ function doEvaluate (loader, load, link, registry, state, seen) {
         moduleObj.default = module.exports;
 
       var moduleDefault = moduleObj.default;
-      
+
       // __esModule flag extension support via lifting
       if (moduleDefault && moduleDefault.__esModule) {
-        moduleObj.__useDefault = false;        
+        if (moduleObj.__useDefault)
+          delete moduleObj.__useDefault;
         for (var p in moduleDefault) {
           if (Object.hasOwnProperty.call(moduleDefault, p))
             moduleObj[p] = moduleDefault[p];
-        }        
+        }
         moduleObj.__esModule = true;
       }
     }
