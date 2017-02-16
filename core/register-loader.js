@@ -20,12 +20,25 @@ var REGISTER_INTERNAL = createSymbol('register-internal');
 function RegisterLoader () {
   Loader.call(this);
 
+  var registryDelete = this.registry.delete;
+  this.registry.delete = function (key) {
+    var deleted = registryDelete.call(this, key);
+
+    // also delete from register registry if linked
+    if (records.hasOwnProperty(key) && !records[key].linkRecord)
+      delete records[key];
+
+    return deleted;
+  };
+
+  var records = {};
+
   this[REGISTER_INTERNAL] = {
     // last anonymous System.register call
     lastRegister: undefined,
     // in-flight es module load records
-    records: {}
-  }
+    records: records
+  };
 
   // tracing
   this.trace = false;
