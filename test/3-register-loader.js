@@ -231,8 +231,10 @@ describe('System Register Loader', function() {
     });
 
     it('should load mixed bundles of register and registerDynamic', async function () {
+      loader.trace = true;
       new Module().require(path.resolve(fileUrlToPath(loader.baseKey), 'dynamic-modules/mixed-bundle.js'));
       var m = await loader.import('tree/first');
+      assert.equal(JSON.stringify(loader.loads['tree/first'].depMap), '{"./second":"tree/second","./amd":"tree/amd"}');
       assert.equal(m.p, 5);
       assert.equal(m.q, 4);
       assert.equal(m.a.is, 'amd');
