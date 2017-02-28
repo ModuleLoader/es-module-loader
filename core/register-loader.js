@@ -306,8 +306,13 @@ function traceLoad (loader, load, link) {
   loader.loads[load.key] = {
     key: load.key,
     deps: link.dependencies,
+    dynamicDeps: [],
     depMap: link.depMap || {}
   };
+}
+
+function traceDynamicLoad (loader, parentKey, key) {
+  loader.loads[parentKey].dynamicDeps.push(key);
 }
 
 /*
@@ -344,7 +349,7 @@ function registerDeclarative (loader, load, link, declare) {
     locked = false;
 
     return value;
-  }, new ContextualLoader(loader, load.key));
+  }, new ContextualLoader(loader, load));
 
   link.setters = declared.setters;
   link.execute = declared.execute;
@@ -502,18 +507,17 @@ function ContextualLoader (loader, key) {
   this.loader = loader;
   this.key = this.id = key;
 }
-ContextualLoader.prototype.constructor = function () {
+/*ContextualLoader.prototype.constructor = function () {
   throw new TypeError('Cannot subclass the contextual loader only Reflect.Loader.');
-};
+};*/
 ContextualLoader.prototype.import = function (key) {
+  if (loader.trace)
+    traceDynamicLoad(loader, this.key, key);
   return this.loader.import(key, this.key);
 };
-ContextualLoader.prototype.resolve = function (key) {
+/*ContextualLoader.prototype.resolve = function (key) {
   return this.loader.resolve(key, this.key);
-};
-ContextualLoader.prototype.load = function (key) {
-  return this.loader.load(key, this.key);
-};
+};*/
 
 // this is the execution function bound to the Module namespace record
 function ensureEvaluate (loader, load, link, registry, state, seen) {
