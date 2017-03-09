@@ -349,7 +349,7 @@ function registerDeclarative (loader, load, link, declare) {
     locked = false;
 
     return value;
-  }, new ContextualLoader(loader, load));
+  }, new ContextualLoader(loader, load.key));
 
   link.setters = declared.setters;
   link.execute = declared.execute;
