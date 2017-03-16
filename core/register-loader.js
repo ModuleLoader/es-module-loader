@@ -511,8 +511,8 @@ function ContextualLoader (loader, key) {
   throw new TypeError('Cannot subclass the contextual loader only Reflect.Loader.');
 };*/
 ContextualLoader.prototype.import = function (key) {
-  if (loader.trace)
-    traceDynamicLoad(loader, this.key, key);
+  if (this.loader.trace)
+    traceDynamicLoad(this.loader, this.key, key);
   return this.loader.import(key, this.key);
 };
 /*ContextualLoader.prototype.resolve = function (key) {
