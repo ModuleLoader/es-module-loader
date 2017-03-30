@@ -77,7 +77,6 @@ describe('System Register Loader', function() {
       var m1 = await loader.import('./register-modules/circular1.js');
       var m2 = await loader.import('./register-modules/circular2.js');
 
-
       assert.equal(m1.variable1, 'test circular 1');
       assert.equal(m2.variable2, 'test circular 2');
 
@@ -85,6 +84,9 @@ describe('System Register Loader', function() {
       assert.equal(m1.output, 'test circular 2');
       assert.equal(m2.output1, 'test circular 2');
       assert.equal(m1.output2, 'test circular 1');
+
+      assert.equal(m1.output1, 'test circular 2');
+      assert.equal(m2.output2, 'test circular 1');
     });
 
     it('should update circular dependencies', async function () {

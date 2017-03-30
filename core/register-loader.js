@@ -326,35 +326,40 @@ function registerDeclarative (loader, load, link, declare) {
   var moduleObj = link.moduleObj;
   var importerSetters = load.importerSetters;
 
-  var locked = false;
+  var definedExports = false;
 
   // closure especially not based on link to allow link record disposal
   var declared = declare.call(global, function (name, value) {
-    // export setter propogation with locking to avoid cycles
-    if (locked)
-      return;
-
     if (typeof name === 'object') {
-      for (var p in name)
-        if (p !== '__useDefault')
-          moduleObj[p] = name[p];
+      var changed = false;
+      for (var p in name) {
+        value = name[p];
+        if (p !== '__useDefault' && (!(p in moduleObj) || moduleObj[p] !== value)) {
+          changed = true;
+          moduleObj[p] = value;
+        }
+      }
+      if (changed === false)
+        return;
     }
     else {
+      if ((definedExports || name in moduleObj) && moduleObj[name] === value)
+        return;
       moduleObj[name] = value;
     }
 
-    locked = true;
     for (var i = 0; i < importerSetters.length; i++)
       importerSetters[i](moduleObj);
-    locked = false;
 
     return value;
   }, new ContextualLoader(loader, load.key));
 
   link.setters = declared.setters;
   link.execute = declared.execute;
-  if (declared.exports)
+  if (declared.exports) {
     link.moduleObj = moduleObj = declared.exports;
+    definedExports = true;
+  }
 }
 
 function instantiateDeps (loader, load, link, registry, state, seen) {

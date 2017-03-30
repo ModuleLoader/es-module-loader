@@ -14,6 +14,7 @@ System.register(['./circular1.js'], function (_export, _context) {
       variable1 = _circular1Js.variable1;
       var _exportObj = {};
       _exportObj.output1 = _circular1Js.output;
+      _exportObj.output2 = _circular1Js.output2;
 
       _export(_exportObj);
     }],
@@ -22,9 +23,9 @@ System.register(['./circular1.js'], function (_export, _context) {
 
       _export('variable2', variable2);
 
-      fn1();
-
       _export('output', output);
+
+      fn1();
     }
   };
 });
