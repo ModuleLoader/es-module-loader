@@ -340,11 +340,11 @@ function registerDeclarative (loader, load, link, declare) {
         }
       }
       if (changed === false)
-        return;
+        return value;
     }
     else {
       if ((definedExports || name in moduleObj) && moduleObj[name] === value)
-        return;
+        return value;
       moduleObj[name] = value;
     }
 
