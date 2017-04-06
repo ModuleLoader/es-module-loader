@@ -406,8 +406,10 @@ function instantiateDeps (loader, load, link, registry, state, seen) {
       if (!depLink || depLink.linked)
         continue;
 
-      if (seen.indexOf(depLoad) !== -1)
+      if (seen.indexOf(depLoad) !== -1) {
+        deepDepsInstantiatePromises.push(depLink.depsInstantiatePromise);
         continue;
+      }
       seen.push(depLoad);
 
       deepDepsInstantiatePromises.push(instantiateDeps(loader, depLoad, depLoad.linkRecord, registry, state, seen));
