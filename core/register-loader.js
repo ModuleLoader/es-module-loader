@@ -223,8 +223,7 @@ function instantiate (loader, load, link, registry, state) {
 
     // process System.registerDynamic declaration
     if (registration[2]) {
-      link.moduleObj.default = {};
-      link.moduleObj.__useDefault = true;
+      link.moduleObj.default = link.moduleObj.__useDefault = {};
       link.executingRequire = registration[1];
       link.execute = registration[2];
     }
@@ -561,7 +560,7 @@ function makeDynamicRequire (loader, key, dependencies, dependencyInstantiations
         else
           module = ensureEvaluate(loader, depLoad, depLoad.linkRecord, registry, state, seen);
 
-        return module.__useDefault ? module.default : module;
+        return module.__useDefault || module;
       }
     }
     throw new Error('Module ' + name + ' not declared as a System.registerDynamic dependency of ' + key);
@@ -616,10 +615,10 @@ function doEvaluate (loader, load, link, registry, state, seen) {
       Object.defineProperty(module, 'exports', {
         configurable: true,
         set: function (exports) {
-          moduleObj.default = exports;
+          moduleObj.default = moduleObj.__useDefault = exports;
         },
         get: function () {
-          return moduleObj.default;
+          return moduleObj.__useDefault;
         }
       });
 
@@ -634,7 +633,7 @@ function doEvaluate (loader, load, link, registry, state, seen) {
 
       // pick up defineProperty calls to module.exports when we can
       if (module.exports !== moduleObj.default)
-        moduleObj.default = module.exports;
+        moduleObj.default = moduleObj.__useDefault = module.exports;
 
       var moduleDefault = moduleObj.default;
 
