@@ -386,6 +386,8 @@ function instantiateDeps (loader, load, link, registry, state, seen) {
             setter(instantiation);
           }
           else {
+            if (instantiation.loadError)
+              throw instantiation.loadError;
             setter(instantiation.module || instantiation.linkRecord.moduleObj);
             // this applies to both es and dynamic registrations
             if (instantiation.importerSetters)
@@ -431,8 +433,8 @@ function instantiateDeps (loader, load, link, registry, state, seen) {
   })
   .catch(function (err) {
     // throw up the instantiateDeps stack
-    load.linkRecord = undefined;
-    throw load.loadError = load.loadError || addToError(err, 'Loading ' + load.key);
+    link.depsInstantiatePromise = undefined;
+    throw addToError(err, 'Loading ' + load.key);
   });
 }
 
