@@ -11,7 +11,7 @@ export default RegisterLoader;
  * - loader.register support
  * - hookable higher-level resolve
  * - instantiate hook returning a ModuleNamespace or undefined for es module loading
- * - loader error behaviour as in HTML and loader specs, clearing failed modules from registration cache synchronously
+ * - loader error behaviour as in HTML and loader specs, caching load and eval errors separately
  * - build tracing support by providing a .trace=true and .loads object format
  */
 
@@ -25,8 +25,10 @@ function RegisterLoader () {
     var deleted = registryDelete.call(this, key);
 
     // also delete from register registry if linked
-    if (records.hasOwnProperty(key) && !records[key].linkRecord)
+    if (records.hasOwnProperty(key) && !records[key].linkRecord) {
       delete records[key];
+      deleted = true;
+    }
 
     return deleted;
   };
@@ -74,6 +76,9 @@ function createLoadRecord (state, key, registration) {
     // for already-loaded modules by adding themselves to their importerSetters
     importerSetters: undefined,
 
+    loadError: undefined,
+    evalError: undefined,
+
     // in-flight linking record
     linkRecord: {
       // promise for instantiated
@@ -96,9 +101,8 @@ function createLoadRecord (state, key, registration) {
       // indicates if the load and all its dependencies are instantiated and linked
       // but not yet executed
       // mostly just a performance shortpath to avoid rechecking the promises above
-      linked: false,
+      linked: false
 
-      error: undefined
       // NB optimization and way of ensuring module objects in setters
       // indicates setters which should run pre-execution of that dependency
       // setters is then just for completely executed module objects
@@ -130,10 +134,6 @@ RegisterLoader.prototype[Loader.resolveInstantiate] = function (key, parentKey) 
     return instantiateDeps(loader, instantiated, instantiated.linkRecord, registry, state, [instantiated])
     .then(function () {
       return ensureEvaluate(loader, instantiated, instantiated.linkRecord, registry, state, undefined);
-    })
-    .catch(function (err) {
-      clearLoadErrors(loader, instantiated);
-      throw err;
     });
   });
 };
@@ -243,7 +243,8 @@ function instantiate (loader, load, link, registry, state) {
     return load;
   })
   .catch(function (err) {
-    throw link.error = addToError(err, 'Instantiating ' + load.key);
+    load.linkRecord = undefined;
+    throw load.loadError = load.loadError || addToError(err, 'Instantiating ' + load.key);
   }));
 }
 
@@ -402,6 +403,9 @@ function instantiateDeps (loader, load, link, registry, state, seen) {
       var depLoad = link.dependencyInstantiations[i];
       var depLink = depLoad.linkRecord;
 
+      if (depLoad.loadError)
+        throw depLoad.loadError;
+
       if (!depLink || depLink.linked)
         continue;
 
@@ -426,49 +430,10 @@ function instantiateDeps (loader, load, link, registry, state, seen) {
     return load;
   })
   .catch(function (err) {
-    err = addToError(err, 'Loading ' + load.key);
-
     // throw up the instantiateDeps stack
-    // loads are then synchonously cleared at the top-level through the clearLoadErrors helper below
-    // this then ensures avoiding partially unloaded tree states
-    link.error = link.error || err;
-
-    throw err;
+    load.linkRecord = undefined;
+    throw load.loadError = load.loadError || addToError(err, 'Loading ' + load.key);
   });
-}
-
-// clears an errored load and all its errored dependencies from the loads registry
-function clearLoadErrors (loader, load) {
-  var state = loader[REGISTER_INTERNAL];
-
-  // clear from loads
-  if (state.records[load.key] === load)
-    delete state.records[load.key];
-
-  var link = load.linkRecord;
-
-  if (!link)
-    return;
-
-  if (link.dependencyInstantiations)
-    link.dependencyInstantiations.forEach(function (depLoad, index) {
-      if (!depLoad || depLoad instanceof ModuleNamespace)
-        return;
-
-      if (depLoad.linkRecord) {
-        if (depLoad.linkRecord.error) {
-          // provides a circular reference check
-          if (state.records[depLoad.key] === depLoad)
-            clearLoadErrors(loader, depLoad);
-        }
-
-        // unregister setters for es dependency load records that will remain
-        if (link.setters && depLoad.importerSetters) {
-          var setterIndex = depLoad.importerSetters.indexOf(link.setters[index]);
-          depLoad.importerSetters.splice(setterIndex, 1);
-        }
-      }
-    });
 }
 
 /*
@@ -530,8 +495,8 @@ function ensureEvaluate (loader, load, link, registry, state, seen) {
   if (load.module)
     return load.module;
 
-  if (link.error)
-    throw link.error;
+  if (load.evalError)
+    throw load.evalError;
 
   if (seen && seen.indexOf(load) !== -1)
     return load.linkRecord.moduleObj;
@@ -539,10 +504,8 @@ function ensureEvaluate (loader, load, link, registry, state, seen) {
   // for ES loads we always run ensureEvaluate on top-level, so empty seen is passed regardless
   // for dynamic loads, we pass seen if also dynamic
   var err = doEvaluate(loader, load, link, registry, state, link.setters ? [] : seen || []);
-  if (err) {
-    clearLoadErrors(loader, load);
+  if (err)
     throw err;
-  }
 
   return load.module;
 }
@@ -587,16 +550,19 @@ function doEvaluate (loader, load, link, registry, state, seen) {
       // custom Module returned from instantiate
       depLink = depLoad.linkRecord;
       if (depLink && seen.indexOf(depLoad) === -1) {
-        if (depLink.error)
-          err = depLink.error;
+        if (depLoad.evalError)
+          err = depLoad.evalError;
         else
           // dynamic / declarative boundaries clear the "seen" list
           // we just let cross format circular throw as would happen in real implementations
           err = doEvaluate(loader, depLoad, depLink, registry, state, depLink.setters ? seen : []);
       }
 
-      if (err)
-        return link.error = addToError(err, 'Evaluating ' + load.key);
+      if (err) {
+        load.linkRecord = undefined;
+        load.evalError = addToError(err, 'Evaluating ' + load.key);
+        return load.evalError;
+      }
     }
   }
 
@@ -647,8 +613,11 @@ function doEvaluate (loader, load, link, registry, state, seen) {
     }
   }
 
+  // dispose link record
+  load.linkRecord = undefined;
+
   if (err)
-    return link.error = addToError(err, 'Evaluating ' + load.key);
+    return load.evalError = addToError(err, 'Evaluating ' + load.key);
 
   registry[load.key] = load.module = new ModuleNamespace(link.moduleObj);
 
@@ -661,9 +630,6 @@ function doEvaluate (loader, load, link, registry, state, seen) {
         load.importerSetters[i](load.module);
     load.importerSetters = undefined;
   }
-
-  // dispose link record
-  load.linkRecord = undefined;
 }
 
 // {} is the closest we can get to call(undefined)
