@@ -6,9 +6,11 @@ import { isNode } from './common.js';
 function throwResolveError (relUrl, parentUrl) {
   throw new RangeError('Unable to resolve "' + relUrl + '" to ' + parentUrl);
 }
+var protocolRegEx = /^[^/]+:/;
 export function resolveIfNotPlain (relUrl, parentUrl) {
   relUrl = relUrl.trim();
-  var parentProtocol = parentUrl && parentUrl.substr(0, parentUrl.indexOf(':') + 1);
+  if (parentUrl)
+    var parentProtocol = parentUrl.match(protocolRegEx);
 
   var firstChar = relUrl[0];
   var secondChar = relUrl[1];
@@ -17,12 +19,12 @@ export function resolveIfNotPlain (relUrl, parentUrl) {
   if (firstChar === '/' && secondChar === '/') {
     if (!parentProtocol)
       throwResolveError(relUrl, parentUrl);
-    return parentProtocol + relUrl;
+    return parentProtocol[0] + relUrl;
   }
   // relative-url
   else if (firstChar === '.' && (secondChar === '/' || secondChar === '.' && (relUrl[2] === '/' || relUrl.length === 2) || relUrl.length === 1)
       || firstChar === '/') {
-    var parentIsPlain = !parentProtocol || parentUrl[parentProtocol.length] !== '/';
+    var parentIsPlain = !parentProtocol || parentUrl[parentProtocol[0].length] !== '/';
 
     // read pathname from parent if a URL
     // pathname taken to be part after leading "/"
@@ -33,10 +35,10 @@ export function resolveIfNotPlain (relUrl, parentUrl) {
         throwResolveError(relUrl, parentUrl);
       pathname = parentUrl;
     }
-    else if (parentUrl[parentProtocol.length + 1] === '/') {
+    else if (parentUrl[parentProtocol[0].length + 1] === '/') {
       // resolving to a :// so we need to read out the auth and host
-      if (parentProtocol !== 'file:') {
-        pathname = parentUrl.substr(parentProtocol.length + 2);
+      if (parentProtocol[0] !== 'file:') {
+        pathname = parentUrl.substr(parentProtocol[0].length + 2);
         pathname = pathname.substr(pathname.indexOf('/') + 1);
       }
       else {
@@ -45,7 +47,7 @@ export function resolveIfNotPlain (relUrl, parentUrl) {
     }
     else {
       // resolving to :/ so pathname is the /... part
-      pathname = parentUrl.substr(parentProtocol.length + 1);
+      pathname = parentUrl.substr(parentProtocol[0].length + 1);
     }
 
     if (firstChar === '/') {
