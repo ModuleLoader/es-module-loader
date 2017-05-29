@@ -311,10 +311,6 @@ function traceLoad (loader, load, link) {
   };
 }
 
-function traceDynamicLoad (loader, parentKey, key) {
-  loader.loads[parentKey].dynamicDeps.push(key);
-}
-
 /*
  * Convert a CJS module.exports into a valid object for new Module:
  *
@@ -475,17 +471,21 @@ RegisterLoader.prototype.registerDynamic = function (key, deps, executingRequire
 };
 
 // ContextualLoader class
-// backwards-compatible with previous System.register context argument by exposing .id
+// backwards-compatible with previous System.register context argument by exposing .id, .key
 function ContextualLoader (loader, key) {
   this.loader = loader;
   this.key = this.id = key;
+  this.meta = {
+    url: key
+    // scriptElement: null
+  };
 }
 /*ContextualLoader.prototype.constructor = function () {
   throw new TypeError('Cannot subclass the contextual loader only Reflect.Loader.');
 };*/
 ContextualLoader.prototype.import = function (key) {
   if (this.loader.trace)
-    traceDynamicLoad(this.loader, this.key, key);
+    this.loader.loads[this.key].dynamicDeps.push(key);
   return this.loader.import(key, this.key);
 };
 /*ContextualLoader.prototype.resolve = function (key) {
