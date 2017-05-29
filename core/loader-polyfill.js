@@ -1,6 +1,6 @@
 import { addToError, createSymbol } from './common.js';
 
-export { Loader, ModuleNamespace }
+export { Loader, ModuleNamespace, REGISTRY }
 
 var resolvedPromise = Promise.resolve();
 
@@ -136,7 +136,6 @@ var iteratorSupport = typeof Symbol !== 'undefined' && Symbol.iterator;
 var REGISTRY = createSymbol('registry');
 function Registry() {
   this[REGISTRY] = {};
-  this._registry = REGISTRY;
 }
 // 4.4.1
 if (iteratorSupport) {

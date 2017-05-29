@@ -1,4 +1,4 @@
-import { Loader, ModuleNamespace } from './loader-polyfill.js';
+import { Loader, ModuleNamespace, REGISTRY } from './loader-polyfill.js';
 import { resolveIfNotPlain } from './resolve.js';
 import { addToError, global, createSymbol, baseURI } from './common.js';
 
@@ -116,18 +116,23 @@ function createLoadRecord (state, key, registration) {
 RegisterLoader.prototype[Loader.resolveInstantiate] = function (key, parentKey) {
   var loader = this;
   var state = this[REGISTER_INTERNAL];
-  var registry = loader.registry[loader.registry._registry];
+  var registry = this.registry[REGISTRY];
 
   return resolveInstantiate(loader, key, parentKey, registry, state)
   .then(function (instantiated) {
     if (instantiated instanceof ModuleNamespace)
       return instantiated;
 
-    // if already beaten to linked, return
-    if (instantiated.module)
-      return instantiated.module;
-
     // resolveInstantiate always returns a load record with a link record and no module value
+    let link = instantiated.linkRecord;
+
+    // if already beaten to done, return
+    if (!link) {
+      if (instantiated.module)
+        return instantiated.module;
+      throw instantiated.evalError;
+    }
+
     if (instantiated.linkRecord.linked)
       return ensureEvaluate(loader, instantiated, instantiated.linkRecord, registry, state, undefined);
 
@@ -148,8 +153,11 @@ function resolveInstantiate (loader, key, parentKey, registry, state) {
   var load = state.records[key];
 
   // already linked but not in main registry is ignored
-  if (load && !load.module)
+  if (load && !load.module) {
+    if (load.loadError)
+      return Promise.reject(load.loadError);
     return instantiate(loader, load, load.linkRecord, registry, state);
+  }
 
   return loader.resolve(key, parentKey)
   .then(function (resolvedKey) {
@@ -166,6 +174,9 @@ function resolveInstantiate (loader, key, parentKey, registry, state) {
     // but keep any existing registration
     if (!load || load.module)
       load = createLoadRecord(state, resolvedKey, load && load.registration);
+
+    if (load.loadError)
+      return Promise.reject(load.loadError);
 
     var link = load.linkRecord;
     if (!link)
@@ -286,6 +297,9 @@ function resolveInstantiateDep (loader, key, parentKey, registry, state, traceDe
     if (module && (!load || load.module && module !== load.module))
       return module;
 
+    if (load && load.loadError)
+      throw load.loadError;
+
     // already has a module value but not already in the registry (load.module)
     // means it was removed by registry.delete, so we should
     // disgard the current load record creating a new one over it
@@ -400,9 +414,6 @@ function instantiateDeps (loader, load, link, registry, state, seen) {
     for (var i = 0; i < link.dependencies.length; i++) {
       var depLoad = link.dependencyInstantiations[i];
       var depLink = depLoad.linkRecord;
-
-      if (depLoad.loadError)
-        throw depLoad.loadError;
 
       if (!depLink || depLink.linked)
         continue;
