@@ -124,7 +124,7 @@ RegisterLoader.prototype[Loader.resolveInstantiate] = function (key, parentKey) 
       return instantiated;
 
     // resolveInstantiate always returns a load record with a link record and no module value
-    let link = instantiated.linkRecord;
+    var link = instantiated.linkRecord;
 
     // if already beaten to done, return
     if (!link) {
