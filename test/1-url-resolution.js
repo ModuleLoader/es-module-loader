@@ -5,6 +5,9 @@ describe('Simple normalization tests', function() {
   it('Should trim whitespace from URLs', function () {
     assert.equal(resolveIfNotPlain(' c:\\some\\path ', 'file:///c:/adsf/asdf'), 'file:///c:/some/path');
   });
+  it('Should resolve relative with protocol', function () {
+    assert.equal(resolveIfNotPlain('./x:y', 'https://x.com/y'), 'https://x.com/x:y');
+  });
   it('Should resolve windows paths as file:/// URLs', function() {
     assert.equal(resolveIfNotPlain('c:\\some\\path', 'file:///c:/adsf/asdf'), 'file:///c:/some/path');
   });
