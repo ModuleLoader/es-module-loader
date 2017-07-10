@@ -403,6 +403,7 @@ function instantiateDeps (loader, load, link, registry, state) {
 
   depsInstantiatePromise = depsInstantiatePromise.catch(function (err) {
     // throw up the instantiateDeps stack
+    link.depsInstantiatePromise = undefined;
     throw addToError(err, 'Loading ' + load.key);
   });
 
@@ -423,7 +424,7 @@ function deepInstantiateDeps (loader, load, link, registry, state) {
       if (seen.indexOf(load) !== -1)
         return;
       seen.push(load);
-      
+
       loadCnt++;
       instantiateDeps(loader, load, link, registry, state)
       .then(processLoad, reject);
