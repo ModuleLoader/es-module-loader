@@ -3,7 +3,7 @@
  */
 export var isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
 export var isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
-export var isWindows = typeof process !== 'undefined' && typeof process.platform === 'string' && process.platform.match(/^win/);
+export var isWindows = (typeof process !== 'undefined' && typeof process.platform === 'string' && process.platform.match(/^win/)) || (typeof navigator !== "undefined" && typeof navigator.platform === "string" && navigator.platform.match(/^Win/));
 
 var envGlobal = typeof self !== 'undefined' ? self : global;
 export { envGlobal as global }
