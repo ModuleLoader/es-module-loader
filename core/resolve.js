@@ -77,12 +77,12 @@ export function resolveIfNotPlain (relUrl, parentUrl) {
       // new segment - check if it is relative
       if (segmented[i] === '.') {
         // ../ segment
-        if (segmented[i + 1] === '.' && segmented[i + 2] === '/') {
+        if (segmented[i + 1] === '.' && (segmented[i + 2] === '/' || i + 2 === segmented.length)) {
           output.pop();
           i += 2;
         }
         // ./ segment
-        else if (segmented[i + 1] === '/') {
+        else if (segmented[i + 1] === '/' || i + 1 === segmented.length) {
           i += 1;
         }
         else {
@@ -95,9 +95,6 @@ export function resolveIfNotPlain (relUrl, parentUrl) {
         if (parentIsPlain && output.length === 0)
           throwResolveError(relUrl, parentUrl);
 
-        // trailing . or .. segment
-        if (i === segmented.length)
-          output.push('');
         continue;
       }
 

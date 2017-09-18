@@ -1,29 +1,29 @@
 import { resolveIfNotPlain } from '../core/resolve.js';
 import assert from 'assert';
 
-describe('Simple normalization tests', function() {
+describe('Simple normalization tests', function () {
   it('Should trim whitespace from URLs', function () {
     assert.equal(resolveIfNotPlain(' c:\\some\\path ', 'file:///c:/adsf/asdf'), 'file:///c:/some/path');
   });
   it('Should resolve relative with protocol', function () {
     assert.equal(resolveIfNotPlain('./x:y', 'https://x.com/y'), 'https://x.com/x:y');
   });
-  it('Should resolve windows paths as file:/// URLs', function() {
+  it('Should resolve windows paths as file:/// URLs', function () {
     assert.equal(resolveIfNotPlain('c:\\some\\path', 'file:///c:/adsf/asdf'), 'file:///c:/some/path');
   });
-  it('Should resolve relative windows paths', function() {
+  it('Should resolve relative windows paths', function () {
     assert.equal(resolveIfNotPlain('./test.js', 'file:///C:/some/path/'), 'file:///C:/some/path/test.js');
   });
-  it('Should resolve unix file paths as file:/// URLs', function() {
+  it('Should resolve unix file paths as file:/// URLs', function () {
     assert.equal(resolveIfNotPlain('/some/file/path.js', 'file:///home/path/to/project'), 'file:///some/file/path.js');
   });
-  it('Should be able to resolve to plain names', function() {
+  it('Should be able to resolve to plain names', function () {
     assert.equal(resolveIfNotPlain('../../asdf/./asdf/.asdf/asdf', 'a/b/c/d'), 'a/asdf/asdf/.asdf/asdf');
   });
-  it('Should support resolving plain URI forms', function() {
+  it('Should support resolving plain URI forms', function () {
     assert.equal(resolveIfNotPlain('./asdf', 'npm:lodash/'), 'npm:lodash/asdf');
   });
-  it('Should not support backtracking below base in plain URI forms', function() {
+  it('Should not support backtracking below base in plain URI forms', function () {
     var thrown = false;
     try {
       resolveIfNotPlain('../asdf', 'npm:lodash/path');
@@ -34,7 +34,7 @@ describe('Simple normalization tests', function() {
     if (!thrown)
       throw new Error('Test should have thrown a RangeError exception');
   });
-  it('Should not support backtracking exactly to the base in plain URI forms', function() {
+  it('Should not support backtracking exactly to the base in plain URI forms', function () {
     var thrown = false;
     try {
       resolveIfNotPlain('../', 'npm:lodash/asdf/y');
@@ -45,32 +45,35 @@ describe('Simple normalization tests', function() {
     if (thrown)
       throw new Error('Test should not have thrown a RangeError exception');
   });
-  it('Should support "." for resolution', function() {
+  it('Should support "." for resolution', function () {
     assert.equal(resolveIfNotPlain('.', 'https://www.google.com/asdf/asdf'), 'https://www.google.com/asdf/');
   });
-  it('Should support ".." resolution', function() {
+  it('Should support ".." resolution', function () {
     assert.equal(resolveIfNotPlain('..', 'https://www.google.com/asdf/asdf/asdf'), 'https://www.google.com/asdf/');
   });
-  it('Should support "./" for resolution', function() {
+  it('Should support "./" for resolution', function () {
     assert.equal(resolveIfNotPlain('./', 'https://www.google.com/asdf/asdf'), 'https://www.google.com/asdf/');
   });
-  it('Should support "../" resolution', function() {
+  it('Should support "../" resolution', function () {
     assert.equal(resolveIfNotPlain('../', 'https://www.google.com/asdf/asdf/asdf'), 'https://www.google.com/asdf/');
   });
-  it('Should leave a trailing "/"', function() {
+  it('Should leave a trailing "/"', function () {
     assert.equal(resolveIfNotPlain('./asdf/', 'file:///x/y'), 'file:///x/asdf/');
   });
-  it('Should leave a trailing "//"', function() {
+  it('Should leave a trailing "//"', function () {
     assert.equal(resolveIfNotPlain('./asdf//', 'file:///x/y'), 'file:///x/asdf//');
+  });
+  it('Should support a trailing ".."', function () {
+    assert.equal(resolveIfNotPlain('../..', 'path/to/test/module.js'), 'path/');
   });
 });
 
 import fs from 'fs';
 var testCases = eval('(' + fs.readFileSync('test/fixtures/url-resolution-cases.json') + ')');
 
-describe('URL resolution selected WhatWG URL spec tests', function() {
+describe('URL resolution selected WhatWG URL spec tests', function () {
   var run = 0;
-  testCases.forEach(function(test) {
+  testCases.forEach(function (test) {
     if (typeof test == 'string')
       return;
 
@@ -121,7 +124,7 @@ describe('URL resolution selected WhatWG URL spec tests', function() {
     if (test.input == '')
       return;
 
-    it('Should resolve "' + test.input + '" to "' + test.base + '"', function() {
+    it('Should resolve "' + test.input + '" to "' + test.base + '"', function () {
       var failed = false;
       try {
         var resolved = resolveIfNotPlain(test.input, test.base) || resolveIfNotPlain('./' + test.input, test.base);
