@@ -612,7 +612,7 @@ function doEvaluate (loader, load, link, registry, state, seen) {
       err = dynamicExecute(link.execute, require, moduleObj.default, module);
 
       // pick up defineProperty calls to module.exports when we can
-      if (module.exports !== moduleObj.default)
+      if (module.exports !== moduleObj.__useDefault)
         moduleObj.default = moduleObj.__useDefault = module.exports;
 
       var moduleDefault = moduleObj.default;
