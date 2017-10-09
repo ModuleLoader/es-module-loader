@@ -6,8 +6,10 @@ import { isNode } from './common.js';
 function throwResolveError (relUrl, parentUrl) {
   throw new RangeError('Unable to resolve "' + relUrl + '" to ' + parentUrl);
 }
+var backslashRegEx = /\\/g;
 export function resolveIfNotPlain (relUrl, parentUrl) {
-  relUrl = relUrl.trim();
+  if (relUrl[0] === ' ' || relUrl[relUrl.length - 1] === ' ')
+    relUrl = relUrl.trim();
   var parentProtocol = parentUrl && parentUrl.substr(0, parentUrl.indexOf(':') + 1);
 
   var firstChar = relUrl[0];
@@ -17,12 +19,16 @@ export function resolveIfNotPlain (relUrl, parentUrl) {
   if (firstChar === '/' && secondChar === '/') {
     if (!parentProtocol)
       throwResolveError(relUrl, parentUrl);
+    if (relUrl.indexOf('\\') !== -1)
+      relUrl = relUrl.replace(backslashRegEx, '/');
     return parentProtocol + relUrl;
   }
   // relative-url
   else if (firstChar === '.' && (secondChar === '/' || secondChar === '.' && (relUrl[2] === '/' || relUrl.length === 2 && (relUrl += '/')) ||
       relUrl.length === 1  && (relUrl += '/')) ||
       firstChar === '/') {
+    if (relUrl.indexOf('\\') !== -1)
+      relUrl = relUrl.replace(backslashRegEx, '/');
     var parentIsPlain = !parentProtocol || parentUrl[parentProtocol.length] !== '/';
 
     // read pathname from parent if a URL
@@ -115,7 +121,7 @@ export function resolveIfNotPlain (relUrl, parentUrl) {
     if (isNode) {
       // C:\x becomes file:///c:/x (we don't support C|\x)
       if (relUrl[1] === ':' && relUrl[2] === '\\' && relUrl[0].match(/[a-z]/i))
-        return 'file:///' + relUrl.replace(/\\/g, '/');
+        return 'file:///' + relUrl.replace(backslashRegEx, '/');
     }
     return relUrl;
   }
