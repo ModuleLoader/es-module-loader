@@ -4,6 +4,8 @@ import { addToError, global, createSymbol, baseURI } from './common.js';
 
 export default RegisterLoader;
 
+var resolvedPromise = Promise.resolve();
+
 /*
  * Register Loader
  *
@@ -195,7 +197,7 @@ function createProcessAnonRegister (loader, load, state) {
 function instantiate (loader, load, link, registry, state) {
   return link.instantiatePromise || (link.instantiatePromise =
   // if there is already an existing registration, skip running instantiate
-  (load.registration ? Promise.resolve() : Promise.resolve().then(function () {
+  (load.registration ? resolvedPromise : resolvedPromise.then(function () {
     state.lastRegister = undefined;
     return loader[INSTANTIATE](load.key, loader[INSTANTIATE].length > 1 && createProcessAnonRegister(loader, load, state));
   }))
@@ -413,37 +415,27 @@ function instantiateDeps (loader, load, link, registry, state) {
 }
 
 function deepInstantiateDeps (loader, load, link, registry, state) {
-  return new Promise(function (resolve, reject) {
-    var seen = [];
-    var loadCnt = 0;
-    function queueLoad (load) {
-      var link = load.linkRecord;
-      if (!link)
-        return;
-
-      if (seen.indexOf(load) !== -1)
-        return;
-      seen.push(load);
-
-      loadCnt++;
-      instantiateDeps(loader, load, link, registry, state)
-      .then(processLoad, reject);
-    }
-    function processLoad (load) {
-      loadCnt--;
-      var link = load.linkRecord;
-      if (link) {
-        for (var i = 0; i < link.dependencies.length; i++) {
-          var depLoad = link.dependencyInstantiations[i];
-          if (!(depLoad instanceof ModuleNamespace))
-            queueLoad(depLoad);
-        }
+  var seen = [];
+  function addDeps (load, link) {
+    if (!link)
+      return resolvedPromise;
+    if (seen.indexOf(load) !== -1)
+      return resolvedPromise;
+    seen.push(load);
+    
+    return instantiateDeps(loader, load, link, registry, state)
+    .then(function () {
+      var depPromises = [];
+      for (let i = 0; i < link.dependencies.length; i++) {
+        var depLoad = link.dependencyInstantiations[i];
+        if (!(depLoad instanceof ModuleNamespace))
+          depPromises.push(addDeps(depLoad, depLoad.linkRecord));
       }
-      if (loadCnt === 0)
-        resolve();
-    }
-    queueLoad(load);
-  });
+      return Promise.all(depPromises);
+    });
+  };
+
+  return addDeps(load, link);
 }
 
 /*
