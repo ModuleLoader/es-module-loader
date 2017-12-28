@@ -58,7 +58,7 @@ The `Loader` and `ModuleNamespace` classes in `core/loader-polyfill.js` provide 
 - *`loader.registry.set(resolvedKey, namespace)`*: Set a module namespace into the registry.
 - *`loader.registry.get(resolvedKey)`*: Get a module namespace (if any) from the registry.
 - *`loader.registry.has(resolvedKey)`*: Boolean indicating whether the given key is present in the registry.
-- *`loader.registry.delete(resolvedKey)``*: Removes the given module from the registry (if any), returning true or false.
+- *`loader.registry.delete(resolvedKey)`*: Removes the given module from the registry (if any), returning true or false.
 - *`loader.registry.keys`*: Function returning the keys iterator for the registry.
 - *`loader.registry.values`*: Function returning the values iterator for the registry.
 - *`loader.registry.entries`*: Function returning the entries iterator for the registry (keys and values).
