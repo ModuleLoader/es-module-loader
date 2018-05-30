@@ -217,7 +217,7 @@ describe('System Register Loader', function() {
       var err = await getImportError('./register-modules/load-non-existent.js');
       var lines = err.split('\n  ');
       assert(lines[0].startsWith('Error: '));
-      assert(lines[0].endsWith('open \'' + testPath + 'non-existent.js\''));
+      assert(lines[0].endsWith('open \'' + testPath.replace(/\//g, path.sep) + 'non-existent.js\''));
       assert.equal(lines[1], 'Instantiating ' + testPath + 'non-existent.js');
       assert.equal(lines[2], 'Loading ' + testPath + 'load-non-existent.js');
       assert.equal(lines[3], 'Loading ./register-modules/load-non-existent.js');

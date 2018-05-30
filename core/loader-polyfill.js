@@ -49,7 +49,9 @@ function Loader () {
 Loader.prototype.constructor = Loader;
 
 function ensureInstantiated (module) {
-  if (!(module instanceof ModuleNamespace || module[toStringTag] === 'module'))
+  if (module === undefined)
+    return;
+  if (module instanceof ModuleNamespace === false && module[toStringTag] !== 'module')
     throw new TypeError('Module instantiation did not return a valid namespace object.');
   return module;
 }

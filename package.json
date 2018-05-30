@@ -1,7 +1,7 @@
 {
   "name": "es-module-loader",
   "description": "An ES Module Loader shim",
-  "version": "2.2.8",
+  "version": "2.2.9",
   "homepage": "https://github.com/ModuleLoader/es-module-loader",
   "author": {
     "name": "Guy Bedford, Luke Hoban, Addy Osmani",
@@ -26,7 +26,7 @@
     "babel-plugin-transform-es2015-modules-systemjs": "^6.14.0",
     "benchmark": "^2.1.1",
     "mocha": "^3.0.2",
-    "node-es-module-loader": "^0.1.1",
+    "node-es-module-loader": "^0.3.8",
     "systemjs": "^0.19.36"
   },
   "keywords": [
