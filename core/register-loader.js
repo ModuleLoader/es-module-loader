@@ -1,6 +1,6 @@
 import { Loader, ModuleNamespace, REGISTRY } from './loader-polyfill.js';
 import { resolveIfNotPlain } from './resolve.js';
-import { addToError, global, createSymbol, baseURI } from './common.js';
+import { addToError, global, createSymbol, baseURI, toStringTag } from './common.js';
 
 export default RegisterLoader;
 
@@ -204,7 +204,7 @@ function instantiate (loader, load, link, registry, state) {
   .then(function (instantiation) {
     // direct module return from instantiate -> we're done
     if (instantiation !== undefined) {
-      if (!(instantiation instanceof ModuleNamespace))
+      if (!(instantiation instanceof ModuleNamespace || instantiation[toStringTag] === 'module'))
         throw new TypeError('Instantiate did not return a valid Module object.');
 
       delete state.records[load.key];
@@ -379,7 +379,7 @@ function instantiateDeps (loader, load, link, registry, state) {
         if (setter) {
           var instantiation = dependencyInstantiations[i];
 
-          if (instantiation instanceof ModuleNamespace) {
+          if (instantiation instanceof ModuleNamespace || instantiation[toStringTag] === 'module') {
             setter(instantiation);
           }
           else {
@@ -428,7 +428,7 @@ function deepInstantiateDeps (loader, load, link, registry, state) {
       var depPromises = [];
       for (let i = 0; i < link.dependencies.length; i++) {
         var depLoad = link.dependencyInstantiations[i];
-        if (!(depLoad instanceof ModuleNamespace))
+        if (!(depLoad instanceof ModuleNamespace || depLoad[toStringTag] === 'module'))
           depPromises.push(addDeps(depLoad, depLoad.linkRecord));
       }
       return Promise.all(depPromises);
@@ -524,7 +524,7 @@ function makeDynamicRequire (loader, key, dependencies, dependencyInstantiations
         var depLoad = dependencyInstantiations[i];
         var module;
 
-        if (depLoad instanceof ModuleNamespace)
+        if (depLoad instanceof ModuleNamespace || depLoad[toStringTag] === 'module')
           module = depLoad;
         else
           module = ensureEvaluate(loader, depLoad, depLoad.linkRecord, registry, state, seen);
@@ -550,7 +550,7 @@ function doEvaluate (loader, load, link, registry, state, seen) {
     for (var i = 0; i < link.dependencies.length; i++) {
       depLoad = link.dependencyInstantiations[i];
 
-      if (depLoad instanceof ModuleNamespace)
+      if (depLoad instanceof ModuleNamespace || depLoad[toStringTag] === 'module')
         continue;
 
       // custom Module returned from instantiate

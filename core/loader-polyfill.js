@@ -1,4 +1,4 @@
-import { addToError, createSymbol } from './common.js';
+import { addToError, createSymbol, toStringTag } from './common.js';
 
 export { Loader, ModuleNamespace, REGISTRY }
 
@@ -49,7 +49,7 @@ function Loader () {
 Loader.prototype.constructor = Loader;
 
 function ensureInstantiated (module) {
-  if (!(module instanceof ModuleNamespace))
+  if (!(module instanceof ModuleNamespace || module[toStringTag] === 'module'))
     throw new TypeError('Module instantiation did not return a valid namespace object.');
   return module;
 }
@@ -170,7 +170,7 @@ Registry.prototype.get = function (key) {
 };
 // 4.4.7
 Registry.prototype.set = function (key, namespace) {
-  if (!(namespace instanceof ModuleNamespace))
+  if (!(namespace instanceof ModuleNamespace || namespace[toStringTag] === 'module'))
     throw new Error('Registry must be set with an instance of Module Namespace');
   this[REGISTRY][key] = namespace;
   return this;
@@ -227,8 +227,8 @@ function ModuleNamespace (baseObject/*, evaluate*/) {
 // 8.4.2
 ModuleNamespace.prototype = Object.create(null);
 
-if (typeof Symbol !== 'undefined' && Symbol.toStringTag)
-  Object.defineProperty(ModuleNamespace.prototype, Symbol.toStringTag, {
+if (toStringTag)
+  Object.defineProperty(ModuleNamespace.prototype, toStringTag, {
     value: 'Module'
   });
 
