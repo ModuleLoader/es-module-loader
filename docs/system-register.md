@@ -1,8 +1,9 @@
 ### What it is
 
-System.register can be considered as a new module format designed to support the exact semantics of ES6 modules within ES5. 
+System.register can be considered as a new module format designed to support the exact semantics of ES6 modules within ES5. The latest iteration (as of [ES Module Loader 2.3.0](https://github.com/ModuleLoader/es-module-loader/releases/tag/2.3.0) / [SystemJS 0.21.4](https://github.com/systemjs/systemjs/releases/tag/0.21.4)) also includes support for top-level await via a Promise return from the execute function.
+
 It is a format that was developed out of collaboration and is supported as a module output in Traceur (as _instantiate_), 
-Babel and TypeScript (as _system_). All dynamic binding and circular reference behaviors supported by ES6 modules are supported 
+Babel, TypeScript and Rollup (as _system_). All dynamic binding and circular reference behaviors supported by ES6 modules are supported 
 by this format. In this way it acts as a safe and comprehensive target format for the polyfill path into ES6 modules.
 
 To run the format, a suitable loader implementation needs to be used that understands how to execute it. Currently these include 
