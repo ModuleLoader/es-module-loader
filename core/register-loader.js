@@ -430,7 +430,7 @@ function deepInstantiateDeps (loader, load, link, registry, state) {
     return instantiateDeps(loader, load, link, registry, state)
     .then(function () {
       var depPromises;
-      for (let i = 0; i < link.dependencies.length; i++) {
+      for (var i = 0; i < link.dependencies.length; i++) {
         var depLoad = link.dependencyInstantiations[i];
         if (!(depLoad instanceof ModuleNamespace || depLoad[toStringTag] === 'module')) {
           depPromises = depPromises || [];
