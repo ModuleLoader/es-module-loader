@@ -5,6 +5,7 @@ import { addToError, global, createSymbol, baseURI, toStringTag } from './common
 export default RegisterLoader;
 
 var resolvedPromise = Promise.resolve();
+var emptyArray = [];
 
 /*
  * Register Loader
@@ -354,7 +355,7 @@ function registerDeclarative (loader, load, link, declare) {
     return value;
   }, new ContextualLoader(loader, load.key));
 
-  link.setters = declared.setters;
+  link.setters = declared.setters || [];
   link.execute = declared.execute;
   if (declared.exports) {
     link.moduleObj = moduleObj = declared.exports;
@@ -428,13 +429,16 @@ function deepInstantiateDeps (loader, load, link, registry, state) {
     
     return instantiateDeps(loader, load, link, registry, state)
     .then(function () {
-      var depPromises = [];
+      var depPromises;
       for (let i = 0; i < link.dependencies.length; i++) {
         var depLoad = link.dependencyInstantiations[i];
-        if (!(depLoad instanceof ModuleNamespace || depLoad[toStringTag] === 'module'))
+        if (!(depLoad instanceof ModuleNamespace || depLoad[toStringTag] === 'module')) {
+          depPromises = depPromises || [];
           depPromises.push(addDeps(depLoad, depLoad.linkRecord));
+        }
       }
-      return Promise.all(depPromises);
+      if (depPromises)
+        return Promise.all(depPromises);
     });
   };
 
@@ -604,7 +608,7 @@ function doEvaluateDeclarative (loader, load, link, registry, state, seen) {
   }
 
   if (depLoadPromises)
-    return Promise.all(depLoadPromises)
+    return link.evaluatePromise = Promise.all(depLoadPromises)
     .then(function () {
       if (link.execute) {
         // ES System.register execute
@@ -618,6 +622,10 @@ function doEvaluateDeclarative (loader, load, link, registry, state, seen) {
         if (execPromise)
           return execPromise.catch(function (e) {
             evalError(load, e);
+          })
+          .then(function () {
+            load.linkRecord = undefined;
+            return registry[load.key] = load.module = new ModuleNamespace(link.moduleObj);
           });
       }
     
@@ -636,8 +644,12 @@ function doEvaluateDeclarative (loader, load, link, registry, state, seen) {
       evalError(load, e);
     }
     if (execPromise)
-      return execPromise.catch(function (e) {
+      return link.evaluatePromise = execPromise.catch(function (e) {
         evalError(load, e);
+      })
+      .then(function () {
+        load.linkRecord = undefined;
+        return registry[load.key] = load.module = new ModuleNamespace(link.moduleObj);
       });
   }
 
