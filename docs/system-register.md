@@ -203,7 +203,7 @@ This can fully support synchronous subgraph execution remaining synchronous whil
 
 ### Limitations
 
-The main limitation with authoring in this format and transitioning to ES6 is if unresolved exports exist such as:
+The main limitations with the format are the lack of TDZ for hosited bindings, as well as an inability to throw for non-existent bindings such as:
 
 ```javascript
 import {p} from 'q';
@@ -211,6 +211,6 @@ import {p} from 'q';
 
 Where module `q` does not export a `p` at all.
 
-This code will run in the System.register output but not in ES6 environments.
-
 While this format can be adjusted to handle the SyntaxErrors that get thrown when an imported name does not exist, for performance and code-size constraints this is not provided. Ideally static checking via tooling should catch these issues rather.
+
+Both of these cases allow code to run in the System.register output which would not work true ES module environments, which is seen as acceptable since the primary goal of the format is the converse - to ensure code which works in ES module environments can be fully supported in all functional cases in non ES module environments.
