@@ -61,7 +61,6 @@ When compiling ES6 modules to ES5, the Traceur `instantiate` output and Babel `s
         // use the export function to update the exports of this module
         s = 'local';
         $__export('C', C = $traceurRuntime.createClass(...));
-        var moduleName = $__moduleContext.id;
       }
     };
   });
@@ -133,10 +132,74 @@ $__export({ key: 'value', another: 'value' });
 This is useful for performance of deep re-exports where unnecessary setter operations can be avoided, otherwise setter performance
 grows quadratically with the `export *` tree depth, and can cause noticable slowdowns on large trees.
 
+#### Let and Uninitialized Bindings
+
+Due to the hoisting of variable declarations into the outer scope, it is assumed that `let` or `const` should be converted into `var` statements. While TDZ errors are not maintained, the primary goal of the module format is that functional ES module code should be fully supported through System.register, and the converse that functional System.register code be functional ES module code is not a requirement of the format. As such, since functional ES module code should not have to rely on top-level TDZ errors for normal operation, this seems a suitable compromise for the format.
+
+Top-level bindings that are uninitialized should still be exported with undefined values to ensure they contribute the module shape.
+
+For example:
+
+```js
+export let x;
+export function p () {
+  x = 10;
+}
+```
+
+Could be written:
+
+```js
+  System.register([], function($__export, $__moduleContext) {
+    var x;
+    function p() {
+      x = 10;
+    }
+    $__export({
+      x: undefined,
+      p: p
+    });
+    return {
+      // setters: [], // (setters can be optional when empty)
+      execute: function() {
+      }
+    };
+  });
+```
+
+Although in the case of not having any dependencies, it could be equally valid to omit hoisting entirely.
+
 #### Metadata
 
-The next iteration of this format will include support for ES6 module meta information through a new 
-System.register argument as soon as the specification for this is proposed.
+The second argument to the `System.register` declare function is a context argument containing an `import` property for dynamic import support, as well as a `meta` property:
+
+```js
+console.log(import.meta.url);
+import('./dynamic.js').then(function(m) {
+  console.log(m);
+});
+```
+
+could be written:
+
+```js
+  System.register([], function($__export, $__moduleContext) {
+    return {
+      execute: function() {
+        console.log($__moduleContext.meta.url);
+        $__moduleContext.import('./dynamic.js').then(function(m) {
+          console.log(m);
+        });
+      }
+    };
+  });
+```
+
+#### Top-level await
+
+Top-level await can be supported by returning a Promise from the `execute` function or making `execute` an asynchronous function.
+
+This can fully support synchronous subgraph execution remaining synchronous while also allowing the runtime to support the exact loading semantics desired. Currently SystemJS supports variant B of the spec.
 
 ### Limitations
 
