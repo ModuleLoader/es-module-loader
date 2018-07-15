@@ -51,7 +51,7 @@ Loader.prototype.constructor = Loader;
 function ensureInstantiated (module) {
   if (module === undefined)
     return;
-  if (module instanceof ModuleNamespace === false && module[toStringTag] !== 'module')
+  if (module instanceof ModuleNamespace === false && module[toStringTag] !== 'Module')
     throw new TypeError('Module instantiation did not return a valid namespace object.');
   return module;
 }
@@ -172,7 +172,7 @@ Registry.prototype.get = function (key) {
 };
 // 4.4.7
 Registry.prototype.set = function (key, namespace) {
-  if (!(namespace instanceof ModuleNamespace || namespace[toStringTag] === 'module'))
+  if (!(namespace instanceof ModuleNamespace || namespace[toStringTag] === 'Module'))
     throw new Error('Registry must be set with an instance of Module Namespace');
   this[REGISTRY][key] = namespace;
   return this;
